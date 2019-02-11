@@ -23,24 +23,24 @@ print 'RESOLVE RESULTS'
 
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_filtered.pkl'
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter.pkl'
 df = pd.read_pickle(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
 #dat = Table.read(inputfile, format='fits')
 #df = dat.to_pandas()
-he2_flag = 0
-save = 0
+he2_flag = 1
+save = 1
 
 if ('heii_4685_flux_port_ext' in df.keys()):
     df = df[~np.isnan(df.heii_4685_flux_port_ext)]
-    heii = df['heii_4685_flux_port_ext']
-    heii_err = df['heii_4685_flux_port_ext_err']
+    heii = df['heii_4685_flux_port']
+    heii_err = df['heii_4685_flux_port_err']
 
 else:
-    df = df[~np.isnan(df.Flux_HeII_4685_ext)]
-    heii = df['Flux_HeII_4685_ext']
-    heii_err = df['Flux_HeII_4685__ext_Err']
+    df = df[~np.isnan(df.Flux_HeII_4685)]
+    heii = df['Flux_HeII_4685']
+    heii_err = df['Flux_HeII_4685_Err']
 
 #define alternate catalog names
 name = df['NAME']
@@ -73,31 +73,31 @@ def he2hblimit(log_NII_HA):
 
 
 #create line ratios [NII]/H-alpha and [OIII]/H-beta
-nii_sum = (df['nii_6584_flux_ext']+ df['nii_6548_flux_ext'])*3./4
-nii_sum_err = (np.sqrt(df['nii_6584_flux_ext_err']**2 + df['nii_6548_flux_ext_err']**2))*3./4
+nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
+nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
 
 # note that the ratio uses only the stronger line, but for S/N reasons we add
 # the weaker and multiply by 3/4 since Chris Richardson says the canonical
 # line ratio is 3:1 (this needs to be updated with a more precise number)
-oiii = df['oiii_5007_flux_ext']
-oiii_err = df['oiii_5007_flux_ext_err']
-h_alpha = df['h_alpha_flux_ext']
-h_alpha_err = df['h_alpha_flux_ext_err']
-h_beta = df['h_beta_flux_ext']
-h_beta_err = df['h_beta_flux_ext_err']
-oi = df['oi_6300_flux_ext']
-oi_err = df['oi_6300_flux_ext_err']
-sii_sum = df['sii_6717_flux_ext'] + df['sii_6731_flux_ext']
-sii_sum_err = np.sqrt(df['sii_6717_flux_ext']**2 + df['sii_6731_flux_ext']**2)
+oiii = df['oiii_5007_flux']
+oiii_err = df['oiii_5007_flux_err']
+h_alpha = df['h_alpha_flux']
+h_alpha_err = df['h_alpha_flux_err']
+h_beta = df['h_beta_flux']
+h_beta_err = df['h_beta_flux_err']
+oi = df['oi_6300_flux']
+oi_err = df['oi_6300_flux_err']
+sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+sii_sum_err = np.sqrt(df['sii_6717_flux']**2 + df['sii_6731_flux']**2)
 
 
 #need to check Kewley paper and figure out if ratio used in nii_sum applies to sii_sum as well
 
 #Filter Data: all non-negative SEL fluxes and errors; Hbeta >3sigma
-gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & (oi > 0) &
-            (sii_sum > 0) & (h_beta > 0) & (h_beta > 3*h_beta_err) &
-            (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0) & 
-            (oi_err > 0) & (sii_sum_err > 0))
+gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & 
+            (h_beta > 0) & (h_beta > 3*h_beta_err) &
+            (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0))# & 
+#            (oi > 0) & (sii_sum > 0) & (oi_err > 0) & (sii_sum_err > 0))
 
 he2data = (heii/heii_err >=3) & (heii_err > 0)
 
@@ -106,15 +106,15 @@ if he2_flag:
 else:
     data = gooddata #use ALL galaxy data within catalog
 
-results = pd.read_csv("C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/results_bpass_agn_snr/RESOLVE_param_estimates.csv")
-agn_index = (results['Parameter'] == 'AGNFRAC')
-results_agn = results[agn_index]
-results_agn.index = results_agn['Galaxy Name']
-Z_index = (results['Parameter'] == 'LOGZ')
-results_Z = results[Z_index]
-results_Z.index = results_agn['Galaxy Name']
+#results = pd.read_csv("C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/results_bpass_agn_snr/RESOLVE_param_estimates.csv")
+#agn_index = (results['Parameter'] == 'AGNFRAC')
+#results_agn = results[agn_index]
+#results_agn.index = results_agn['Galaxy Name']
+#Z_index = (results['Parameter'] == 'LOGZ')
+#results_Z = results[Z_index]
+#results_Z.index = results_agn['Galaxy Name']
 
-agn_sel = (results_agn['Estimate'] > 0) & (results_Z['Estimate'] != min(results_Z['Estimate']))
+#agn_sel = (results_agn['Estimate'] > 0) & (results_Z['Estimate'] != min(results_Z['Estimate']))
 data = data #& agn_sel
 print len(np.where(data)[0])
 
@@ -129,7 +129,7 @@ print 'ALL DATA'
 
 #print total points shared with alternate catalog
 #sel = (np.where(data & resname)[0]) #for eco
-sel = (np.where(data & econame)[0]) #for resolve
+sel = (np.where(data))# & econame)[0]) #for resolve
 print ''
 print 'TOTAL DATA WITH ALTERNATE CATALOG NAME: ', len(sel)
 
@@ -161,7 +161,7 @@ he2hb = np.log10(heii/h_beta)
 #NII plot selectors
 compsel1 = (o3hb >= n2hacompmin(n2ha)) & (o3hb <= n2hamain(n2ha))
 sfsel1 = (o3hb < n2hacompmin(n2ha)) & (n2ha < 0.) & ~(o3hb > n2hamain(n2ha)) #~(o3hb > n2hamain(n2ha)) & ~compsel1
-agnsel1= (o3hb > n2hamain(n2ha))
+agnsel1= (o3hb >= n2hamain(n2ha))
 
 #SII plot selectors
 sfsel2 = (o3hb <= s2hamain(s2ha)) & ~compsel1

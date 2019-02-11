@@ -14,46 +14,46 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
 path = os.path.dirname(os.path.realpath(__file__))
-he2_flag = 0
+he2_flag = 1
 if he2_flag:
-    flags = pd.read_csv('resolve_emlineclass_filtered_he2.csv')
+    flags = pd.read_csv('eco_emlineclass_filtered_he2.csv')
 else:
-    flags = pd.read_csv('resolve_emlineclass_filtered.csv')
+    flags = pd.read_csv('eco_emlineclass_filtered.csv')
 
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_filtered.pkl'
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO_filter.pkl'
 full_df = pd.read_pickle(inputfile)
 df = full_df.loc[flags.galname]
-
-results_izi = 'C:/Users/mugdhapolimera/github/izi/results/IZI_Z_filtered.txt'
-full_Z = np.genfromtxt(results_izi, dtype = None, names= True)
-Z = full_Z[list(x for x in range(len(full_Z)) if full_Z['Name'][x] in list(flags.galname))]
+df['NAME'] = df['name']
+#results_izi = 'C:/Users/mugdhapolimera/github/izi/results/IZI_Z_filtered.txt'
+#full_Z = np.genfromtxt(results_izi, dtype = None, names= True)
+#Z = full_Z[list(x for x in range(len(full_Z)) if full_Z['Name'][x] in list(flags.galname))]
         
 
-os.chdir('C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/')
-results_nb = pd.read_csv("results_izi_filtered/RESOLVE_param_estimates.csv")
+os.chdir('C:/Users/mugdhapolimera/github/nebulabayes')
+results_nb = pd.read_csv("eco_izi_SEL/ECO_param_estimates.csv")
 Z_index = (results_nb['Parameter'] == 'LOGZ')
 full_Z_nb = results_nb[Z_index]
 full_Z_nb.index = full_Z_nb['Galaxy Name']
 Z_nb = full_Z_nb.loc[flags.galname]
 
-results_nb2 = pd.read_csv("results_k13_deredden/RESOLVE_param_estimates.csv")
-Z_index2 = (results_nb2['Parameter'] == 'LOGZ')
-full_Z_nb2 = results_nb2[Z_index2]
-full_Z_nb2.index = full_Z_nb2['Galaxy Name']
-Z_nb2 = full_Z_nb2.loc[flags.galname]
+#results_nb2 = pd.read_csv("results_k13_deredden/RESOLVE_param_estimates.csv")
+#Z_index2 = (results_nb2['Parameter'] == 'LOGZ')
+#full_Z_nb2 = results_nb2[Z_index2]
+#full_Z_nb2.index = full_Z_nb2['Galaxy Name']
+#Z_nb2 = full_Z_nb2.loc[flags.galname]
 
-results_izi = 'C:/Users/mugdhapolimera/github/izi/results/IZI_Z_prior2.txt'
-full_Z1 = np.genfromtxt(results_izi, dtype = None, names= True)
-Z1 = full_Z1[list(x for x in range(len(full_Z1)) if full_Z1['Name'][x] in list(flags.galname))]
+#results_izi = 'C:/Users/mugdhapolimera/github/izi/results/IZI_Z_prior2.txt'
+#full_Z1 = np.genfromtxt(results_izi, dtype = None, names= True)
+#Z1 = full_Z1[list(x for x in range(len(full_Z1)) if full_Z1['Name'][x] in list(flags.galname))]
 
 keys = ['agntosf', 'defagn', 'composite', 'defstarform', 'sftoagn']
 if he2_flag:
     keys.append('heiisel')
     
-flags['defagn'] = flags['defseyf'] | flags['defliner'] | flags['ambigagn']
+#flags['defagn'] = flags['defseyf'] | flags['defliner'] | flags['ambigagn']
 marker = {'agntosf': 'g^', 'ambigagn': 'rs', 'composite': 'bs', 'defagn': 'rs', 
           'defliner': 'yo', 'defseyf': 'co', 'heiisel': 'ks',
-          'defstarform': 'k.', 'sftoagn': 'm^'}
+          'defstarform': 'k.', 'sftoagn': 'm*'}
 
 colors = {'agntosf': 'g', 'ambigagn': 'r', 'composite': 'b', 'defagn': 'r', 
           'defliner': 'y', 'defseyf': 'c', 'heiisel': 'k',
@@ -71,10 +71,13 @@ percent = {'agntosf': 0, 'composite': 0, 'defagn': 0, 'heiisel': 57,
 for key in keys:
     percent[key] = len(np.where(flags[key])[0])
 
+df = df[df.logmstar > 0]
+flags = flags.iloc[list(x for x in range(len(flags)) if flags.galname[x] in list(df.name))]
+
 print percent
 bins = np.arange(0.775,1.2,0.025)
 plt.figure()
-plt.hist(df.logmgas/df.logmstar, bins = bins, alpha = 0.1, 
+plt.hist(df.logmgas/df.logmstar, bins = 'fd', alpha = 0.1, 
          histtype = 'stepfilled', label = 'All Galaxies')
 for key in keys:
         mgas = df.iloc[np.where(flags[key])[0]].logmgas
@@ -131,13 +134,18 @@ for key in keys:
         sel = df.iloc[np.where(flags[key])[0]]
         if key == 'defstarform':
             axScatter.plot(sel.logmstar,sel.logmgas, marker[key], 
-                           label = labels[key], markersize = 8, alpha = 0.3)
+                           label = labels[key], markersize = 8, alpha = 0.3, mew = 0)
+        
+        elif key == 'sftoagn':
+            axScatter.plot(sel.logmstar,sel.logmgas, marker[key], 
+                           label = labels[key], markersize = 15, mew = 0)
+                
         elif key == 'heiisel':
             axScatter.plot(sel.logmstar,sel.logmgas, marker[key], 
                            label = labels[key], markersize = 8,  mfc = 'None', mew = 2)            
         else:
             axScatter.plot(sel.logmstar,sel.logmgas, marker[key],
-                     markersize = 8, label = labels[key])
+                     markersize = 8, mew = 0, label = labels[key])
         axScatter.plot(np.linspace(7.5,11.5), np.linspace(7.5,11.5), 'k-.')
         axScatter.set_ylim(7.5,10.5)        
         if he2_flag:
@@ -199,7 +207,7 @@ for key in keys:
 axHistx.set_xlim(axScatter.get_xlim())
 #axHisty.set_ylim(axScatter.get_ylim())
 
-inputfile = 'C:/Users/mugdhapolimera/github/izi/RESOLVE_SDSS_full.pkl'
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_blend_dext.pkl'
 full = pd.read_pickle(inputfile)
 ra=full.radeg
 dec=full.dedeg
@@ -217,14 +225,14 @@ mbary = 10**mgas + 10**mstars
 
 inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & (((flinsample | (np.log10(mbary) > 9.0)) & infall) | ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
 full = full[inobssample]
-full = full[~np.isnan(full.h_alpha_flux_ext)]
-full = full[~np.isnan(full.oiii_5007_flux_ext)]
-full = full[~np.isnan(full.nii_6584_flux_ext)]
-full = full[~np.isnan(full.nii_6548_flux_ext)]
-full = full[~np.isnan(full.h_beta_flux_ext)]
-full = full[~np.isnan(full.oi_6300_flux_ext)]
-full = full[~np.isnan(full.sii_6717_flux_ext)]
-full = full[~np.isnan(full.sii_6731_flux_ext)]
+full = full[~np.isnan(full.h_alpha_flux)]
+full = full[~np.isnan(full.oiii_5007_flux)]
+full = full[~np.isnan(full.nii_6584_flux)]
+full = full[~np.isnan(full.nii_6548_flux)]
+full = full[~np.isnan(full.h_beta_flux)]
+full = full[~np.isnan(full.oi_6300_flux)]
+full = full[~np.isnan(full.sii_6717_flux)]
+full = full[~np.isnan(full.sii_6731_flux)]
 ndx = [x for x in full.NAME if x not in list(flags.galname)]
 full = full.loc[ndx]
 plt.figure(10)
@@ -247,14 +255,17 @@ for key in keys:
             plt.plot(sel.logmh[sel.fc == 0], mbary[sel.fc == 0], marker[key], markersize = 5, alpha = 0.3) #other group galaxies
             plt.plot(sel.logmh[sel.fc == 1], mbary[sel.fc == 1], marker[key], markersize = 10, label = labels[key], alpha = 0.3) #central
             
+        elif key == 'sftoagn':        
+            plt.plot(sel.logmh[sel.fc == 0], mbary[sel.fc == 0], marker[key], markersize = 15, mew = 0) #other group galaxies
+            plt.plot(sel.logmh[sel.fc == 1], mbary[sel.fc == 1], marker[key], markersize = 20, label = labels[key], mew = 0) #central
             
         elif key == 'heiisel':
             plt.plot(sel.logmh[sel.fc == 0], mbary[sel.fc == 0], marker[key], markersize = 5, mfc ='none', mew = 2) #other group galaxies
             plt.plot(sel.logmh[sel.fc == 1], mbary[sel.fc == 1], marker[key], markersize = 10, mfc ='none', mew = 2,label = labels[key]) #central
 
         else:
-            plt.plot(sel.logmh[sel.fc == 0], mbary[sel.fc == 0], marker[key], markersize = 5) #other group galaxies
-            plt.plot(sel.logmh[sel.fc == 1], mbary[sel.fc == 1], marker[key], markersize = 10, label = labels[key]) #central
+            plt.plot(sel.logmh[sel.fc == 0], mbary[sel.fc == 0], marker[key], markersize = 5, mew = 0) #other group galaxies
+            plt.plot(sel.logmh[sel.fc == 1], mbary[sel.fc == 1], marker[key], markersize = 10, label = labels[key],mew = 0) #central
 
 #        plt.plot(sel.logmh[sel.fc ==0], mbary[sel.fc==0], marker[key], markersize = 5) #other group galaxies
                 
@@ -276,7 +287,7 @@ for key in keys:
         plt.xlabel('Stellar Mass')
         plt.ylabel('Metallicity')
         plt.title('M-Z Relation using NebulaBayes + Levesque Grid (no Prior)')
-m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
+m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\M-Z_Tremonti04.txt')
 plt.plot(m_z[:,0], m_z[:,1],'r')
 #From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
 m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
@@ -334,7 +345,7 @@ for key in keys:
         plt.xlabel('Stellar Mass')
         plt.ylabel('Metallicity')
         plt.title('M-Z Relation using IZI (Python + GPy) with Prior')
-m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
+m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\M-Z_Tremonti04.txt')
 plt.plot(m_z[:,0], m_z[:,1],'r')
 #From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
 m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)

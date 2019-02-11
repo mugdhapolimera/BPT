@@ -14,12 +14,12 @@ he2_flag = 0
 if he2_flag:
     flags = pd.read_csv('resolve_emlineclass_filtered_he2.csv')
 else:
-    flags = pd.read_csv('resolve_emlineclass_filtered.csv')
+    flags = pd.read_csv('resolve_emlineclass_bpt1.csv')
 inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_filtered.pkl'
 full_df = pd.read_pickle(inputfile)
 df = full_df.loc[flags.galname]
 
-os.chdir('C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/')
+os.chdir('C:/Users/mugdhapolimera/github/nebulabayes/')
 results_nb = pd.read_csv("results_izi_prior/RESOLVE_param_estimates.csv")
 Z_index = (results_nb['Parameter'] == 'LOGZ')
 full_Z_nb = results_nb[Z_index]

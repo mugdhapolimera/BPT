@@ -30,7 +30,7 @@ print 'RESOLVE RESULTS'
 
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_filtered.pkl'
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO_filter.pkl'
 df = pd.read_pickle(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
@@ -39,24 +39,25 @@ df = pd.read_pickle(inputfile) #ECO catalog
 he2_flag = 1
 save = 0
 
-if ('heii_4685_flux_port_ext' in df.keys()):
-    df = df[~np.isnan(df.heii_4685_flux_port_ext)]
-    heii = df['heii_4685_flux_port_ext']
-    heii_err = df['heii_4685_flux_port_ext_err']
+if ('heii_4685_flux_port' in df.keys()):
+    df = df[~np.isnan(df.heii_4685_flux_port)]
+    heii = df['heii_4685_flux_port']
+    heii_err = df['heii_4685_flux_port_err']
 
 else:
-    df = df[~np.isnan(df.Flux_HeII_4685_ext)]
-    heii = df['Flux_HeII_4685_ext']
-    heii_err = df['Flux_HeII_4685__ext_Err']
+    df = df[~np.isnan(df.Flux_HeII_4685)]
+    heii = df['Flux_HeII_4685']
+    heii_err = df['Flux_HeII_4685_Err']
 
 #define alternate catalog names
+if 'name' in df.keys():
+    df['NAME'] = df['name']
 name = df['NAME']
-#resname = df['resname'] #for eco
-#resname = resname != 'notinresolve'
-
-#econame = df['econame']
-econame = df['econame'] #for resolve
-econame = econame != 'notineco'
+resname = df['resname'] #for eco
+resname = resname != 'notinresolve'
+econame = resname
+#econame = df['econame'] #for resolve
+#econame = econame != 'notineco'
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -80,22 +81,22 @@ def he2hblimit(log_NII_HA):
 
 
 #create line ratios [NII]/H-alpha and [OIII]/H-beta
-nii_sum = (df['nii_6584_flux_ext']+ df['nii_6548_flux_ext'])*3./4
-nii_sum_err = (np.sqrt(df['nii_6584_flux_ext_err']**2 + df['nii_6548_flux_ext_err']**2))*3./4
+nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
+nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
 
 # note that the ratio uses only the stronger line, but for S/N reasons we add
 # the weaker and multiply by 3/4 since Chris Richardson says the canonical
 # line ratio is 3:1 (this needs to be updated with a more precise number)
-oiii = df['oiii_5007_flux_ext']
-oiii_err = df['oiii_5007_flux_ext_err']
-h_alpha = df['h_alpha_flux_ext']
-h_alpha_err = df['h_alpha_flux_ext_err']
-h_beta = df['h_beta_flux_ext']
-h_beta_err = df['h_beta_flux_ext_err']
-oi = df['oi_6300_flux_ext']
-oi_err = df['oi_6300_flux_ext_err']
-sii_sum = df['sii_6717_flux_ext'] + df['sii_6731_flux_ext']
-sii_sum_err = np.sqrt(df['sii_6717_flux_ext']**2 + df['sii_6731_flux_ext']**2)
+oiii = df['oiii_5007_flux']
+oiii_err = df['oiii_5007_flux_err']
+h_alpha = df['h_alpha_flux']
+h_alpha_err = df['h_alpha_flux_err']
+h_beta = df['h_beta_flux']
+h_beta_err = df['h_beta_flux_err']
+oi = df['oi_6300_flux']
+oi_err = df['oi_6300_flux_err']
+sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+sii_sum_err = np.sqrt(df['sii_6717_flux']**2 + df['sii_6731_flux']**2)
 
 
 #need to check Kewley paper and figure out if ratio used in nii_sum applies to sii_sum as well
@@ -223,19 +224,21 @@ ambigsel2 = agnsel1 & (sfsel2 | sfsel3) #AGN in first plot, SF in subsequent plo
 ambagnsel = agnsel1 & ~seyfselr & ~linerselr & ~(sfsel2 | sfsel3) #Ambiguous AGN
 
 emlineclass = sfsel ^ compsel ^ seyfsel ^ linersel ^ ambigsel1 ^ ambigsel2 ^ ambagnsel
+defagn = seyfsel ^ linersel ^ ambagnsel
 #print np.sum(emlineclass)
 
 if save:
     if not he2_flag:    
         dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                           'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
-                          'sftoagn':ambigsel1, 'agntosf':ambigsel2})
+                          'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn})
         dfout.to_csv('resolve_emlineclass_filtered.csv',index=False)
     
     else:
         dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                           'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
-                          'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'heiisel':agnsel4})
+                          'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn,
+                          'heiisel':agnsel4})
         dfout.to_csv('resolve_emlineclass_filtered_he2.csv',index=False)
 
 #create alternate catalog name-based agn selector, print len
@@ -355,12 +358,12 @@ ax.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 #data, = ax.plot(n2ha, o3hb, 'k.')
 sfdata1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', markersize = 3, alpha = 0.5, label = 'Star Forming (SF)')
-seyfdata1, = ax.plot(n2ha[seyfsel], o3hb[seyfsel], 'rs',  markersize = 8)
-linerdata1, = ax.plot(n2ha[linersel], o3hb[linersel],'rs',  markersize = 8)
-agndata1, = ax.plot(n2ha[ambagnsel], o3hb[ambagnsel],'rs', markersize = 8, label = 'Definite AGN')
-compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'bs', markersize = 8, label = 'Composite')
-ambig1data1, = ax.plot(n2ha[ambigsel1], o3hb[ambigsel1],'m^', markersize = 8, label = 'SF -> AGN (MP-AGN)')
-ambig2data1, = ax.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 8, label = 'AGN -> SF')
+ambig1data1, = ax.plot(n2ha[ambigsel1], o3hb[ambigsel1],'m*', markersize = 15, mew = 0, label = 'SF -> AGN (MP-AGN)')
+ambig2data1, = ax.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 12, mew = 0, label = 'AGN -> SF')
+seyfdata1, = ax.plot(n2ha[seyfsel], o3hb[seyfsel], 'rs',  markersize = 8, mew = 0 )
+linerdata1, = ax.plot(n2ha[linersel], o3hb[linersel],'rs',  markersize = 8, mew = 0)
+agndata1, = ax.plot(n2ha[ambagnsel], o3hb[ambagnsel],'rs', markersize = 8, mew = 0, label = 'Definite AGN')
+compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'bs', markersize = 8, mew = 0, label = 'Composite')
 #comp2he2, = ax.plot(n2ha[agnsel4], o3hb[agnsel4], 'y*', label = 'HeII-selected AGN')
 if he2_flag:
     agndata4, = ax.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
@@ -378,12 +381,12 @@ ax2.set_ylim(-1.25,1.5)
 ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
 ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 sfdata2, = ax2.plot(s2ha[sfsel], o3hb[sfsel], 'k.', markersize = 3, alpha = 0.5, label = 'SF')
-seyfdata2, = ax2.plot(s2ha[seyfsel], o3hb[seyfsel], 'rs', markersize = 8, label = 'Seyfert')
-linerdata2, = ax2.plot(s2ha[linersel], o3hb[linersel],'rs', markersize = 8, label = 'LINER')
-agndata2, = ax2.plot(s2ha[ambagnsel], o3hb[ambagnsel],'rs', markersize = 8, label = 'Ambiguous AGN')
-compdata2, = ax2.plot(s2ha[compsel], o3hb[compsel], 'bs',markersize = 8, label = 'Composite')
-ambig1data2, = ax2.plot(s2ha[ambigsel1], o3hb[ambigsel1], 'm^', markersize = 8, label = 'Star Forming --> AGN')
-ambig2data2, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2], 'g^', markersize = 8, label = 'AGN --> Star Forming ')
+ambig1data2, = ax2.plot(s2ha[ambigsel1], o3hb[ambigsel1], 'm*', markersize = 15, mew = 0, label = 'Star Forming --> AGN')
+ambig2data2, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2], 'g^', markersize = 12, mew = 0, label = 'AGN --> Star Forming ')
+seyfdata2, = ax2.plot(s2ha[seyfsel], o3hb[seyfsel], 'rs', markersize = 8, mew = 0, label = 'Seyfert')
+linerdata2, = ax2.plot(s2ha[linersel], o3hb[linersel],'rs', markersize = 8, mew = 0, label = 'LINER')
+agndata2, = ax2.plot(s2ha[ambagnsel], o3hb[ambagnsel],'rs', markersize = 8, mew = 0, label = 'Ambiguous AGN')
+compdata2, = ax2.plot(s2ha[compsel], o3hb[compsel], 'bs',markersize = 8, mew = 0, label = 'Composite')
 if he2_flag:
     agndata4, = ax2.plot(s2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title = 'Galaxy Types: ', numpoints = 1)
@@ -401,13 +404,13 @@ ax3.set_xlim(-2.5, 0)
 ax3.set_ylim(-1.25,1.5)
 ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
 ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.5, markersize = 3,label = 'SF')
-seyfdata3, = ax3.plot(o1ha[seyfsel], o3hb[seyfsel], 'rs', markersize = 8, label = 'Seyfert')
-linerdata3, = ax3.plot(o1ha[linersel], o3hb[linersel],'rs', markersize = 8, label = 'LINER')
-agndata3, = ax3.plot(o1ha[ambagnsel], o3hb[ambagnsel],'rs', markersize = 8, label = 'Ambiguous AGN')
-compdata3, = ax3.plot(o1ha[compsel], o3hb[compsel], 'bs', markersize = 8, label = 'Composite')
-ambig1data3, = ax3.plot(o1ha[ambigsel1], o3hb[ambigsel1],'m^', markersize = 8, label = 'MP-AGN')#'Star Forming --> AGN')
-ambig2data3, = ax3.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 8, label = 'AGN --> Star Forming')
+sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.5, markersize = 3, mew = 0, label = 'SF')
+ambig1data3, = ax3.plot(o1ha[ambigsel1], o3hb[ambigsel1],'m*', markersize = 15, mew = 0, label = 'MP-AGN')#'Star Forming --> AGN')
+ambig2data3, = ax3.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 12, mew = 0, label = 'AGN --> Star Forming')
+seyfdata3, = ax3.plot(o1ha[seyfsel], o3hb[seyfsel], 'rs', markersize = 8, mew = 0, label = 'Seyfert')
+linerdata3, = ax3.plot(o1ha[linersel], o3hb[linersel],'rs', markersize = 8, mew = 0, label = 'LINER')
+agndata3, = ax3.plot(o1ha[ambagnsel], o3hb[ambagnsel],'rs', markersize = 8, mew = 0, label = 'Ambiguous AGN')
+compdata3, = ax3.plot(o1ha[compsel], o3hb[compsel], 'bs', markersize = 8, mew = 0, label = 'Composite')
 if he2_flag:
     agndata4, = ax3.plot(o1ha[agnsel4], o3hb[agnsel4],'ks',  markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title = 'Galaxy Types: ', numpoints = 1)
@@ -449,12 +452,12 @@ mbary = 10**mgas + 10**mstars
 
 inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & (((flinsample | (np.log10(mbary) > 9.0)) & infall) | ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
 df = df[inobssample]
-df = df[~np.isnan(df.h_alpha_flux_ext)]
-df = df[~np.isnan(df.oiii_5007_flux_ext)]
-df = df[~np.isnan(df.nii_6584_flux_ext)]
-df = df[~np.isnan(df.nii_6548_flux_ext)]
-df = df[~np.isnan(df.h_beta_flux_ext)]
-df = df[~np.isnan(df.oi_6300_flux_ext)]
-df = df[~np.isnan(df.sii_6717_flux_ext)]
-df = df[~np.isnan(df.sii_6731_flux_ext)]
+df = df[~np.isnan(df.h_alpha_flux)]
+df = df[~np.isnan(df.oiii_5007_flux)]
+df = df[~np.isnan(df.nii_6584_flux)]
+df = df[~np.isnan(df.nii_6548_flux)]
+df = df[~np.isnan(df.h_beta_flux)]
+df = df[~np.isnan(df.oi_6300_flux)]
+df = df[~np.isnan(df.sii_6717_flux)]
+df = df[~np.isnan(df.sii_6731_flux)]
 '''
