@@ -23,14 +23,15 @@ print 'RESOLVE RESULTS'
 
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter.pkl'
+#inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter.pkl'
+inputfile = '/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/RESOLVE_filter.pkl'
 df = pd.read_pickle(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
 #dat = Table.read(inputfile, format='fits')
 #df = dat.to_pandas()
 he2_flag = 1
-save = 1
+save = 0
 
 if ('heii_4685_flux_port_ext' in df.keys()):
     df = df[~np.isnan(df.heii_4685_flux_port_ext)]

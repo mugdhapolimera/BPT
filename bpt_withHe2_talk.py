@@ -19,25 +19,44 @@ Created on Thu Nov 29 16:05:06 2018
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
-#plt.ion()
-#import pdb
-#os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/Documents/BPT/')
+import os 
+import sys
+from astroML.plotting import scatter_contour
 #display catalog being used
 print ''
-#print 'ECO RESULTS'
-print 'RESOLVE RESULTS'
 
 #read in data
-#inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO_filter.pkl'
+he2_flag = 0
+save = 0
+resolve = 0
+eco = 1
+if sys.platform == 'linux2':
+    os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
+
+else:
+    os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
+
+
+if eco: 
+    inputfile = 'ECO_filter.pkl'
+    print 'ECO RESULTS'
+    if he2_flag:
+        outputfile = 'eco_emlineclass_filter_he2.csv'
+    else: 
+        outputfile = 'eco_emlineclass_filter.csv'
+
+if resolve: 
+    inputfile = 'RESOLVE_filter.pkl'
+    print 'RESOLVE RESULTS'
+    if he2_flag:
+        outputfile = 'resolve_emlineclass_filter_he2.csv'
+    else: 
+        outputfile = 'resolve_emlineclass_filter.csv'
 df = pd.read_pickle(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
 #dat = Table.read(inputfile, format='fits')
 #df = dat.to_pandas()
-he2_flag = 1
-save = 0
 
 if ('heii_4685_flux_port' in df.keys()):
     df = df[~np.isnan(df.heii_4685_flux_port)]
@@ -52,12 +71,14 @@ else:
 #define alternate catalog names
 if 'name' in df.keys():
     df['NAME'] = df['name']
+
 name = df['NAME']
-resname = df['resname'] #for eco
-resname = resname != 'notinresolve'
-econame = resname
-#econame = df['econame'] #for resolve
-#econame = econame != 'notineco'
+if eco: 
+    resname = df['resname'] #for eco
+    resname = resname != 'notinresolve'
+if resolve:
+    econame = df['econame'] #for resolve
+    econame = econame != 'notineco'
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -124,8 +145,11 @@ print 'ALL DATA'
 
 
 #print total points shared with alternate catalog
-#sel = (np.where(data & resname)[0]) #for eco
-sel = (np.where(data & econame)[0]) #for resolve
+
+if eco: 
+    sel = (np.where(data & resname)[0]) #for eco
+elif resolve:
+    sel = (np.where(data & econame)[0]) #for resolve
 print ''
 print 'TOTAL DATA WITH ALTERNATE CATALOG NAME: ', len(sel)
 
@@ -232,18 +256,20 @@ if save:
         dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                           'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
                           'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn})
-        dfout.to_csv('resolve_emlineclass_filtered.csv',index=False)
+        dfout.to_csv(outputfile,index=False)
     
     else:
         dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                           'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
                           'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn,
                           'heiisel':agnsel4})
-        dfout.to_csv('resolve_emlineclass_filtered_he2.csv',index=False)
+        dfout.to_csv(outputfile ,index=False)
 
 #create alternate catalog name-based agn selector, print len
-#agn = (np.where(agnsel1 & resname)[0]) #for eco
-agn = (np.where(agnsel1 & econame)[0]) #for resolve
+if eco: 
+    agn = (np.where(agnsel1 & resname)[0]) #for eco
+if resolve: 
+    agn = (np.where(agnsel1 & econame)[0]) #for resolve
 print ''
 print 'AGN WITH ALTERNATE CATALOG NAME: ', len(agn)
 
@@ -347,7 +373,22 @@ refoiha = np.linspace(-2.5, 0.0)
 refsiiha = np.linspace(-2, 0.3)
 
 #NII/OIII plot
-plt.figure(1)
+fig,ax = plt.subplots()
+main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Main Line')
+composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 'k-.', label = 'Composite Line')
+ax.set_xlim(-2,1)
+ax.set_ylim(-1.25,1.5)
+scatter_contour(n2ha[sfsel], o3hb[sfsel], threshold = 20,
+                ax = ax, histogram2d_args=dict(bins=40), plot_args=dict(marker = ',',
+                linestyle = 'none', color = 'black'), contour_args = dict(cmap=plt.cm.bone))
+ambig1data1, = ax.plot(n2ha[ambigsel1], o3hb[ambigsel1],'mo', markersize = 5, mew = 0, label = 'SF -> AGN (MP-AGN)')
+ambig2data1, = ax.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 8, mew = 0, label = 'AGN -> SF')
+scatter_contour(n2ha[defagn], o3hb[defagn], threshold = 5, 
+                ax = ax, histogram2d_args=dict(bins=15), plot_args=dict(marker = 'o',
+                markersize = 2, linestyle = 'none', color = 'gray'), contour_args = dict(cmap=plt.cm.Greys))
+compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'bs', markersize = 5, mew = 0, label = 'Composite')
+
+plt.figure(5)
 ax = plt.subplot(111)
 main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Main Line')
 composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 'k-.', label = 'Composite Line')
@@ -369,6 +410,7 @@ if he2_flag:
     agndata4, = ax.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title = 'Galaxy Types: ', numpoints = 1)
 plt.subplots_adjust(left=0.08, bottom=0.11, right=0.72, top=0.96, wspace=0.49, hspace=None)
+
 
 
 #SII/OIII plot
