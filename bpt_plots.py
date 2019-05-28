@@ -35,6 +35,7 @@ save = 0
 resolve = 1
 eco = 0
 full = 0
+singlepanel = 1
 if sys.platform == 'linux2':
         os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
 
@@ -294,7 +295,7 @@ print ''
 #reference points in x-direction for demarcation lines on plots
 refn2ha = np.linspace(-3.0, 0.35)
 refoiha = np.linspace(-2.5, -0.4)
-refsiiha = np.linspace(-2, 0.3)
+refsiiha = np.linspace(-2, 0.3,100)
 
 #NII/OIII plot
 if resolve == 1:    
@@ -413,7 +414,97 @@ if resolve == 1:
                    title = 'Galaxy Types: ', numpoints = 1)
         plt.subplots_adjust(left=0.08, bottom=0.11, right=0.72, 
                             top=0.96, wspace=0.49, hspace=None)
-
+    if singlepanel ==1:
+            fig = plt.figure('NII Scatter Plot')
+            ax1 = fig.add_subplot(111)
+            ax1.set_xlim(-1.5,0.5)
+            ax1.set_ylim(-1.0,1.0)
+            main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', 
+                              label = 'ke01 Theoretical Maximum Starburst Line')
+            composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
+                                  'k-.', label = 'Ka03 Composite Line')
+            sfsel1, = ax1.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+                               markersize = 5)#, label = 'Definite Star Forming')
+            ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1],'bs', 
+                                    markersize = 8, mew = 0)#, label = 'SF-to-AGN)')
+            compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', 
+                                  markersize = 8, mew = 0)#, label = 'Composite')
+            seyfsel1, = ax1.plot(n2ha[seyfsel], o3hb[seyfsel], 'o', color = 'maroon', 
+                                 markersize = 8, mew = 0)#, label = 'Seyfert')
+            liner1, = ax1.plot(n2ha[linersel], o3hb[linersel], 'co', 
+                               markersize = 8, mew = 0)#, label = 'LINER')
+            ambig1, = ax1.plot(n2ha[ambagnsel], o3hb[ambagnsel], 'yo',
+                               markersize = 8, mew = 0)#, label = 'Ambiguous AGN')
+            ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', 
+                                    markersize = 12, mew = 0)#, label = 'AGN -> SF')
+            ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
+            ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+            
+            if he2_flag:
+                agndata4, = ax1.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', 
+                    markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+            
+            #SII/OIII plot
+            fig = plt.figure('SII Scatter Plot')
+            ax2 = fig.add_subplot(111)
+            main2, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
+            liner, = ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
+                              'k--', label = 'Liner/Seyfert Division')
+            ax2.set_xlim(-1.5, 0.5)
+            ax2.set_ylim(-1.0,1.0)
+            ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
+            ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+            sfdata2, = ax2.plot(s2ha[sfsel], o3hb[sfsel], 'k.', markersize = 5, 
+                                alpha = 0.1, label = 'SF')
+            ambig1data2, = ax2.plot(s2ha[ambigsel1], o3hb[ambigsel1], 'bs', 
+                                    markersize = 8, mew = 0, label = 'SFing-AGN')
+            ambig2data2, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2], 'g^', 
+                                    markersize = 12, mew = 0, label = 'AGN-to-SF ')
+            seyfdata2, = ax2.plot(s2ha[seyfsel], o3hb[seyfsel], 'o', color = 'maroon',
+                                  markersize = 8, mew = 0, label = 'Seyfert')
+            linerdata2, = ax2.plot(s2ha[linersel], o3hb[linersel],'co', 
+                                   markersize = 8, mew = 0, label = 'LINER')
+            agndata2, = ax2.plot(s2ha[ambagnsel], o3hb[ambagnsel],'yo', 
+                                 markersize = 8, mew = 0, label = 'Ambiguous AGN')
+            compdata2, = ax2.plot(s2ha[compsel], o3hb[compsel], 'ms',
+                                  markersize = 8, mew = 0, label = 'Composite')
+            if he2_flag:
+                agndata4, = ax2.plot(s2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8,
+                                     mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+            
+            #OI/OIII plot
+            fig = plt.figure('OI Scatter Plot')
+            ax3 = fig.add_subplot(111)
+            main3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
+                              'k', label = 'Ke01 Theoretical Maximum Starburst Line')
+            comp3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
+                              'k-.', label = 'Ka03 Composite Line')
+            liner2, = ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
+                               'k--', label = 'Ke06 Liner/Seyfert Division Line')
+            ax3.set_xlim(-2.0, -0.4)
+            ax3.set_ylim(-1.0,1.0)
+            ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
+            ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+            sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+                                markersize = 5, label = 'SF')
+            ambig1data3, = ax3.plot(o1ha[ambigsel1], o3hb[ambigsel1],'bs',
+                                    markersize = 8, mew = 0, label = 'SFing-AGN')
+            ambig2data3, = ax3.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', 
+                                    markersize = 10, mew = 0, label = 'AGN-to-SF')
+            seyfdata3, = ax3.plot(o1ha[seyfsel], o3hb[seyfsel], 'o', color = 'maroon', 
+                                  markersize = 8, mew = 0, label = 'Seyfert')
+            linerdata3, = ax3.plot(o1ha[linersel], o3hb[linersel],'co', 
+                                   markersize = 8, mew = 0, label = 'LINER')
+            agndata3, = ax3.plot(o1ha[ambagnsel], o3hb[ambagnsel],'yo', 
+                                 markersize = 8, mew = 0, label = 'Ambiguous AGN')
+            compdata3, = ax3.plot(o1ha[compsel], o3hb[compsel], 'ms',
+                                  markersize = 8, mew = 0, label = 'Composite')
+            if he2_flag:
+                agndata4, = ax3.plot(o1ha[agnsel4], o3hb[agnsel4],'ks',  
+                    markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+            plt.legend(bbox_to_anchor=(1.25, 1),loc=2, borderaxespad=0., 
+                       numpoints = 1, fontsize = 14)
+            
 def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
   	new_cmap = colors.LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
@@ -521,15 +612,16 @@ ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3,
             colors='k')
 ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
                shading='gouraud', cmap=sf_colors_map)
-composite_fake, = ax1.plot(refoiha, o1hamain(refoiha), 'k-.', 
+composite_fake, = ax1.plot(refoiha[refoiha < -0.75], 
+                           o1hamain(refoiha)[refoiha < -0.75], 'k-.', 
                            label = 'Ka03 Composite Line')
-main1, = ax1.plot(refoiha, o1hamain(refoiha), 'k', 
+main1, = ax1.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 'k', 
                   label = 'Ke01 Maximum Starburst Line')
 ax1.set_xlim(-2.1,-0.2)
 ax1.set_ylim(-1,1)
-compdata1, = ax1.plot(o1ha[compsel], o3hb[compsel], 'bs', alpha = 0.5, 
+compdata1, = ax1.plot(o1ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Composite')
-ambig1data1, = ax1.plot(o1ha[ambigsel1], o3hb[ambigsel1],'rs', alpha = 0.5,
+ambig1data1, = ax1.plot(o1ha[ambigsel1], o3hb[ambigsel1],'bs', alpha = 0.5,
                         markersize = 8, mew = 0, label = 'SF-to-AGN')
 ax1.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
