@@ -31,7 +31,7 @@ print 'RESOLVE RESULTS'
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_bpt1_filter.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO_full_blend_dext.pkl'
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter_new.pkl'
 df = pd.read_pickle(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
@@ -51,13 +51,12 @@ else:
     heii_err = df['Flux_HeII_4685_Err']
 
 #define alternate catalog names
-name = df['name']
-resname = df['resname'] #for eco
-resname = resname != 'notinresolve'
+name = df['NAME']
+#resname = df['econame'] #for eco
+#resname = resname != 'notinresolve'
 
-#econame = df['econame']
-#econame = df['econame'] #for resolve
-#econame = econame != 'notineco'
+econame = df['econame'] #for resolve
+econame = econame != 'notineco'
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -202,20 +201,14 @@ emlineclass = sfsel ^ compsel ^ agnsel
 #print np.sum(emlineclass)
 
 if save:
-    if not he2_flag:    
         dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                            'defagn':agnsel})
-        dfout.to_csv('eco_emlineclass_bpt1.csv',index=False)
+        dfout.to_csv('resolve_emlineclass_bpt1_new.csv',index=False)
     
-    else:
-        dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
-                          'defagn':agnsel,
-                          'heiisel':agnsel4})
-        dfout.to_csv('resolve_emlineclass_filtered_he2.csv',index=False)
 
 #create alternate catalog name-based agn selector, print len
-agn = (np.where(agnsel1 & resname)[0]) #for eco
-#agn = (np.where(agnsel1 & econame)[0]) #for resolve
+#agn = (np.where(agnsel1 & resname)[0]) #for eco
+agn = (np.where(agnsel1 & econame)[0]) #for resolve
 print ''
 print 'AGN WITH ALTERNATE CATALOG NAME: ', len(agn)
 
