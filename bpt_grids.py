@@ -29,6 +29,9 @@ obsR_h_alpha = res_den['h_alpha_flux']
 obsR_h_beta = res_den['h_beta_flux']
 obsR_heii_4686 = res_den['Flux_HeII_4685']
 
+plt.figure()
+plt.plot(np.log10(np.array(res_den.oi_6300_flux_err)), 'o')
+
 obsR_n2ha = np.log10(obsR_nii/obsR_h_alpha)
 obsR_o3hb = np.log10(obsR_oiii/obsR_h_beta)
 obsR_s2ha = np.log10(obsR_sii_sum/obsR_h_alpha)
@@ -86,7 +89,11 @@ main_oi = o1hamain(refoiha)
 #grid = 'L10'
 grid = 'BPASS'
 if grid == 'BPASS':
-    sim = pd.read_csv('C:/Users/mugdhapolimera/github/izi/Richardson-0-0_1-0agn-BPASS-Binary-CSF-n=1e2-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3.csv')
+    #CSF
+    #sim = pd.read_csv('C:/Users/mugdhapolimera/github/izi/Richardson-0-0_1-0agn-BPASS-Binary-CSF-n=1e2-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3.csv')
+    
+    #SSP
+    sim = pd.read_csv('C:/Users/mugdhapolimera/github/izi/Richardson-0-0_1-0agn-BPASS-Binary-SSP-n=1e2-1.0Myr-NichollsCE-D_G-RR14_Fstar_0_3.csv')
     #sim = sim0
     #lowz, highz = marginalize(sim0)
     sim= sim[(sim["LOGQ"] > 6.9) & (sim["LOGQ"] < 8.9)]
@@ -100,6 +107,7 @@ if grid == 'L10':
 bpt = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/resolve_emlineclass_filter_new.csv')
 bpt.index = bpt['galname']
 
+rms = np.sqrt(np.mean(np.log10(res_den.oi_6300_flux_err[bpt['defstarform']]/res_den.oi_6300_flux[bpt['defstarform']]))**2)
 
 ##################################
 #
@@ -126,6 +134,9 @@ def truncate_colormap(cmap, minval=0.15, maxval=1.0, n=256):
 
 metal_colors_map = truncate_colormap(cm.BuPu, n = metals)
 u_colors_map = truncate_colormap(cm.YlOrRd, n = ionps)
+
+metal_list = [0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 1., 1.5, 2. ]
+ionps_list = [6.9 , 7.2, 7.5, 7.7, 8. , 8.2, 8.5, 8.7]
 
 #gnuplot, rainbow, winter, spring, viridis, magma
 for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
@@ -215,7 +226,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     minorLocator = MultipleLocator(0.1)
     sp1.yaxis.set_minor_locator(minorLocator)
     
-    sp1.set_xlabel(r'$\rm log([$N II$]$ 6584 / H$\alpha)$',fontsize=15)
+    if frac == 1:
+        sp1.set_xlabel(r'$\rm log([$N II$]$ 6584 / H$\alpha)$',fontsize=15)
     sp1.set_ylabel(r'$\rm log([$O III$]$ 5007 / H$\beta$)',fontsize=15)
     
     Z = 10**np.unique(sim.LOGZ)
@@ -226,8 +238,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
             bbox_to_anchor=(0.1, 0.17), bbox_transform=sp1.figure.transFigure)
     cbar = plt.colorbar(sm,cax=smaxes)
     cbar.ax.set_title(r'Z / Z$_{\odot}$',fontsize=cbar_tick_label)
-    #cbar.set_ticks(10**np.unique(simdata['LOGZ']))
-    #cbar.set_ticklabels(np.around(10**np.unique(simdata['LOGZ']),1))
+    cbar.set_ticks(np.linspace(0.15,2.0, metals))
+    cbar.set_ticklabels(metal_list)
     cbar.ax.tick_params(labelsize=cbar_tick_label) 
     
     q = np.unique(sim.LOGQ)
@@ -238,8 +250,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
             bbox_to_anchor=(0.18, 0.17), bbox_transform=sp1.figure.transFigure)
     cbar = plt.colorbar(sm,cax=smaxes)
     cbar.ax.set_title(r'log $q$',fontsize=cbar_tick_label)
-    #cbar.set_ticks([-4.0,-0.5])
-    #cbar.set_ticklabels([-4.0,-0.5])
+    cbar.set_ticks(np.linspace(6.977,8.727, ionps))
+    cbar.set_ticklabels(ionps_list)
     cbar.ax.tick_params(labelsize=cbar_tick_label) 
     
     
@@ -260,8 +272,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     sp2.plot(refsiiha, s2hamain(refsiiha),'k')
 #    plt.plot(refsiiha-0.09,main_sii,'k')
     
-    x = np.log10(np.divide(sii,halpha))
-    y = np.log10(np.divide(oiii,hbeta))
+    x = np.log10(np.divide(sii,halpha)) + 0.02
+    y = np.log10(np.divide(oiii,hbeta)) + 0.04
     z50_x = x[8]
     z50_y = y[8]
     
@@ -284,7 +296,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     minorLocator = MultipleLocator(0.1)
     sp2.yaxis.set_minor_locator(minorLocator)
     
-    sp2.set_xlabel(r'$\rm log([$S II$]$ 6717 + 6731/ H$\alpha)$',fontsize=15)
+    if frac == 1:
+        sp2.set_xlabel(r'$\rm log([$S II$]$ 6717 + 6731/ H$\alpha)$',fontsize=15)
     #plt.ylabel(r'$[$O III$]$ 5007 / H$\beta$',fontsize=15)
 
     if frac == 0:
@@ -311,8 +324,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
 #                color='r',marker='s')
     sp3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),'k')
     
-    x = np.log10(np.divide(oi,halpha))
-    y = np.log10(np.divide(oiii,hbeta))
+    x = np.log10(np.divide(oi,halpha)) + 0.07
+    y = np.log10(np.divide(oiii,hbeta)) + 0.04
     z50_x = x[8]
     z50_y = y[8]
     
@@ -334,7 +347,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     minorLocator = MultipleLocator(0.1)
     sp3.yaxis.set_minor_locator(minorLocator)
     
-    sp3.set_xlabel(r'$\rm log ([$O I$]$ 6300 / H$\alpha$)',fontsize=15)
+    if frac == 1:
+        sp3.set_xlabel(r'$\rm log ([$O I$]$ 6300 / H$\alpha$)',fontsize=15)
     #plt.ylabel(r'$[$O III$]$ 5007 / H$\beta$',fontsize=15)
     sp3.legend(title = 'AGN Fraction '+str(int(frac*100))+'%', loc = 'upper right')
 

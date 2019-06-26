@@ -35,7 +35,7 @@ save = 0
 resolve = 1
 eco = 0
 full = 0
-singlepanel = 1
+singlepanel = 0
 if sys.platform == 'linux2':
         os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
 
@@ -65,7 +65,9 @@ else:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
     else: 
         outputfile = 'resolve_emlineclass_filter_new.csv'
-
+xray = pd.read_csv('C:/Users/mugdhapolimera/github/xray/ECO+RESOLVE_xray_new.csv')
+os.chdir('C:/Users/mugdhapolimera/github/xray/')
+#inputfile = 'XMM_AGN_mwdext.pkl'
 df = pd.read_pickle(inputfile)
 
 df = df[~np.isnan(df.Flux_HeII_4685)]
@@ -81,8 +83,8 @@ if eco:
     resname = df['resname'] #for eco
     resname = resname != 'notinresolve'
 if resolve:
-    econame = df['econame'] #for resolve
-    econame = econame != 'notineco'
+    econame = df['name']#df['econame'] #for resolve
+    econame = df['name']#econame != 'notineco'
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -233,7 +235,7 @@ sftoagn2 = sfsel1 & agnsel3
 
 #Save the BPT flags to a CSV file
 emlineclass = sfsel ^ compsel ^ seyfsel ^ linersel ^ ambigsel1 ^ ambigsel2 ^ ambagnsel
-defagn = seyfsel ^ linersel ^ ambagnsel
+defagn = seyfsel | linersel | ambagnsel
 if save:
     if not he2_flag:    
         dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
@@ -271,7 +273,11 @@ comppercent = float(compselpts)/float(datalen)*100
 agnpercent = float(agnselpts)/float(datalen)*100
 ambig1percent = float(ambigsel1pts)/float(datalen)*100
 ambig2percent = float(ambigsel2pts)/float(datalen)*100
-
+#dwarf = (df[data].logmstar < 9.5)
+#giant = (df[data].logmstar > 9.5)
+#agn = (ambigsel1|seyfsel|linersel|ambagnsel)#|compsel)
+#dwarfagn = dwarf & agn
+#giantagn = giant & agn
 
 print ("DATA POINTS: "),datalen
 print ("TOTAL PLOTTED POINTS: "), totalselpts
@@ -284,12 +290,16 @@ print ("AGN --> SF: "), ambigsel2pts, ("("),round(ambig2percent, 2),("%"),(")")
 print ("Ambiguous AGN: "),agnselpts, ("("),round(agnpercent, 2),("%"),(")")
 print ("Seyfert: "),seyfselpts, ("("),round(seyfpercent, 2),("%"),(")")
 print ("LINER: "),linerselpts, ("("),round(linerpercent, 2),("%"),(")")
-print ("TOTAL KNOWN AGN: "),linerselpts+seyfselpts+agnselpts, ("("),
-round(linerpercent+seyfpercent+agnpercent, 2), ("%"), (")")
-print ("POSSIBLE TOTAL AGN: "),linerselpts+seyfselpts+agnselpts+ambigsel1pts+ambigsel2pts, 
-("("),round(linerpercent+seyfpercent+agnpercent+ambig1percent+ambig2percent, 2), (")")
+print ("TOTAL KNOWN AGN: "),linerselpts+seyfselpts+agnselpts, ("("), \
+round(linerpercent+seyfpercent+agnpercent, 2), ("% )")
+print ("POSSIBLE TOTAL AGN: "),linerselpts+seyfselpts+agnselpts+ambigsel1pts+ambigsel2pts,("("),\
+round(linerpercent+seyfpercent+agnpercent+ambig1percent+ambig2percent, 2), ("% )")
 print ("Percent Omitted: "), round((100-(sfpercent+seyfpercent+linerpercent+comppercent+agnpercent+ambig1percent+ambig2percent)), 2), ("%")
 print ''
+
+#print ("AGN in Dwarf Galaxies: "), 100*round(np.sum(dwarfagn)/float(np.sum(dwarf)),2), ("%")
+#print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant)),2), ("%")
+
 
 ###PLOTS###
 #reference points in x-direction for demarcation lines on plots
@@ -297,6 +307,7 @@ refn2ha = np.linspace(-3.0, 0.35)
 refoiha = np.linspace(-2.5, -0.4)
 refsiiha = np.linspace(-2, 0.3,100)
 
+#lowsfagn = ['rf0376', 'rf0503', 'rs0063', 'rs0626', 'rs1195', 'rs1292']
 #NII/OIII plot
 if resolve == 1:    
     fig = plt.figure('Full Scatter Plot')
@@ -423,7 +434,7 @@ if resolve == 1:
                               label = 'ke01 Theoretical Maximum Starburst Line')
             composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
                                   'k-.', label = 'Ka03 Composite Line')
-            sfsel1, = ax1.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+            sfsel1, = ax1.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.5, 
                                markersize = 5)#, label = 'Definite Star Forming')
             ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1],'bs', 
                                     markersize = 8, mew = 0)#, label = 'SF-to-AGN)')
@@ -455,7 +466,7 @@ if resolve == 1:
             ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
             ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
             sfdata2, = ax2.plot(s2ha[sfsel], o3hb[sfsel], 'k.', markersize = 5, 
-                                alpha = 0.1, label = 'SF')
+                                alpha = 0.5, label = 'SF')
             ambig1data2, = ax2.plot(s2ha[ambigsel1], o3hb[ambigsel1], 'bs', 
                                     markersize = 8, mew = 0, label = 'SFing-AGN')
             ambig2data2, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2], 'g^', 
@@ -485,7 +496,7 @@ if resolve == 1:
             ax3.set_ylim(-1.0,1.0)
             ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
             ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-            sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+            sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.5, 
                                 markersize = 5, label = 'SF')
             ambig1data3, = ax3.plot(o1ha[ambigsel1], o3hb[ambigsel1],'bs',
                                     markersize = 8, mew = 0, label = 'SFing-AGN')
@@ -539,8 +550,17 @@ ax1.set_xlim(-1.7,0.4)
 ax1.set_ylim(-1.0,1.0)
 ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1], 'bs',
                 alpha = 0.5, markersize = 8, mew = 0, label = 'SFing-AGN')
+#lowsfagnpt, = ax1.plot(n2ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
+#                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Composite')
+xraypt, = ax1.plot(n2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+xrayagn, = ax1.plot(n2ha[xray.name[xray['xrayagn']]], 
+                         o3hb[xray.name[xray['xrayagn']]],
+                    'rx', markersize = 8, mfc ='none', mew = 2, 
+                    label = 'HeII-Selected AGN')
+
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
@@ -581,6 +601,14 @@ compdata1, = ax1.plot(s2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5,
                       markersize = 8, mew = 0, label = 'Composite')
 ambig1data1, = ax1.plot(s2ha[ambigsel1], o3hb[ambigsel1],'bs', alpha = 0.5, 
                     markersize = 8, mew = 0, label = 'SF-to-AGN')
+#lowsfagnpt, = ax1.plot(s2ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
+#                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+xrayagn, = ax1.plot(s2ha[xray.name[xray['xrayagn']]], 
+                         o3hb[xray.name[xray['xrayagn']]],
+                    'rx', markersize = 8, mfc ='none', mew = 2, 
+                    label = 'HeII-Selected AGN')
 ax1.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ambig2data1, = ax1.plot(s2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
@@ -627,7 +655,17 @@ ax1.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ambig2data1, = ax1.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
                         mew = 1, mec = 'y', label = 'AGN-to-SF')
+#lowsfagnpt, = ax1.plot(o1ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
+#                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+xraypt, = ax1.plot(o1ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+xrayagn, = ax1.plot(o1ha[xray.name[xray['xrayagn']]], 
+                         o3hb[xray.name[xray['xrayagn']]],
+                    'rx', markersize = 8, mfc ='none', mew = 2, 
+                    label = 'HeII-Selected AGN')
+
 if he2_flag:
     agndata4, = ax1.plot(o1ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, 
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 plt.show()
+

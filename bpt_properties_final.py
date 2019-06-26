@@ -90,12 +90,12 @@ for key in keys:
     percent[key] = len(np.where(flags[key])[0])
 
 df = df[df.logmstar > 0]
-flags = flags.iloc[list(x for x in range(len(flags)) if flags.galname[x] in list(df.NAME))]
-
+#flags = flags.iloc[list(x for x in range(len(flags)) if flags.galname[x] in list(df.NAME))]
+flags.index = flags.galname
 
 plt.figure()
 for key in keys:
-    sel = df.iloc[np.where(flags[key])[0]]
+    sel = df[flags[key]]
     plt.plot(sel.logmstar, sel.modelu_r, marker[key]) #sel.umag-sel.rmag, marker[key])
     plt.xlabel(r'log($M_{*}/M_{\odot}$)')
     plt.ylabel('(u - r)')
@@ -120,7 +120,7 @@ for key in keys:
     plt.plot(np.linspace(-2.1,1.6), 1+0*np.linspace(-2.1,1.6), 'k-.')
     plt.text(-0.1, 10**-1.5, r'1:1 G/S Ratio', fontsize=14, color='k', 
              rotation = 'vertical')
-    plt.text(-2.0, 1.5, r'Stellar Mass (in last Gyr) Doubling Point', 
+    plt.text(-2.0, 1.5, r'Stellar Mass Doubled in last Gyr', 
              fontsize=14, color='k')
     
     plt.xlabel(r'$\rm \log (M_{gas}/M_{stellar})$', size = 22)
@@ -219,7 +219,7 @@ if not he2_flag:
                  color = colors['defagn'])
     mstars = df.iloc[np.where((flags['sftoagn']))[0]].logmstar
     axHistx.hist(mstars, histtype = 'step',bins = bins, hatch = '\\',
-                 linewidth = 5, label = 'SF-to-AGN', 
+                 linewidth = 5, label = 'SFing-AGN', 
                  color = colors['sftoagn'])
     axHistx.legend(loc=2, bbox_to_anchor=(1,1.15), 
                    fontsize = 14)
@@ -648,3 +648,4 @@ axHistx.set_ylabel('Number')
 axHistx.set_xlim(axScatter.get_xlim())
 
 '''
+lowsfagn = df[flags.sftoagn & (10**df.logmgas/10**df.logmstar < 1.0)]
