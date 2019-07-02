@@ -65,17 +65,14 @@ else:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
     else: 
         outputfile = 'resolve_emlineclass_filter_new.csv'
-xray = pd.read_csv('C:/Users/mugdhapolimera/github/xray/ECO+RESOLVE_xray_new.csv')
+xray = pd.read_csv('../xray/ECO+RESOLVE_xray_new.csv')
 #os.chdir('C:/Users/mugdhapolimera/github/xray/')
 #inputfile = 'XMM_AGN_mwdext.pkl'
 df = pd.read_pickle(inputfile)
 
-veronagn = pd.read_csv(r'C:/Users/mugdhapolimera/'+
-                       'github/xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
-hmqagn = pd.read_csv(r'C:/Users/mugdhapolimera/'+
-                       'github/xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
-broadagn = pd.read_csv(r'C:/Users/mugdhapolimera/'+
-                       'github/xray/catalog_matching/BroadlineAgnMatched.csv')['eco+res_name']
+veronagn = pd.read_csv(r'../xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
+hmqagn = pd.read_csv(r'../xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
+broadagn = pd.read_csv(r'../xray/catalog_matching/BroadlineAgnMatched.csv')['eco+res_name']
 
 df = df[~np.isnan(df.Flux_HeII_4685)]
 heii = df['Flux_HeII_4685']
@@ -177,7 +174,27 @@ h_beta = h_beta[data]
 h_alpha = h_alpha[data]
 heii = heii[data] # 3-sigma cut for HeII selection
 subsetname = name[data]
-
+midir = ['rs0059' , 'rs0082' , 'rs0083' , 'rs0086' , 'rs0137' , 'rs0146' , 
+         'rs0158' , 'rs0164' , 'rs0199' , 'rs0228' , 'rs0238' , 'rs0261' , 
+         'rs0298' , 'rs0304' , 'rs0317' , 'rs0325' , 'rs0346' , 'rs0352' , 
+         'rs0382' , 'rs0387' , 'rs0447' , 'rs0507' , 'rs0527' , 'rs0583' , 
+         'rs0584' , 'rs0635' , 'rs0759' , 'rs0793' , 'rs0796' , 'rs0807' , 
+         'rs0814' , 'rs0817' , 'rs0856' , 'rs0857' , 'rs0858' , 'rs0863' , 
+         'rs0864' , 'rs0879' , 'rs0898' , 'rs0924' , 'rs0945' , 'rs1347' , 
+         'rs0952' , 'rs0990' , 'rs1011' , 'rs1019' , 'rs1063' , 'rs1073' , 
+         'rs1113' , 'rs1170' , 'rs1194' , 'rs1227' , 'rs1374' , 'rs1388' , 
+         'rs1397' , 'rs1256' , 'rs1295' , 'rs1305' , 'rf0001' , 'rf0516' , 
+         'rf0517' , 'rf0006' , 'rf0524' , 'rf0531' , 'rf0535' , 'rf0538' , 
+         'rf0544' , 'rf0058' , 'rf0059' , 'rf0552' , 'rf0555' , 'rf0073' , 
+         'rf0077' , 'rf0108' , 'rf0576' , 'rf0598' , 'rf0204' , 'rf0605' , 
+         'rf0613' , 'rf0246' , 'rf0623' , 'rf0628' , 'rf0629' , 'rf0632' , 
+         'rf0634' , 'rf0289' , 'rf0308' , 'rf0662' , 'rf0325' , 'rf0676' , 
+         'rf0680' , 'rf0685' , 'rf0686' , 'rf0690' , 'rf0691' , 'rf0372' , 
+         'rf0373' , 'rf0712' , 'rf0718' , 'rf0721' , 'rf0722' , 'rf0740' , 
+         'rf0743' , 'rf0422' , 'rf0746' , 'rf0750' , 'rf0430' , 'rf0439' , 
+         'rf0762' , 'rf0765' , 'rf0497' , 'rf0780' , 'rf0501' , 'rf0504' , 
+         'rf0791' , 'rf0344']
+midiragn = [x for x in midir if x in subsetname]
 #length of data to be used for debugging
 datalen = np.sum(data)
 
@@ -243,21 +260,19 @@ sftoagn2 = sfsel1 & agnsel3
 #Save the BPT flags to a CSV file
 emlineclass = sfsel ^ compsel ^ seyfsel ^ linersel ^ ambigsel1 ^ ambigsel2 ^ ambagnsel
 defagn = seyfsel | linersel | ambagnsel
-if save:
-    if not he2_flag:    
-        dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
+if not he2_flag:    
+    flags = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                           'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
                           'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn,
                           'sftoagn1':sftoagn1, 'sftoagn2': sftoagn2})
-        dfout.to_csv(outputfile,index=False)
-    
-    else:
-        dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
+else:
+    flags = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                           'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
                           'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn,
                           'heiisel':agnsel4})
-        dfout.to_csv(outputfile ,index=False)
-
+        
+if save:
+    flags.to_csv(outputfile ,index=False)
 
 #checking that plotted points are within the total data range
 print ''
@@ -574,7 +589,7 @@ hmq1, = ax1.plot(n2ha[hmqagn], o3hb[hmqagn],'k^',
                    mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
 broad1, = ax1.plot(n2ha[broadagn], o3hb[broadagn],'ko', 
                    mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
-    
+midiragn1 = ax1.plot(n2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
