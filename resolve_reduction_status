@@ -1,0 +1,49 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Jun 26 10:14:22 2019
+
+@author: mugpol
+
+Script to search cielo for galaxies that have been reduced by SOAR
+
+The list of folders with reduced data is in the folder 
+/srv/one/resolve/analysis_code/emlineanalysis/broademline/
+
+...and given by the file
+newbroad_dirs.batch1.txt
+
+The list of folders with reduced data that might be problematic is given at
+newbroad_dirs.txt
+
+This script is looking for the SFing-AGN galaxies that are classified by the 
+new emission line classification scheme. The SFing-AGN galaxies have a 'True'
+flag next to their names in the file 'resolve_emlineclass_new.csv'
+
+"""
+
+import numpy as np
+import os
+import pandas as pd
+import re
+folder = '/srv/one/resolve/analysis_code/emlineanalysis/broademline/'
+os.chdir(folder)
+
+reduced = np.genfromtxt('newbroad_dirs.batch1.txt', dtype = [('folder','S100'),
+                                                            ('type','S1')])
+problem = np.genfromtxt('newbroad_dirs.txt', dtype = [('folder','S100'),
+                                                            ('type','S1')])
+flags = pd.read_csv('~/github/SDSS_spectra/resolve_emlineclass_filter_new.csv')
+sfagn = list(flags.galname[flags.sftoagn])
+
+reducedgals = []
+for folders in reduced['folder']:
+    for root, dirs, files in os.walk(folders, topdown=False):
+        for filename in files:
+            for galname in sfagn:
+                if re.match('linslo\S'+galname+'gspec.fits',filename):
+                    reducedgals.append(root+filename)
+                #reducedgals.append((filename[7:13],folder))
+print reducedgals
+#soar_sfagn = [x for x in sfagn if x in reducedgals]
+
