@@ -32,9 +32,9 @@ matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
 save = 0
-resolve = 1
+resolve = 0
 eco = 0
-full = 0
+full = 1
 singlepanel = 0
 if sys.platform == 'linux2':
         os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
@@ -66,9 +66,16 @@ else:
     else: 
         outputfile = 'resolve_emlineclass_filter_new.csv'
 xray = pd.read_csv('C:/Users/mugdhapolimera/github/xray/ECO+RESOLVE_xray_new.csv')
-os.chdir('C:/Users/mugdhapolimera/github/xray/')
+#os.chdir('C:/Users/mugdhapolimera/github/xray/')
 #inputfile = 'XMM_AGN_mwdext.pkl'
 df = pd.read_pickle(inputfile)
+
+veronagn = pd.read_csv(r'C:/Users/mugdhapolimera/'+
+                       'github/xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
+hmqagn = pd.read_csv(r'C:/Users/mugdhapolimera/'+
+                       'github/xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
+broadagn = pd.read_csv(r'C:/Users/mugdhapolimera/'+
+                       'github/xray/catalog_matching/BroadlineAgnMatched.csv')['eco+res_name']
 
 df = df[~np.isnan(df.Flux_HeII_4685)]
 heii = df['Flux_HeII_4685']
@@ -363,6 +370,7 @@ if resolve == 1:
                          markersize = 8, mew = 0, label = 'Ambiguous AGN')
     compdata2, = ax2.plot(s2ha[compsel], o3hb[compsel], 'ms',
                           markersize = 8, mew = 0, label = 'Composite')
+    
     if he2_flag:
         agndata4, = ax2.plot(s2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8,
                              mfc ='none', mew = 2, label = 'HeII-Selected AGN')
@@ -554,13 +562,19 @@ ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1], 'bs',
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Composite')
-xraypt, = ax1.plot(n2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
-                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+#xraypt, = ax1.plot(n2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+#                         mfc ='none', mew = 2, label = 'X-ray Selected')
 xrayagn, = ax1.plot(n2ha[xray.name[xray['xrayagn']]], 
                          o3hb[xray.name[xray['xrayagn']]],
                     'rx', markersize = 8, mfc ='none', mew = 2, 
-                    label = 'HeII-Selected AGN')
-
+                    label = 'X-ray AGN ')
+veron1, = ax1.plot(n2ha[veronagn], o3hb[veronagn],'ks', 
+                   mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
+hmq1, = ax1.plot(n2ha[hmqagn], o3hb[hmqagn],'k^', 
+                   mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
+broad1, = ax1.plot(n2ha[broadagn], o3hb[broadagn],'ko', 
+                   mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
+    
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,

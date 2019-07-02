@@ -29,9 +29,6 @@ obsR_h_alpha = res_den['h_alpha_flux']
 obsR_h_beta = res_den['h_beta_flux']
 obsR_heii_4686 = res_den['Flux_HeII_4685']
 
-plt.figure()
-plt.plot(np.log10(np.array(res_den.oi_6300_flux_err)), 'o')
-
 obsR_n2ha = np.log10(obsR_nii/obsR_h_alpha)
 obsR_o3hb = np.log10(obsR_oiii/obsR_h_beta)
 obsR_s2ha = np.log10(obsR_sii_sum/obsR_h_alpha)
@@ -174,13 +171,6 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
         halpha = halpha[:,ndx]
         oi = oi[:,ndx]
         sii = sii[:,ndx]
-#    oiii = oiii.reshape((ionps,metals))
-#    hbeta = hbeta.reshape((ionps,metals))
-#    nii = nii.reshape((ionps,metals))
-#    halpha = halpha.reshape((ionps,metals))
-#    oi = oi.reshape((ionps,metals))
-#    sii = sii.reshape((ionps,metals))
-    
     ##################################
     #
     # Plot
