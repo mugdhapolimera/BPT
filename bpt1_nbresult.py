@@ -15,13 +15,14 @@ he2_flag = 0
 if he2_flag:
     flags = pd.read_csv('resolve_emlineclass_filtered_he2.csv')
 else:
-    flags = pd.read_csv('resolve_emlineclass_filtered.csv')
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter.pkl'
-full_df = pd.read_pickle(inputfile)
+    flags = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_spectra/resolve_emlineclass_filter_new.csv')
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_spectra/RESOLVE_filter_new.csv'
+full_df = pd.read_csv(inputfile)
+full_df.index = full_df.name
 df = full_df.loc[flags.galname]
 
 os.chdir('C:/Users/mugdhapolimera/github/nebulabayes/')
-results_nb = pd.read_csv("results_izi_full_Amandalines/RESOLVE_param_estimates.csv")
+results_nb = pd.read_csv("res_bpass_nicholls_csf/RESOLVE_param_estimates.csv")
 Z_index = (results_nb['Parameter'] == 'LOGZ')
 full_Z_nb = results_nb[Z_index]
 full_Z_nb.index = full_Z_nb['Galaxy Name']
@@ -41,7 +42,7 @@ for key in keys:
             
         Z_sel = Z_nb.loc[sel.NAME]['Estimate']
         if len(Z_sel) > 1:
-            plt.plot(sel.logmstar, Z_sel, marker[key], label = key, alpha = 0.5)
+            plt.plot(sel.logmstar, Z_sel+8.76, marker[key], label = key, alpha = 0.5)
             plt.legend(borderaxespad=0., loc = 4)
             plt.xlabel('Stellar Mass')
             plt.ylabel('Metallicity')
