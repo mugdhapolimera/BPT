@@ -36,7 +36,7 @@ resolve = 0
 eco = 0
 full = 1
 singlepanel = 0
-if sys.platform == 'linux2':
+if (sys.platform == 'linux2') or sys.platform == 'linux':
         os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
 
 else:
@@ -45,14 +45,14 @@ else:
 
 if full: 
     inputfile = 'ECO+RESOLVE_filter_new.pkl'
-    print 'ECO RESULTS'
+    print ('ECO and RESOLVE RESULTS')
     if he2_flag:
         outputfile = 'eco+resolve_emlineclass_filter_he2.csv'
     else: 
         outputfile = 'eco+resolve_emlineclass_filter.csv'
 elif eco: 
     inputfile = 'ECO_filter_new.pkl'
-    print 'ECO RESULTS'
+    print ('ECO RESULTS')
     if he2_flag:
         outputfile = 'eco_emlineclass_filter_he2.csv'
     else: 
@@ -60,7 +60,7 @@ elif eco:
 
 else:
     inputfile = 'RESOLVE_filter_new.pkl'
-    print 'RESOLVE RESULTS'
+    print ('RESOLVE RESULTS')
     if he2_flag:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
     else: 
@@ -162,8 +162,8 @@ elif eco:
     sel = (np.where(data & resname)[0]) #for eco
 elif resolve:
     sel = (np.where(data & econame)[0]) #for resolve
-print ''
-print 'TOTAL DATA WITH ALTERNATE CATALOG NAME: ', len(sel)
+print ('')
+print ('TOTAL DATA WITH ALTERNATE CATALOG NAME: '), len(sel)
 
 nii = nii[data]
 nii_sum = nii_sum[data]
@@ -199,12 +199,12 @@ midiragn = [x for x in midir if x in subsetname]
 datalen = np.sum(data)
 
 # data ratios
-#n2ha = np.log10(nii_sum/h_alpha)
+n2ha = np.log10(nii_sum/h_alpha)
 o3hb = np.log10(oiii/h_beta) # always the y-axis
 o1ha = np.log10(oi/h_alpha)
 s2ha = np.log10(sii_sum/h_alpha)
 he2hb = np.log10(heii/h_beta)
-n2ha = np.log10(nii/h_alpha)
+
 #Below are the selectors for the data to distinguish btwn: Seyferts, Composites,
 #and AGN's based on the flux ratio diagnostic as understood via Kewley 2006.
 
@@ -275,7 +275,7 @@ if save:
     flags.to_csv(outputfile ,index=False)
 
 #checking that plotted points are within the total data range
-print ''
+print( '')
 sfselpts = (len(np.where(sfsel)[0]))
 seyfselpts = (len(np.where(seyfsel)[0]))
 linerselpts = (len(np.where(linersel)[0]))
@@ -301,23 +301,23 @@ ambig2percent = float(ambigsel2pts)/float(datalen)*100
 #dwarfagn = dwarf & agn
 #giantagn = giant & agn
 
-print ("DATA POINTS: "),datalen
-print ("TOTAL PLOTTED POINTS: "), totalselpts
-print ("TOTAL PLOTTED POINTS OMITTED: "), datalen-totalselpts
-print "* IF NUMBERS ABOVE ARE AT ALL NEGATIVE THEN THERE IS OVERPLOTTING"
-print ("Definite Star Forming: "),sfselpts,("("),round(sfpercent, 2),("%"),(")")
-print ("Composite: "),compselpts, ("("),round(comppercent, 2),("%"),(")")
-print ("SF --> AGN: "), ambigsel1pts, ("("),round(ambig1percent, 2),("%"),(")")
+print ("DATA POINTS: ",datalen)
+print ("TOTAL PLOTTED POINTS: ", totalselpts)
+print ("TOTAL PLOTTED POINTS OMITTED: ", datalen-totalselpts)
+print ("* IF NUMBERS ABOVE ARE AT ALL NEGATIVE THEN THERE IS OVERPLOTTING")
+print ("Definite Star Forming: ",sfselpts,"(",round(sfpercent, 2),"% )")
+print ("Composite: ",compselpts, "(",round(comppercent, 2),"% ")
+print ("SF --> AGN: ", ambigsel1pts, "(",round(ambig1percent, 2),"%")
 print ("AGN --> SF: "), ambigsel2pts, ("("),round(ambig2percent, 2),("%"),(")")
 print ("Ambiguous AGN: "),agnselpts, ("("),round(agnpercent, 2),("%"),(")")
 print ("Seyfert: "),seyfselpts, ("("),round(seyfpercent, 2),("%"),(")")
 print ("LINER: "),linerselpts, ("("),round(linerpercent, 2),("%"),(")")
-print ("TOTAL KNOWN AGN: "),linerselpts+seyfselpts+agnselpts, ("("), \
-round(linerpercent+seyfpercent+agnpercent, 2), ("% )")
+print ("TOTAL KNOWN AGN: ",linerselpts+seyfselpts+agnselpts, "(", \
+round(linerpercent+seyfpercent+agnpercent, 2),"% )")
 print ("POSSIBLE TOTAL AGN: "),linerselpts+seyfselpts+agnselpts+ambigsel1pts+ambigsel2pts,("("),\
 round(linerpercent+seyfpercent+agnpercent+ambig1percent+ambig2percent, 2), ("% )")
 print ("Percent Omitted: "), round((100-(sfpercent+seyfpercent+linerpercent+comppercent+agnpercent+ambig1percent+ambig2percent)), 2), ("%")
-print ''
+print ('')
 
 #print ("AGN in Dwarf Galaxies: "), 100*round(np.sum(dwarfagn)/float(np.sum(dwarf)),2), ("%")
 #print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant)),2), ("%")
