@@ -32,10 +32,10 @@ matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
 save = 0
-resolve = 0
+resolve = 1
 eco = 0
 full = 0
-sami = 1
+sami = 0
 singlepanel = 0
 catalog = 0
 if sys.platform == 'linux2':
@@ -66,7 +66,8 @@ elif sami:
     outputfile = '71146_flags.csv'
 
 else:
-    inputfile = 'RESOLVE_filter_new.csv'
+    #inputfile = 'RESOLVE_filter_new.csv'
+    inputfile = 'NSA_RESOLVE.csv'
     print 'RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
@@ -88,15 +89,18 @@ if he2_flag:
 #define alternate catalog names
 if 'name' in df.keys():
     df['NAME'] = df['name']
+if 'resname' in df.keys():
+    df['NAME'] = df['resname']
 if 'CATID' in df.keys():
     df['NAME'] = df['CATID']
 name = df['NAME']
+#df['name'] = df['resname']
 if eco: 
     resname = df['resname'] #for eco
     resname = resname != 'notinresolve'
 if resolve:
-    econame = df['name']#df['econame'] #for resolve
-    econame = df['name']#econame != 'notineco'
+    econame = df['NAME']#df['econame'] #for resolve
+    econame = df['NAME']#econame != 'notineco'
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -142,7 +146,7 @@ if 'nii_6548_flux' in df.keys():
     nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
 else:
     nii_sum = df['nii_6584_flux']
-    nii_sum_err = df['nii_6584_flux_err']**2
+    nii_sum_err = df['nii_6584_flux_err']
 # note that the ratio uses only the stronger line, but for S/N reasons we add
 # the weaker and multiply by 3/4 since Chris Richardson says the canonical
 # line ratio is 3:1 (this needs to be updated with a more precise number)
@@ -154,8 +158,14 @@ h_beta = df['h_beta_flux']
 h_beta_err = df['h_beta_flux_err']
 oi = df['oi_6300_flux']
 oi_err = df['oi_6300_flux_err']
-sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
-sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
+if 'sii_6717_flux' in df.keys():
+    sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+
+    sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
+else:
+    sii_sum = df['sii_6731_flux']
+
+    sii_sum_err = df['sii_6731_flux_err']
 
 #nii = df['Flux_NII_6583']
 #nii_sum = (df['Flux_NII_6583']+ df['Flux_NII_6547'])*3./4
@@ -177,11 +187,14 @@ gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & (oi > 0) &
             (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0) & 
             (oi_err > 0) & (sii_sum_err > 0))
 
+snr = ((h_alpha > 3*h_alpha_err) & (nii_sum > nii_sum_err) & (oiii > oiii_err) & 
+       (oi > oi_err) & (sii_sum > sii_sum_err) & (h_beta > 3*h_beta_err))
+
 if he2_flag:
     he2data = (heii/heii_err >=5) & (heii_err > 0)
     data = gooddata & he2data
 else:
-    data = gooddata #use ALL galaxy data within catalog
+    data = gooddata & snr #use ALL galaxy data within catalog
 
 #print total points shared with alternate catalog
 if full: 
@@ -193,21 +206,52 @@ elif resolve:
 print ''
 print 'TOTAL DATA WITH ALTERNATE CATALOG NAME: ', len(sel)
 
-nii = nii[data]
-nii_sum = nii_sum[data]
-oiii = oiii[data]
-oiii_err = oiii_err[data]
-oi = oi[data]
-oi_err = oi_err[data]
-sii_sum = sii_sum[data]
-sii_sum_err = sii_sum_err[data]
-h_beta = h_beta[data]
-h_beta_err = h_beta_err[data]
-h_alpha = h_alpha[data]
-h_alpha_err = h_alpha_err[data]
+df = df[data]
+df.index = np.arange(len(df))
+df.index = df.NAME
+#nii = nii[data]
+#nii_sum = nii_sum[data]
+#oiii = oiii[data]
+#oiii_err = oiii_err[data]
+#oi = oi[data]
+#oi_err = oi_err[data]
+#sii_sum = sii_sum[data]
+#sii_sum_err = sii_sum_err[data]
+#h_beta = h_beta[data]
+#h_beta_err = h_beta_err[data]
+#h_alpha = h_alpha[data]
+#h_alpha_err = h_alpha_err[data]
+
+nii = df['nii_6584_flux']
+if 'nii_6548_flux' in df.keys():
+    nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
+    nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
+else:
+    nii_sum = df['nii_6584_flux']
+    nii_sum_err = df['nii_6584_flux_err']
+# note that the ratio uses only the stronger line, but for S/N reasons we add
+# the weaker and multiply by 3/4 since Chris Richardson says the canonical
+# line ratio is 3:1 (this needs to be updated with a more precise number)
+oiii = df['oiii_5007_flux']
+oiii_err = df['oiii_5007_flux_err']
+h_alpha = df['h_alpha_flux']
+h_alpha_err = df['h_alpha_flux_err']
+h_beta = df['h_beta_flux']
+h_beta_err = df['h_beta_flux_err']
+oi = df['oi_6300_flux']
+oi_err = df['oi_6300_flux_err']
+if 'sii_6717_flux' in df.keys():
+    sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+
+    sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
+else:
+    sii_sum = df['sii_6731_flux']
+
+    sii_sum_err = df['sii_6731_flux_err']
+
 if he2_flag:
     heii = heii[data] # 3-sigma cut for HeII selection
-subsetname = name[data]
+subsetname = df.NAME
 midir = ['rs0059' , 'rs0082' , 'rs0083' , 'rs0086' , 'rs0137' , 'rs0146' , 
          'rs0158' , 'rs0164' , 'rs0199' , 'rs0228' , 'rs0238' , 'rs0261' , 
          'rs0298' , 'rs0304' , 'rs0317' , 'rs0325' , 'rs0346' , 'rs0352' , 
@@ -584,8 +628,7 @@ def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
         cmap(np.linspace(minval, maxval, n)))
   	return new_cmap
 sf_colors_map = truncate_colormap(cm.gray_r)
-
-ndx = np.where((df[data].resname == 'rs0775') | (df[data].resname == 'rs0010'))[0]
+ndx = np.where((df.NAME == 'rs0775') | (df.NAME == 'rs0010'))[0]
 xmin = refn2ha.min(); xmax = refn2ha.max()
 ymin = -1.25; ymax = 1.5
 nbins = 50

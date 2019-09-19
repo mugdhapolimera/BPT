@@ -34,11 +34,10 @@ def ratioerror(num,num_err,den, den_err):
     err = (num/den) * np.sqrt((num_err/num)**2 + (den_err/den)**2)
     return err
 
-#folder = '71146'
-#folder = '372320'
-folder = '372374'
-center = (25,25)
-os.chdir(r'C:\Users\mugdhapolimera\Desktop\UNC\Courses\Research\SAMI Data\/'+folder)
+#folder = '71146' #rs07750
+folder = '372320' #rs0010
+#folder = '372374' #rs0013
+os.chdir(r'C:\Users\mugdhapolimera\Desktop\UNC\Courses\Research\SAMI Data\/'+ folder)
 #filename = 'adaptive_1-comp.fits'
 #filename = 'adaptive_recom-comp.fits'
 filename = 'default_recom-comp.fits'
@@ -62,14 +61,22 @@ sii_1 = fits.open(folder+'_SII6716_'+filename)[0].data#.flatten()
 sii_1_err = fits.open(folder+'_SII6716_'+filename)[0].data#.flatten()
 sii_2 = fits.open(folder+'_SII6731_'+filename)[0].data#.flatten()
 sii_2_err = fits.open(folder+'_SII6731_'+filename)[0].data#.flatten()
-
+sii = sii_1 + sii_2
+MAX = np.max(halpha[~np.isnan(halpha)])
+center = [[26],[26]]#np.where(halpha == MAX)
+#center = [center[0][0], center[1][0]]
 ha_cen = halpha[center]
 hb_cen = hbeta[center]
 nii_cen = nii[center]
+sii_cen = sii[center]
+oi_cen = oi[center]
 oiii_cen = oiii[center]
 
-good = [~np.isnan(halpha) & ~np.isnan(hbeta) & ~np.isnan(nii) & ~np.isnan(sii_1)
+nans = [~np.isnan(halpha) & ~np.isnan(hbeta) & ~np.isnan(nii) & ~np.isnan(sii_1)
         & ~np.isnan(sii_2) & ~np.isnan(oi) & ~np.isnan(oiii)]
+err = [(nii/nii_err > 5) & (sii/nii_err > 5) & (oi/nii_err > 5) & 
+       (oiii/oiii_err > 5) & (hbeta/hbeta_err > 5) & (halpha/halpha_err > 5)]
+good = (nans and err)
 halpha = halpha[good]
 hbeta = hbeta[good]
 nii = nii[good]
@@ -102,10 +109,10 @@ df = pd.DataFrame(data, columns = names)
 df.to_csv(folder+'.csv')
 sii = sii_1 + sii_2
 sii_err = np.sqrt(sii_1_err**2 + sii_2_err**2)
-n2ha = nii/halpha
-s2ha = sii/halpha
-o1ha= oi/halpha
-o3hb = oiii/hbeta
+n2ha = np.log10(nii/halpha)
+s2ha = np.log10(sii/halpha)
+o1ha= np.log10(oi/halpha)
+o3hb = np.log10(oiii/hbeta)
 n2ha_err = ratioerror(nii, nii_err, halpha, halpha_err)
 s2ha_err = ratioerror(sii, sii_err, halpha, halpha_err)
 o1ha_err = ratioerror(oi, oi_err, halpha, halpha_err)
@@ -124,7 +131,7 @@ ax1.plot(refn2ha, n2hamain(refn2ha), 'k',
 ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
                       'k-.', label = 'Ka03 Composite Line')
 ax1.plot(n2ha, o3hb, 'k.', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
-ax1.plot(nii_cen/ha_cen, oiii_cen/hb_cen, 'ro', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
+ax1.plot(np.log10(nii_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ro', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 if error: 
@@ -138,12 +145,13 @@ ax2 = fig.add_subplot(111)
 ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
 ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
                   'k--', label = 'Liner/Seyfert Division')
+ax2.plot(s2ha, o3hb, 'k.', markersize = 5, 
+                    alpha = 0.5, label = 'SF')
+ax2.plot(np.log10(sii_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ro', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
 ax2.set_xlim(-1.5, 0.5)
 ax2.set_ylim(-1.0,1.0)
 ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
 ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-ax2.plot(s2ha, o3hb, 'k.', markersize = 5, 
-                    alpha = 0.5, label = 'SF')
 if error:
     ax2.errorbar(s2ha.flatten(), o3hb.flatten(), xerr = s2ha_err.flatten(),
                             yerr = o3hb_err.flatten(), fmt = 'b.', alpha = 0.5,
@@ -164,6 +172,7 @@ ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
 ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ax3.plot(o1ha, o3hb, 'k.', alpha = 0.5, 
                     markersize = 5, label = 'SF')
+ax3.plot(np.log10(oi_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ro', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
 if error:
     ax3.errorbar(o1ha.flatten(), o3hb.flatten(), xerr = o1ha_err.flatten(),
                                 yerr = o3hb_err.flatten(), fmt = 'b.', alpha = 0.5,
