@@ -30,13 +30,13 @@ if full :
     inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO+RESOLVE_filter_new.pkl'
     flags = pd.read_csv('eco+resolve_emlineclass_filter.csv')
 if resolve: 
-    inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter_new.pkl'
-    flags = pd.read_csv('resolve_emlineclass_filter_new.csv')
+    inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5.csv'
+    flags = pd.read_csv('resolve_emlineclass_full_snr5.csv')
 if eco: 
     inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO_filter_new.pkl'
     flags = pd.read_csv('eco_emlineclass_filter_new.csv')
 
-full_df = pd.read_pickle(inputfile)
+full_df = pd.read_csv(inputfile, index_col = 'name')
 df = full_df.loc[list(flags['galname'])]
 if 'NAME' not in df.keys():
     df['NAME'] = df['name']
@@ -341,8 +341,9 @@ for key in keys:
         plt.ylabel('Galaxy Baryonic Mass', fontsize = 14)
         plt.xlim(10.7,14.8)
         plt.ylim(9,11.7)
-        plt.legend(title = 'ECO', fontsize = 14, bbox_to_anchor=(1,1), 
-                   loc = 2)
+        plt.legend(fontsize = 14, loc = 'upper right')
+        #bbox_to_anchor=(1,1), 
+        #           loc = 2)
 for key in keys:
     print key, ' : ', percent_fc[key]*100.0/percent[key]
 
@@ -362,9 +363,9 @@ plt.legend(title = 'ECO', fontsize = 14)
 plt.ylim(0,max(xaxis))
 plt.ylabel('Normalized Number of Galaxies', fontsize =14 )
 plt.xlabel('Group Halo Mass', fontsize = 14)
-'''
+
 nb = pd.read_csv('C:/Users/mugdhapolimera/github/nebulabayes/resolve_bpass_full_nicholls+jenkins/RESOLVE_param_estimates.csv')
-Z_nb = nb[nb["Parameter"] == 'LOGZ']
+Z_nb = nb[nb["Parameter"] == 'LOGQ']
 Z_nb.index = Z_nb["Galaxy Name"]
 plt.figure()
 for key in keys:
@@ -467,7 +468,8 @@ plt.ylim(8, 9.2)
 plt.plot(m+10,z)
 
 plt.figure()
-bins = np.arange(7.6,9.1,0.1)
+#bins = np.arange(7.6,9.1,0.1)
+bins = np.arange(6.9,9.1,0.1)
 for key in keys:
         sel = df.iloc[np.where(flags[key])[0]]
         Z_sel = Z_nb.loc[sel.NAME]['Estimate']
@@ -647,5 +649,69 @@ if not he2_flag:
 axHistx.set_ylabel('Number')
 axHistx.set_xlim(axScatter.get_xlim())
 
-'''
+
 lowsfagn = df[flags.sftoagn & (10**df.logmgas/10**df.logmstar < 1.0)]
+
+plt.figure()
+for key in keys:
+    sel = df.iloc[np.where(flags[key])[0]]
+    ssfr = np.log10(sel.sfr_nuv_wise) - sel.logmstar
+    if key == 'defstarform':
+        plt.plot(np.log10(10**sel.logmgas/10**sel.logmstar), ssfr, 
+             marker[key], markersize = 10, alpha = 0.3,  mew = 0, 
+             color = colors[key], label = labels[key])
+    elif key == 'agntosf': 
+        plt.plot(np.log10(10**sel.logmgas/10**sel.logmstar), ssfr, 
+             marker[key], markersize = 10, mew = 1, color = colors[key],
+             mec = 'y', label = labels[key])
+    else:
+        plt.plot(np.log10(10**sel.logmgas/10**sel.logmstar), ssfr, 
+             marker[key], markersize = 10, mew = 0, color = colors[key],
+             label = labels[key])
+    plt.plot(0*np.linspace(0.001,100), np.linspace(0.001,100), 'k-.')
+    #plt.plot(np.linspace(-2.1,1.6), 1+0*np.linspace(-2.1,1.6), 'k-.')
+    plt.text(-0.1, 10**-1.5, r'1:1 G/S Ratio', fontsize=14, color='k', 
+             rotation = 'vertical')
+    plt.text(-2.0, 1.5, r'Stellar Mass Doubled in last Gyr', 
+             fontsize=14, color='k')
+    
+    plt.xlabel(r'$\rm \log (M_{gas}/M_{stellar})$', size = 22)
+    plt.ylabel('sSFR', size = 22)
+    #plt.yscale('log')
+    #yticks = plt.yticks()[0]
+    #plt.yticks(yticks, np.around(yticks,2))
+    #plt.ylim(10**-3, 10**2)
+    #plt.xlim(-2.1,1.6)
+    plt.legend(title = 'RESOLVE', loc = 'lower right', fontsize = 14)
+
+plt.figure()
+for key in keys:
+    sel = df.iloc[np.where(flags[key])[0]]
+    ssfr = np.log10(sel.sfr_nuv_wise) - sel.logmstar
+    if key == 'defstarform':
+        plt.plot(ssfr, sel.meanfsmgr,
+             marker[key], markersize = 10, alpha = 0.3,  mew = 0, 
+             color = colors[key], label = labels[key])
+    elif key == 'agntosf': 
+        plt.plot(ssfr, sel.meanfsmgr,
+             marker[key], markersize = 10, mew = 1, color = colors[key],
+             mec = 'y', label = labels[key])
+    else:
+        plt.plot(ssfr, sel.meanfsmgr,
+             marker[key], markersize = 10, mew = 0, color = colors[key],
+             label = labels[key])
+    #plt.plot(0*np.linspace(0.001,100), np.linspace(0.001,100), 'k-.')
+    plt.plot(np.linspace(-12,-8), 1+0*np.linspace(-12,-8), 'k-.')
+    #plt.text(-0.1, 10**-1.5, r'1:1 G/S Ratio', fontsize=14, color='k', 
+    #         rotation = 'vertical')
+    plt.text(-11.5, 1.5, r'Stellar Mass Doubled in last Gyr', 
+             fontsize=14, color='k')
+    
+    plt.xlabel('sSFR', size = 22)
+    plt.ylabel('Mean FSMGR', size = 22)
+    plt.yscale('log')
+    yticks = plt.yticks()[0]
+    plt.yticks(yticks, np.around(yticks,2))
+    #plt.ylim(10**-3, 10**2)
+    plt.xlim(-12,-8)
+    plt.legend(title = 'RESOLVE', loc = 'lower right', fontsize = 14)
