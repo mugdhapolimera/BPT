@@ -28,16 +28,21 @@ import matplotlib
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
-save = 0
+save = 1
 resolve = 1
 eco = 0
 full = 0
 sami = 0
 singlepanel = 0
-catalog = 0
+catalog = 1
+sdsscat = 'jhu'
+#sdsscat = 'port'
+#sdsscat = 'nsa'
 if sys.platform == 'linux2':
         os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
 
@@ -53,7 +58,8 @@ if full:
     else: 
         outputfile = 'eco+resolve_emlineclass_filter.csv'
 elif eco: 
-    inputfile = 'ECO_filter_new.csv'
+    #inputfile = 'ECO_filter_new.csv'
+    inputfile = 'ECO_full_snr5_port.csv'
     print 'ECO RESULTS'
     if he2_flag:
         outputfile = 'eco_emlineclass_filter_he2.csv'
@@ -67,20 +73,26 @@ elif sami:
 
 else:
     #inputfile = 'RESOLVE_filter_new.csv'
-    inputfile = 'NSA_RESOLVE.csv'
+    if sdsscat == 'port':       
+        inputfile = 'RESOLVE_full_snr5_port.csv'
+    if sdsscat == 'jhu':       
+        inputfile = 'RESOLVE_full_snr5.csv'
+    if sdsscat == 'nsa':       
+        inputfile = 'NSA_RESOLVE.csv'
     print 'RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
     else: 
-        outputfile = 'resolve_emlineclass_filter_new.csv'
+        outputfile = 'resolve_emlineclass_full_snr5.csv'
 #xray = pd.read_csv('../xray/ECO+RESOLVE_xray_new.csv')
 #os.chdir('C:/Users/mugdhapolimera/github/xray/')
 #inputfile = 'XMM_AGN_mwdext.pkl'
 df = pd.read_csv(inputfile)
-
-#veronagn = pd.read_csv(r'../xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
-#hmqagn = pd.read_csv(r'../xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
-#broadagn = pd.read_csv(r'../xray/catalog_matching/BroadlineAgnMatched.csv')['eco+res_name']
+fulldf = pd.read_csv('RESOLVE_full_snr5.csv')
+veronagn = pd.read_csv(r'../xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
+hmqagn = pd.read_csv(r'../xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
+broadagn = pd.read_csv(r'../xray/catalog_matching/BroadlineAgn_RESOLVE.csv')['eco+res_name']
+xray = pd.read_csv(r'../xray/ECO+RESOLVE_xray_new.csv')
 if he2_flag:
     df = df[~np.isnan(df.Flux_HeII_4685)]
     heii = df['Flux_HeII_4685']
@@ -90,10 +102,12 @@ if he2_flag:
 if 'name' in df.keys():
     df['NAME'] = df['name']
 if 'resname' in df.keys():
-    df['NAME'] = df['resname']
+    df['name'] = df['resname']
 if 'CATID' in df.keys():
     df['NAME'] = df['CATID']
-name = df['NAME']
+name = df['name']
+df['NAME'] = df['name']
+df.index = df.name
 #df['name'] = df['resname']
 if eco: 
     resname = df['resname'] #for eco
@@ -187,8 +201,8 @@ gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & (oi > 0) &
             (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0) & 
             (oi_err > 0) & (sii_sum_err > 0))
 
-snr = ((h_alpha > 3*h_alpha_err) & (nii_sum > nii_sum_err) & (oiii > oiii_err) & 
-       (oi > oi_err) & (sii_sum > sii_sum_err) & (h_beta > 3*h_beta_err))
+snr = ((h_alpha > 5*h_alpha_err) & (nii_sum > 5*nii_sum_err) & (oiii > 5*oiii_err) & 
+       (oi > 5*oi_err) & (sii_sum > 5*sii_sum_err) & (h_beta > 5*h_beta_err))
 
 if he2_flag:
     he2data = (heii/heii_err >=5) & (heii_err > 0)
@@ -205,22 +219,22 @@ elif resolve:
     sel = (np.where(data & econame)[0]) #for resolve
 print ''
 print 'TOTAL DATA WITH ALTERNATE CATALOG NAME: ', len(sel)
-
 df = df[data]
 df.index = np.arange(len(df))
-df.index = df.NAME
-#nii = nii[data]
-#nii_sum = nii_sum[data]
-#oiii = oiii[data]
-#oiii_err = oiii_err[data]
-#oi = oi[data]
-#oi_err = oi_err[data]
-#sii_sum = sii_sum[data]
-#sii_sum_err = sii_sum_err[data]
-#h_beta = h_beta[data]
-#h_beta_err = h_beta_err[data]
-#h_alpha = h_alpha[data]
-#h_alpha_err = h_alpha_err[data]
+df.index = df.name
+
+nii = nii[data]
+nii_sum = nii_sum[data]
+oiii = oiii[data]
+oiii_err = oiii_err[data]
+oi = oi[data]
+oi_err = oi_err[data]
+sii_sum = sii_sum[data]
+sii_sum_err = sii_sum_err[data]
+h_beta = h_beta[data]
+h_beta_err = h_beta_err[data]
+h_alpha = h_alpha[data]
+h_alpha_err = h_alpha_err[data]
 
 nii = df['nii_6584_flux']
 if 'nii_6548_flux' in df.keys():
@@ -252,26 +266,34 @@ else:
 if he2_flag:
     heii = heii[data] # 3-sigma cut for HeII selection
 subsetname = df.NAME
-midir = ['rs0059' , 'rs0082' , 'rs0083' , 'rs0086' , 'rs0137' , 'rs0146' , 
-         'rs0158' , 'rs0164' , 'rs0199' , 'rs0228' , 'rs0238' , 'rs0261' , 
-         'rs0298' , 'rs0304' , 'rs0317' , 'rs0325' , 'rs0346' , 'rs0352' , 
-         'rs0382' , 'rs0387' , 'rs0447' , 'rs0507' , 'rs0527' , 'rs0583' , 
-         'rs0584' , 'rs0635' , 'rs0759' , 'rs0793' , 'rs0796' , 'rs0807' , 
-         'rs0814' , 'rs0817' , 'rs0856' , 'rs0857' , 'rs0858' , 'rs0863' , 
-         'rs0864' , 'rs0879' , 'rs0898' , 'rs0924' , 'rs0945' , 'rs1347' , 
-         'rs0952' , 'rs0990' , 'rs1011' , 'rs1019' , 'rs1063' , 'rs1073' , 
-         'rs1113' , 'rs1170' , 'rs1194' , 'rs1227' , 'rs1374' , 'rs1388' , 
-         'rs1397' , 'rs1256' , 'rs1295' , 'rs1305' , 'rf0001' , 'rf0516' , 
-         'rf0517' , 'rf0006' , 'rf0524' , 'rf0531' , 'rf0535' , 'rf0538' , 
-         'rf0544' , 'rf0058' , 'rf0059' , 'rf0552' , 'rf0555' , 'rf0073' , 
-         'rf0077' , 'rf0108' , 'rf0576' , 'rf0598' , 'rf0204' , 'rf0605' , 
-         'rf0613' , 'rf0246' , 'rf0623' , 'rf0628' , 'rf0629' , 'rf0632' , 
-         'rf0634' , 'rf0289' , 'rf0308' , 'rf0662' , 'rf0325' , 'rf0676' , 
-         'rf0680' , 'rf0685' , 'rf0686' , 'rf0690' , 'rf0691' , 'rf0372' , 
-         'rf0373' , 'rf0712' , 'rf0718' , 'rf0721' , 'rf0722' , 'rf0740' , 
-         'rf0743' , 'rf0422' , 'rf0746' , 'rf0750' , 'rf0430' , 'rf0439' , 
-         'rf0762' , 'rf0765' , 'rf0497' , 'rf0780' , 'rf0501' , 'rf0504' , 
-         'rf0791' , 'rf0344']
+midir = ['rs0059' , 'rs0082' , 'rs0083' , 'rs0086' , 'rs0094' , 'rs0137' , 
+         'rs0146' , 'rs0158' , 'rs0164' , 'rs0180' , 'rs0200' , 'rs0199' , 
+         'rs0219' , 'rs0223' , 'rs0228' , 'rs0238' , 'rs0261' , 'rs0298' , 
+         'rs0304' , 'rs0317' , 'rs0325' , 'rs0327' , 'rs0346' , 'rs0349' , 
+         'rs0352' , 'rs0357' , 'rs0382' , 'rs0387' , 'rs0447' , 'rs0489' , 
+         'rs0499' , 'rs0507' , 'rs0527' , 'rs0583' , 'rs0584' , 'rs0635' , 
+         'rs0659' , 'rs0743' , 'rs0752' , 'rs0759' , 'rs0771' , 'rs0775' , 
+         'rs0789' , 'rs0793' , 'rs0796' , 'rs0807' , 'rs0814' , 'rs0817' , 
+         'rs0856' , 'rs0857' , 'rs0858' , 'rs0863' , 'rs0864' , 'rs0895' , 
+         'rs0898' , 'rs0905' , 'rs0910' , 'rs0924' , 'rs1347' , 'rs0952' , 
+         'rs0979' , 'rs0987' , 'rs0990' , 'rs1011' , 'rs1019' , 'rs1063' , 
+         'rs1073' , 'rs1113' , 'rs1139' , 'rs1155' , 'rs1170' , 'rs1181' , 
+         'rs1194' , 'rs1227' , 'rs1368' , 'rs1374' , 'rs1380' , 'rs1388' , 
+         'rs1397' , 'rs1256' , 'rs1285' , 'rs1295' , 'rs1305' , 'rs1306' , 
+         'rf0001' , 'rf0514' , 'rf0517' , 'rf0519' , 'rf0006' , 'rf0531' , 
+         'rf0535' , 'rf0538' , 'rf0042' , 'rf0058' , 'rf0059' , 'rf0552' , 
+         'rf0064' , 'rf0065' , 'rf0555' , 'rf0073' , 'rf0077' , 'rf0108' , 
+         'rf0572' , 'rf0120' , 'rf0576' , 'rf0591' , 'rf0189' , 'rf0598' , 
+         'rf0192' , 'rf0199' , 'rf0204' , 'rf0206' , 'rf0605' , 'rf0207' , 
+         'rf0608' , 'rf0218' , 'rf0614' , 'rf0246' , 'rf0623' , 'rf0260' , 
+         'rf0628' , 'rf0629' , 'rf0632' , 'rf0633' , 'rf0634' , 'rf0289' , 
+         'rf0308' , 'rf0661' , 'rf0662' , 'rf0676' , 'rf0680' , 'rf0685' , 
+         'rf0686' , 'rf0690' , 'rf0691' , 'rf0694' , 'rf0372' , 'rf0373' , 
+         'rf0712' , 'rf0718' , 'rf0721' , 'rf0722' , 'rf0400' , 'rf0736' , 
+         'rf0738' , 'rf0740' , 'rf0743' , 'rf0422' , 'rf0746' , 'rf0750' , 
+         'rf0430' , 'rf0755' , 'rf0439' , 'rf0454' , 'rf0762' , 'rf0765' , 
+         'rf0485' , 'rf0493' , 'rf0494' , 'rf0497' , 'rf0780' , 'rf0501' , 
+         'rf0504' , 'rf0791' , 'rf0344' ]
 midiragn = [x for x in midir if x in subsetname]
 #length of data to be used for debugging
 datalen = np.sum(data)
@@ -378,11 +400,16 @@ comppercent = float(compselpts)/float(datalen)*100
 agnpercent = float(agnselpts)/float(datalen)*100
 ambig1percent = float(ambigsel1pts)/float(datalen)*100
 ambig2percent = float(ambigsel2pts)/float(datalen)*100
-#dwarf = (df[data].logmstar < 9.5)
-#giant = (df[data].logmstar > 9.5)
-#agn = (ambigsel1|seyfsel|linersel|ambagnsel)#|compsel)
-#dwarfagn = dwarf & agn
-#giantagn = giant & agn
+fulldf.index = fulldf.name
+if 'logmstar' in df.keys():
+    dwarf = (df.logmstar < 9.5)
+    giant = (df.logmstar > 9.5)
+else:
+    dwarf = (fulldf.loc[df.name].logmstar < 9.5)
+    giant = (fulldf.loc[df.name].logmstar > 9.5)
+agn = (ambigsel1|seyfsel|linersel|ambagnsel|compsel)
+dwarfagn = dwarf & agn
+giantagn = giant & agn
 
 print ("DATA POINTS: "),datalen
 print ("TOTAL PLOTTED POINTS: "), totalselpts
@@ -402,10 +429,10 @@ round(linerpercent+seyfpercent+agnpercent+ambig1percent+ambig2percent, 2), ("% )
 print ("Percent Omitted: "), round((100-(sfpercent+seyfpercent+linerpercent+comppercent+agnpercent+ambig1percent+ambig2percent)), 2), ("%")
 print ''
 
-#print ("AGN in Dwarf Galaxies: "), 100*round(np.sum(dwarfagn)/float(np.sum(dwarf)),2), ("%")
-#print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant)),2), ("%")
-
-
+print ("AGN in Dwarf Galaxies: "), 100*round(np.sum(dwarfagn)/float(np.sum(dwarf)),2), ("%")
+print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant)),2), ("%")
+print ("SF-AGN in dwarfs: "), np.sum(ambigsel1 & dwarf)
+print ("Number of Dwarfs:"), np.sum(dwarf)
 ###PLOTS###
 #reference points in x-direction for demarcation lines on plots
 refn2ha = np.linspace(-3.0, 0.35)
@@ -628,7 +655,7 @@ def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
         cmap(np.linspace(minval, maxval, n)))
   	return new_cmap
 sf_colors_map = truncate_colormap(cm.gray_r)
-ndx = np.where((df.NAME == 'rs0775') | (df.NAME == 'rs0010'))[0]
+ndx = np.where((df.NAME == 'rf0503') | (df.NAME == 'rs1195'))[0]
 xmin = refn2ha.min(); xmax = refn2ha.max()
 ymin = -1.25; ymax = 1.5
 nbins = 50
@@ -683,10 +710,11 @@ ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3,
 if he2_flag:
     agndata4, = ax1.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8,
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-ax1.plot(n2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
-                      markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
-ax1.plot(n2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
-                      markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
+if len(ndx) > 0:
+    ax1.plot(n2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
+    ax1.plot(n2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
 plt.legend(loc=3, numpoints = 1, fontsize = 14)
 plt.show()
 xmin = refsiiha.min(); xmax = refsiiha.max()
@@ -726,20 +754,28 @@ ax1.plot(s2ha[ambigsel1], o3hb[ambigsel1],
 #lowsfagnpt, = ax1.plot(s2ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 if catalog:
-    xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
-                             mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+    #xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+    #                         mfc ='none', mew = 2, label = 'X-Ray Detected')
     xrayagn, = ax1.plot(s2ha[xray.name[xray['xrayagn']]], 
                              o3hb[xray.name[xray['xrayagn']]],
                         'rx', markersize = 8, mfc ='none', mew = 2, 
-                        label = 'HeII-Selected AGN')
+                        label = 'X-Ray AGN')
+    veron2, = ax1.plot(s2ha[veronagn], o3hb[veronagn],'ks', 
+                       mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
+    hmq2, = ax1.plot(s2ha[hmqagn], o3hb[hmqagn],'k^', 
+                       mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
+    broad2, = ax1.plot(s2ha[broadagn], o3hb[broadagn],'ko', 
+                       mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
+    midiragn2 = ax1.plot(s2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
 ax1.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 ambig2data1, = ax1.plot(s2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
                         mew = 1, mec = 'y',label = 'AGN-to-SF')
-ax1.plot(s2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
-                      markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
-ax1.plot(s2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
-                      markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
+if len(ndx) > 0:
+    ax1.plot(s2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
+    ax1.plot(s2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
 ax1.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
                   'k--', label = 'Liner/Seyfert Division')
 if he2_flag:
@@ -789,16 +825,25 @@ ambig2data1, = ax1.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
                         mew = 1, mec = 'y', label = 'AGN-to-SF')
 #lowsfagnpt, = ax1.plot(o1ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-#xraypt, = ax1.plot(o1ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
-#                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-#xrayagn, = ax1.plot(o1ha[xray.name[xray['xrayagn']]], 
-#                         o3hb[xray.name[xray['xrayagn']]],
-#                    'rx', markersize = 8, mfc ='none', mew = 2, 
-#                    label = 'HeII-Selected AGN')
-ax1.plot(o1ha[ndx[0]], o3hb[ndx[0]], 'ko',  
-                      markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
-ax1.plot(o1ha[ndx[1]], o3hb[ndx[1]], 'ro',  
-                      markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
+if catalog:
+    #xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+    #                         mfc ='none', mew = 2, label = 'X-Ray Detected')
+    xrayagn, = ax1.plot(o1ha[xray.name[xray['xrayagn']]], 
+                             o3hb[xray.name[xray['xrayagn']]],
+                        'rx', markersize = 8, mfc ='none', mew = 2, 
+                        label = 'X-Ray AGN')
+    veron2, = ax1.plot(o1ha[veronagn], o3hb[veronagn],'ks', 
+                       mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
+    hmq2, = ax1.plot(o1ha[hmqagn], o3hb[hmqagn],'k^', 
+                       mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
+    broad2, = ax1.plot(o1ha[broadagn], o3hb[broadagn],'ko', 
+                       mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
+    midiragn2 = ax1.plot(o1ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
+if len(ndx) > 0:
+    ax1.plot(o1ha[ndx[0]], o3hb[ndx[0]], 'ko',  
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
+    ax1.plot(o1ha[ndx[1]], o3hb[ndx[1]], 'ro',  
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
 ax1.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
                                'k--', label = 'Ke06 Liner/Seyfert Division Line')
 
@@ -807,3 +852,9 @@ if he2_flag:
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 plt.show()
 
+sftoagn = df[ambigsel1 & dwarf][['radeg','dedeg']]
+c = SkyCoord(ra = list(sftoagn.radeg)*u.degree, 
+             dec=list(sftoagn.dedeg)*u.degree, frame='icrs')
+sftoagn['h'],sftoagn['m'],sftoagn['s'] = c.ra.hms
+print(sftoagn)
+sftoagn.to_csv(sdsscat+'_sfagn.csv')
