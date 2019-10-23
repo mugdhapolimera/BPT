@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Jul 16 17:18:49 2019
+
+@author: mugpol
+
+Category flags for all ECO+RESOLVE galaxies with SNR > 5 for H_alpha, H_beta 
+and NII
+"""
+
+import numpy as np
+import pandas as pd
+
+data = pd.read_csv('../SDSS_spectra/ECO+RESOLVE_snr5.csv')
+flags = pd.read_csv('../SDSS_spectra/eco+resolve_emlineclass_filter.csv')
+data.index = data.name
+flags.index = flags.galname
+
+df = pd.DataFrame(index = data.index, 
+            columns = ['bptagn','nontrad','unclassified','composite','sf'])
+df.fillna(False, inplace = True)
+sf = [gal for gal in flags.galname[flags.defstarform] if gal in data.index.values]
+df.loc[sf,'sf'] = True
+
+bptagn = [gal for gal in flags.galname[flags.defagn] if gal in data.index.values]
+df.loc[bptagn,'bptagn'] = True
+
+nontrad = [gal for gal in flags.galname[flags.sftoagn] if gal in data.index.values]
+df.loc[nontrad,'nontrad'] = True
+
+composite = [gal for gal in flags.galname[flags.composite | flags.agntosf] if gal in data.index.values]
+df.loc[composite,'composite'] = True
+
+
+print(np.sum(df.sf),np.sum(df.bptagn))
+
+def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
+    return 1.3 + (0.61 / (log_NII_HA - 0.05))
+def n2hamain(log_NII_HA): #main line for NII/H-alpha from equation 5, Kewley 2006
+    return 1.19 + (0.61 / (log_NII_HA - 0.47))
+
+oiii = data['oiii_5007_flux']
+good = (oiii/data['oiii_5007_flux_err'] >=3)
+
+nii = data['nii_6584_flux'][good]
+nii_sum = (data['nii_6584_flux'][good]+ data['nii_6548_flux'][good])*3./4
+h_alpha = data['h_alpha_flux'][good]
+h_beta = data['h_beta_flux'][good]
+oiii = data['oiii_5007_flux'][good]
+
+n2ha = np.log10(nii_sum/h_alpha)
+o3hb = np.log10(oiii/h_beta)
+
+compsel1 = (o3hb >= n2hacompmin(n2ha)) & (o3hb <= n2hamain(n2ha))
+sfsel1 = (o3hb < n2hacompmin(n2ha)) & (n2ha < 0.) & ~(o3hb > n2hamain(n2ha)) #~(o3hb > n2hamain(n2ha)) & ~compsel1
+agnsel1= (o3hb > n2hamain(n2ha))
+
+sf = [gal for gal in data.name.iloc[np.where(sfsel1)[0]]]
+df.loc[sf,'sf'] = True
+composite = [gal for gal in data.name.iloc[np.where(compsel1)[0]]]
+df.loc[composite,'composite'] = True
+bptagn = [gal for gal in data.name.iloc[np.where(agnsel1)[0]]]
+df.loc[bptagn,'bptagn'] = True
+
+
+print(np.sum(df.sf),np.sum(df.bptagn))
+
+classified = data.name.iloc[np.where(list(df.sf) or 
+           list(df.bptagn) or list(df.composite) or list(df.nontrad))[0]]
+unclass = [gal for gal in df.index.values if gal not in classified]
+df.loc[unclass,'unclassified'] = True
+
+df.to_csv('../SDSS_spectra/ECO+RESOLVE_snr5_classification.csv')
