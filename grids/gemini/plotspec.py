@@ -48,12 +48,12 @@ if spectype == 'cloudy':
 #spec = spec.iloc[np.where((spec.lam < 10000 ) & (spec.lam >=1 ))]
 spec = spec.iloc[np.where((8000 > spec.lam) & (spec.lam > 4000))]
 plt.figure()
-plt.plot(spec.lam,spec.flux/max(spec.flux))
-newlam = np.arange(min(spec.lam),max(spec.lam),0.45)
+plt.plot(spec.lam,spec.flux/np.max(spec.flux))
+newlam = np.arange(np.min(spec.lam),np.max(spec.lam),0.5)
 spec.flux = np.array(spec.flux[::-1])
 spec.lam = np.array(spec.lam[::-1])
 new_spec = rebin_spec(np.array(spec.lam),np.array(spec.flux),newlam)
-plt.plot(newlam,new_spec/max(new_spec), 'r')
+plt.plot(newlam,new_spec/np.max(new_spec), 'r')
 
 #vacuum to air conversion
 s = 10**4/newlam
@@ -69,7 +69,7 @@ new_spec = new_spec/hbeta_flux
 plt.plot(newlam,new_spec, 'k')
 
 resdata = readsav('../../../SDSS_spectra/resolvecatalog.dat')
-galname = 'rf0376'
+galname = 'rs0010'
 resphot = readsav('../../../SDSS_spectra/resolvecatalogphot.dat')
 galndx = np.where(resdata['name'] == galname)
 v = resdata['vhel'][galndx] #km/s
@@ -78,38 +78,57 @@ r_pc = (v/70)*10**6*(1+z) #pc
 r = r_pc*3.086e+18 #pc to cm
 mstar = resdata['mstars'][np.where(resdata['name'] == galname)]
 #new_spec = new_spec/4*np.pi*r
-emlines = pd.read_csv('../../../izi/Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-CSF-n=1e3-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3-unified-2.csv')
-emlines = emlines[(emlines.AGNFRAC == 1.0) & (emlines.LOGZ == np.log10(0.4)) &\
-                   (7.3>emlines.LOGQ) & (emlines.LOGQ > 7.2)]
-wavelengths = {'oii3726' : 3726.032, 'oii3729' : 3728.815, 
-               'neiii3869' : 3868.760, 'hgamma' : 4340.471, 
-               'oiii4363' : 4363.210, 'heii4685' : 4685.710,
-               'hbeta' : 4861.333, 'oiii4959': 4958.911, 
-               'oiii5007' : 5006.843, 'hei5875' : 5875.624, 
-               'oi6300' : 6300.304, 'nii6548' : 6548.050, 
-               'halpha' : 6562.819, 'nii6584' : 6583.46, 
-               'sii6717' : 6716.440, 'sii6731' : 6730.810,
-               'ariii7136' : 7135.790}
-
+sdss = 1
+if sdss:
+    #emlines = pd.read_csv('../../../SDSS_spectra/RESOLVE_full_blend_dext_new.csv')
+    emlines = pd.read_csv('../../../SDSS_spectra/RESOLVE_full_snr5.csv')
+    emlines.index = emlines.name
+    emlines = emlines.loc['rs0010']
+    wavelengths = {'oii_3726_flux' : 3726.032, 'oii_3729_flux' : 3728.815, 
+                   'neiii_3869_flux' : 3868.760, 'h_gamma_flux' : 4340.471, 
+                   'oiii_4363_flux' : 4363.210, 'heii_4685_flux' : 4685.710,
+                   'h_beta_flux' : 4861.333, 'oiii_4959_flux': 4958.911, 
+                   'oiii_5007_flux' : 5006.843, 'hei_5875_flux' : 5875.624, 
+                   'oi_6300_flux' : 6300.304, 'nii_6548_flux' : 6548.050, 
+                   'h_alpha_flux' : 6562.819, 'nii_6584_flux' : 6583.46, 
+                   'sii_6717_flux' : 6716.440, 'sii_6731_flux' : 6730.810,
+                   'ariii_7136_flux' : 7135.790}
+else:
+    emlines = pd.read_csv('../../../izi/Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-CSF-n=1e3-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3-unified-2.csv')
+    emlines = emlines[(emlines.AGNFRAC == 0.5) & (emlines.LOGZ == np.log10(0.4)) &\
+                       (7.3>emlines.LOGQ) & (emlines.LOGQ > 7.2)]
+    wavelengths = {'oii3726' : 3726.032, 'oii3729' : 3728.815, 
+                   'neiii3869' : 3868.760, 'hgamma' : 4340.471, 
+                   'oiii4363' : 4363.210, 'heii4685' : 4685.710,
+                   'hbeta' : 4861.333, 'oiii4959': 4958.911, 
+                   'oiii5007' : 5006.843, 'hei5875' : 5875.624, 
+                   'oi6300' : 6300.304, 'nii6548' : 6548.050, 
+                   'halpha' : 6562.819, 'nii6584' : 6583.46, 
+                   'sii6717' : 6716.440, 'sii6731' : 6730.810,
+                   'ariii7136' : 7135.790}
 emspec = np.zeros(len(new_spec))
+sdss_hbeta = emlines['h_beta_flux']
 #plt.figure()
 for lam in wavelengths.keys():
     mu = wavelengths[lam]
     if mu > newlam[0]:
-        sigma = 1.69/2.355 #FWHM to sigma (69/3e5)*6500
-        x = (newlam - mu)/sigma
-        line = norm.pdf(x)*np.array(emlines[lam])
-        #print line, max(line), lam
-        line = (line/max(line)) * np.array(emlines[lam]) 
-        emspec+= line
-        plt.plot(newlam,line,'g')
-    if lam == 'halpha':
+        if lam in emlines.keys():
+            if sdss:
+                emlines[lam] = emlines[lam]/sdss_hbeta
+            sigma = 1.69/2.355 #FWHM to sigma (69/3e5)*6500
+            x = (newlam - mu)/sigma
+            line = norm.pdf(x)*np.array(emlines[lam])
+            #print line, max(line), lam
+            line = (line/np.max(line)) * np.array(emlines[lam]) 
+            emspec+= line
+            plt.plot(newlam,line,'g')
+    if (lam == 'halpha'):
         #converting broad gaussian width from velocity into wavelength
         sigma = ((500/2.355)/3e5)*mu 
         x = (newlam - mu)/sigma
         line = norm.pdf(x)*0.15*np.array(emlines[lam]) #15% of height of Halpha
         #print line, max(line), lam
-        line = (line/max(line))*0.15*np.array(emlines[lam])
+        line = (line/np.max(line))*0.15*np.array(emlines[lam])
         line = line*emlines.AGNFRAC.iloc[0]
         emspec+= line
         plt.plot(newlam,line,'g')
@@ -121,7 +140,11 @@ from scipy import optimize
 #    return amplitude * np.exp(-((x - 4861) / 4 / stddev)**2)
 def gaussian(x, amplitude, stddev, offset):
     return amplitude * np.exp(-(x - mean) ** 2 / (2 * stddev ** 2)) + offset
-mean = wavelengths['hbeta']
+
+if sdss:
+    mean = wavelengths['h_beta_flux']
+else:
+    mean = wavelengths['hbeta']
 hbndx = (newlam > 4800) & (newlam < 4920)
 hb = np.array(new_spec[hbndx])
 hbetalam = np.array(newlam[hbndx])
@@ -131,9 +154,12 @@ plt.plot(hbetalam,gaussian(hbetalam,*popt),'orange')
 sig = ((250/2.354)/3e5)*mean #converting 190 km/s to sigma in Angstroms 
 sigratio = popt[1]/sig
 plt.plot(hbetalam,gaussian(hbetalam,popt[0]*sigratio/4, sig, popt[-1])-popt[-1],'m')
-emspec += gaussian(newlam,popt[0]*sigratio/4, sig, popt[-1])-popt[-1]
+#emspec += gaussian(newlam,popt[0]*sigratio/4, sig, popt[-1])-popt[-1]
 
-mean = wavelengths['halpha']
+if sdss:
+    mean = wavelengths['h_alpha_flux']
+else:
+    mean = wavelengths['halpha']
 handx = (newlam > 6480) & (newlam < 6630)
 ha = np.array(new_spec[handx])
 halphalam = np.array(newlam[handx])
@@ -141,8 +167,8 @@ popt, _ = optimize.curve_fit(gaussian, halphalam, ha, p0 = [-100,100,100])
 plt.plot(halphalam,ha,'k.')
 plt.plot(halphalam,gaussian(halphalam,*popt),'orange')
 sigratio = popt[1]/sig
-plt.plot(halphalam,gaussian(halphalam,popt[0]*sigratio/4, sig, popt[-1])-popt[-1],'m')
-#emspec += gaussian(newlam,popt[0]*sigratio/4, sig, popt[-1])-popt[-1]
+plt.plot(halphalam,gaussian(halphalam,popt[0]*sigratio, sig, popt[-1])-popt[-1],'m')
+#emspec += gaussian(newlam,popt[0]*sigratio, sig, popt[-1])-popt[-1]
 print(emspec)  
 #totalspec = (new_spec/max(new_spec))+(emspec/max(emspec))
 lsun = 3.826*10**33 #ergs/s
@@ -176,8 +202,11 @@ fullmask = ((newlam <4070) | (newlam > 4150)) \
         & ((newlam < 6500) | (newlam > 6800)) \
         & ((newlam < 7000) | (newlam > 7200)) \
         & ((newlam < 7250) | (newlam > 7380))
-#To match the line/continuum ratio from SDSS for rf0376
-eq_width = 15*1e-17#/23.0
+#To match the line/continuum ratio from SDSS for rf0306
+if sdss: 
+    eq_width = 1e-17#/23.0
+else:
+    eq_width = 15*1e-17#/23.0
 totalflux[fullmask] = new_spec[fullmask]
 #totalflux = new_spec
 totalflux = (totalflux+emspec)*eq_width#hbeta_flux
@@ -191,20 +220,21 @@ plt.figure()
 plt.plot(newlam, totalflux/1e-17)
 plt.xlabel(r'Wavelength (in ${\AA}$)')
 plt.ylabel(r'Flux Density ($10^{-17}$ $ergs/s/cm^2/{\AA}$)')
-plt.xlim(4850,5050)
+#plt.xlim(4850,5050)
 
-plt.figure()
-plt.plot(newlam, totalflux/1e-17)
-plt.xlim(6250,6600)
-plt.xlabel(r'Wavelength (in ${\AA}$)')
-plt.ylabel(r'Flux Density ($10^{-17}$ $ergs/s/cm^2/{\AA}$)')
+#plt.figure()
+#plt.plot(newlam, totalflux/1e-17)
+#plt.xlim(6250,6600)
+#plt.xlabel(r'Wavelength (in ${\AA}$)')
+#plt.ylabel(r'Flux Density ($10^{-17}$ $ergs/s/cm^2/{\AA}$)')
 #plt.plot(optlam,cont(optlam))
 #spectrum = pd.DataFrame(data = {'flux' : totalflux[optndx]*10, 'lam' : newlam[optndx]/10})
 #spectrum.to_csv('mock_spectrum.csv')
-np.savetxt('mock_spectrum'+str(emlines.AGNFRAC.iloc[0])+'.txt', zip(newlam[optndx]/10,totalflux[optndx]))
+if sdss:
+    np.savetxt('mock_spectrum_SDSSrs0010.txt', zip(newlam[optndx]/10,totalflux[optndx]))
+else:
+    np.savetxt('mock_spectrum'+str(emlines.AGNFRAC.iloc[0])+'.txt', zip(newlam[optndx]/10,totalflux[optndx]*1e35))
 #plt.xlim(0,10000)
-#add reddening
-#Assume E_BV of one of our galaxies?
 
 def func(x, a, x0, sigma):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))    
@@ -218,27 +248,50 @@ def composite_spectrum(x, # data
             + func(x, a3, x03, sigma3)\
             + func(x, a4, x04, sigma4))
 #                    + func(x, a3, x03, sigma3))
-
-guess = [1000, 6563, 1.69/2.354, 500, 6584, 1.69/2.354,
-         200, 6548, 1.69/2.354, 150, 6563, 4]
-
+wavelengths = {'nii6548' : 6548.050, 
+               'halpha' : 6562.819, 'nii6584' : 6583.46}
 from scipy.optimize import curve_fit
-x2 = newlam[(newlam>6500) & (newlam<6600)]
-y2 = totalflux[(newlam>6500) & (newlam<6600)]
-y2 = y2/np.max(y2)
+x2 = newlam[(newlam>6540) & (newlam<6590)]
+emspec = np.zeros(len(x2))
+for lam in wavelengths.keys():
+    mu = wavelengths[lam]
+    sigma = 1.69/2.355 #FWHM to sigma (69/3e5)*6500
+    #x = (newlam - mu)/sigma
+    line = func(x2,1,mu,sigma)*np.array(emlines[lam])
+    #print line, max(line), lam
+    line = (line/np.max(line)) * np.array(emlines[lam]) 
+    emspec+= line
+    if lam == 'halpha':
+        #converting broad gaussian width from velocity into wavelength
+        sigma = ((120/2.355)/3e5)*mu 
+        x = (newlam - mu)/sigma
+        line = func(x2,1,mu,sigma)*np.array(emlines[lam])*0.15#15% of height of Halpha
+        #print line, max(line), lam
+        line = (line/np.max(line))*0.15*np.array(emlines[lam])
+        line = line*emlines.AGNFRAC.iloc[0]
+        emspec+= line
+y2 = emspec
+#y2 = totalflux[(newlam>6540) & (newlam<6590)]/1e-16
+y2 = y2 - np.min(y2)
+guess = [1000, 6563, 1.69/2.354, 500, 6584, 1.69/2.354,
+         200, 6548, 1.69/2.354, 150, 6563, 2]
+
 popt, pcov = curve_fit(composite_spectrum, x2, y2, p0 = guess)
+sig_broad = round(abs(popt[-1])*3e5*2.354/6563,2)
 plt.figure()
 plt.plot(x2,y2)
 plt.plot(x2, composite_spectrum(x2, *popt), 'k', label='Total fit')
+plt.plot(x2, func(x2, *popt[:3]), c='g', lw = 3,
+         label='Narrow Halpha')
 plt.plot(x2, func(x2, *popt[-3:]), c='r', 
-         label='Broad component')
+         label='Broad Halpha '+str(sig_broad)+' km/s')
 FWHM = round(2*np.sqrt(2*np.log(2))*popt[-1],4)
 #plt.axvspan(popt[-2]-FWHM/2, popt[-2]+FWHM/2, 
 #            facecolor='g', alpha=0.3, label='FWHM = %s'%(FWHM))
 plt.legend(fontsize=10)
 #plt.ylim(0,1.1)
-plt.show()
 
+'''
 import numpy as np
 from scipy.optimize import leastsq
 import matplotlib.pyplot as plt
@@ -255,11 +308,11 @@ mean1, mean2 = 0, -2
 std1, std2 = 0.5, 1 
 
 x = x2 #np.linspace(-20, 20, 500)
-y_real = y2# norm(x, mean1, std1) + norm(x, mean2, std2)
+y_real = y2-min(y2)# norm(x, mean1, std1) + norm(x, mean2, std2)
 
 ######################################
 # Solving
-m, dm, sd1, sd2 = [6563, 0, 2, 10]
+m, dm, sd1, sd2 = [6563, 10, 2, 30]
 p = [m, dm, sd1, sd2] # Initial guesses for leastsq
 y_init = norm(x, m, sd1) + norm(x, m+dm, sd2) # For final comparison plot
 
@@ -278,6 +331,7 @@ plt.figure()
 plt.plot(x, y_real, label='Real Data')
 plt.plot(x, y_init, 'r.', label='Starting Guess')
 plt.plot(x, y_est, 'g', label='Fitted')
+plt.plot(x,norm(x, plsq[0][0] + plsq[0][1], plsq[0][3]),'r',label = 'Broad')
 plt.legend()
 plt.show()
 
@@ -285,19 +339,18 @@ fwhminpix=[]
 arcspec = y2
 lines = [6548, 6563, 6561, 6584]
 waverange = x2
-add=[10, 10, 40, 10]
+add=[10, 10, 10, 10]
 
 shap=np.shape(arcspec)
 
 conv=((waverange[1]-waverange[0])/(shap[0]-1))
 
 lines=np.array(lines)
-pixlines=(lines/conv)-(waverange[0]/conv)
-pixlines = [int(i) for i in pixlines]
+pixlines = [np.where(x2 > i)[0][0] for i in lines]
 from mpfit import mpfit
 
 for i in np.arange(len(lines)):
-    nput=arcspec[shap[0]//2+100,pixlines[i]-add[i]:pixlines[i]+add[i]]
+    nput=arcspec[pixlines[i]-add[i]:pixlines[i]+add[i]]
     gerr=np.zeros(len(nput))+0.5
     xaxis=np.arange(len(nput))
 
@@ -338,3 +391,5 @@ for i in np.arange(len(lines)):
 fwhminpix=np.array(fwhminpix)
 
 fwhminA=fwhminpix*conv
+'''
+

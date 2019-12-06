@@ -34,8 +34,8 @@ unq = unq.append(port.loc[[x for x in port.index \
 unq = unq.append(nsa.loc[[x for x in nsa.index \
                 if (x in unique) & (x not in jhu.index) & (x not in port.index)]])
 print(unq)
-ra_beg = 22.5
-ra_end = 17.5
+ra_beg = 0.5
+ra_end = 18.5
 observable = ((unq.h > ra_beg) & (unq.h < 24)) | (unq.h > 0) & (unq.h < ra_end)
 
 print('\n\nList of SFing-AGN observable between December 1st and Februray 29th')

@@ -22,10 +22,9 @@ sig_n = 1.69/2.354
 #We need to detect sig_b at a 5-sigma confidence 
 #(sig_b - sig_n)/sigma(sig_b) >= 5
 confidence = 5
-sig_sig_b = (sig_b - sig_n-5*0.14)/confidence
 sig_sig_b = (sig_b - sig_n)/confidence
 sig_sig_b = sig_b/confidence
-
+sig_sig_b = ((33)/3e5)*6563
 #This means that sig_b +- sig_sig_b is needed to get a 5-sigma confirmation
 #of a 500 km/s FWHm of broad Halpha component
 
@@ -45,6 +44,6 @@ var_sig_b2 = sig_sig_b2**2
 #(N-1) var(sig_b2) = 2 sig_b**4
 N = 1 + 2*sig_b**4/var_sig_b2
 SNR = np.ceil(np.sqrt(N))
-
-print('For broad Halpha component with FWHM velocity {} km/s, we need S/N >= {} for a {}-sigma detection'.format(vel_FWHM, SNR, confidence))
+print(np.sqrt(N))
+print('For broad Halpha component with FWHM velocity {} km/s, we need S/N >= {}'.format(vel_FWHM, SNR, confidence))# for a {}-sigma detection'
 print('1-sigma error on the width of broad Halpha is {}km/s'.format(sig_sig_b*3e5/6563))

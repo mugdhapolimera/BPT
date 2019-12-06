@@ -182,6 +182,10 @@ for key in keys:
                            10**sel.logmgas/10**sel.logmstar, 
                            marker[key], markersize = 12, mew = 0, 
                            label = labels[key])
+        axScatter.plot(df.logmstar.loc['rf0073'],
+                           10**df.logmgas.loc['rf0073']/10**df.logmstar.loc['rf0073'], 
+                           'ks', markersize = 12, mew = 0, 
+                           label = labels[key])
         axScatter.plot(np.linspace(7.5,11.5), 
                        np.ones(len(np.linspace(7.5,11.5))), 'k-.')
         axScatter.text(11.0, 0.005, 'RESOLVE', fontsize=14, color='k')

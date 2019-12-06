@@ -19,7 +19,10 @@ from marginalize_grid import marginalize
 #res_data = '../../../data/resolve_plusmetandemline-Hood.pkl'
 res_data = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5.pkl'
 res_den = pd.read_pickle(res_data)
-
+full = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5.csv')
+full.index = full.name
+port = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5_port.csv')
+port.index = port.name
 obsR_nii = res_den['nii_6584_flux']
 obsR_oiii = res_den['oiii_5007_flux']
 obsR_sii_sum = res_den['sii_6717_flux'] + res_den['sii_6731_flux']
@@ -52,6 +55,10 @@ obsR_o1ha = np.log10(obsR_oi/obsR_h_alpha)
 #def s2hamain(log_SII_HA): #main line for SII/H-alpha from equation 2, Kewley 2006
 #    return 1.30 + (0.72 / (log_SII_HA - 0.32))
 
+def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
+    return 1.3 + (0.61 / (log_NII_HA - 0.05))
+def n2hamain(log_NII_HA): #main line for NII/H-alpha from equation 5, Kewley 2006
+    return 1.19 + (0.61 / (log_NII_HA - 0.47))
 def s2hamain(log_SII_HA): #main line for SII/H-alpha from equation 2, Kewley 2006
     return 1.30 + (0.72 / (log_SII_HA - 0.32))
 def s2halinseyf(log_SII_HA): #liner/seyfert divider for SII/H-alpha
@@ -62,19 +69,14 @@ def o1halinseyf(log_OI_HA): #liner/seyfert divider for OI/H-alpha
     return 1.3 + 1.18*log_OI_HA
 def o1hacrit(log_OI_HA): #boundary for OI/H-alpha
     return -0.59
-def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
-    return 1.3 + (0.61 / (log_NII_HA - 0.05))
-def n2hamain(log_NII_HA): #main line for NII/H-alpha from equation 5, Kewley 2006
-    return 1.19 + (0.61 / (log_NII_HA - 0.47))
 
-refn2ha = np.linspace(-3.0, 0.35)
 #comp = o3hbcomposite(refn2ha)
 #main = o3hbmain(refn2ha)
 
-refsiiha = np.linspace(-2, 0.3)
+refn2ha = np.linspace(-3.0, 0.35)
+refoiha = np.linspace(-2.5, -0.4)
+refsiiha = np.linspace(-2, 0.3,100)
 main_sii = s2hamain(refsiiha)
-
-refoiha = np.linspace(-3.0, -0.59)
 main_oi = o1hamain(refoiha)
 
 ##################################
@@ -111,7 +113,7 @@ if grid == 'L10':
 bpt = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/resolve_emlineclass_full_snr5.csv')
 bpt.index = bpt['galname']
 
-rms = np.sqrt(np.mean(np.log10(res_den.oi_6300_flux_err[bpt['defstarform']]/res_den.oi_6300_flux[bpt['defstarform']]))**2)
+#rms = np.sqrt(np.mean(np.log10(res_den.oi_6300_flux_err[bpt['defstarform']]/res_den.oi_6300_flux[bpt['defstarform']]))**2)
 
 ##################################
 #
@@ -143,7 +145,8 @@ metal_list = [0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 1., 1.5, 2. ]
 ionps_list = [6.9 , 7.2, 7.5, 7.7, 8. , 8.2, 8.5, 8.7]
 f, (sp1, sp2, sp3) = plt.subplots(1,3, sharey = True)
 fid = 1  
-frac_color = {0: 'b', 0.5: 'm', 1:'r'}
+frac_color = {0: 'b', 0.5: 'fuchsia', 1:'brown'}
+gals = nov_target#['rf0006', 'rf0073','rf0503']#,'rs0463']#, 'rs0814']
 #gnuplot, rainbow, winter, spring, viridis, magma
 for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     if "oiii5007" in sim.keys(): #grid == 'L10':
@@ -193,12 +196,14 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     tick_label = 8
     cbar_tick_label = 8
     text_size = 8
-    xmin, xmax = -2.50001, 0.30001
+    xmin, xmax = -2.00001, 0.30001
     ymin, ymax = -1.0, 1.2
     
     if frac == 0:
         
-        sp1.scatter(obsR_n2ha,obsR_o3hb,c='k',s=0.5, alpha = 0.5)
+        sp1.scatter(obsR_n2ha,obsR_o3hb,c='k',s=0.5, alpha = 0.3)
+
+        
     #plt.scatter(obsR_n2ha[bpt['sftoagn']],obsR_o3hb[bpt['sftoagn']],color='r',marker='s')
     
     sp1.plot(refn2ha, n2hamain(refn2ha),'k')
@@ -235,7 +240,7 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     minorLocator = MultipleLocator(0.1)
     sp1.yaxis.set_minor_locator(minorLocator)
     if fid:
-        sp1.scatter(x_fid,y_fid,marker = 's', s = 100, c = frac_color[frac])
+        sp1.scatter(x_fid,y_fid,marker = 's', s = 150, c = frac_color[frac])
     
     if frac == 1:
         sp1.set_xlabel(r'$\rm log([$N II$]$ 6584 / H$\alpha)$',fontsize=15)
@@ -274,15 +279,18 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     cbar_tick_label = 8
     text_size = 8
     xmin, xmax = -2.00001, 0.50001
-    ymin, ymax = -1.0, 1.2
+    ymin, ymax = -1.5, 1.2
     
     #sp2 = plt.subplot(132)
     if frac == 0:
         
-        sp2.scatter(obsR_s2ha,obsR_o3hb,c='k',s=0.5, alpha = 0.5)
+        sp2.scatter(obsR_s2ha,obsR_o3hb,c='k',s=1, alpha = 0.3)
     #plt.scatter(obsR_s2ha[bpt['sftoagn']],obsR_o3hb[bpt['sftoagn']],
     #            color='r',marker='s')
     sp2.plot(refsiiha, s2hamain(refsiiha),'k')
+    sp2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
+                  'k-.')
+
 #    plt.plot(refsiiha-0.09,main_sii,'k')
     
     x = np.log10(np.divide(sii,halpha)) #+ 0.02
@@ -333,18 +341,18 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     minorLocator = MultipleLocator(0.1)
     sp2.yaxis.set_minor_locator(minorLocator)
     if fid:
-        sp2.scatter(x_fid,y_fid,marker = 's', s = 100, c = frac_color[frac])
+        sp2.scatter(x_fid,y_fid,marker = 's', s = 150, c = frac_color[frac])
     
     if frac == 1:
         sp2.set_xlabel(r'$\rm log([$S II$]$ 6717 + 6731/ H$\alpha)$',fontsize=15)
     #plt.ylabel(r'$[$O III$]$ 5007 / H$\beta$',fontsize=15)
 
-    if frac == 0:
-        sp2.set_title('(a)', y = -0.15)
-    elif frac == 0.5:
-        sp2.set_title('(b)', y = -0.15)
-    elif frac == 1.0:
-        sp2.set_title('(c)', y = -0.15)
+#    if frac == 0:
+#        sp2.set_title('(a)', y = -0.15)
+#    elif frac == 0.5:
+#        sp2.set_title('(b)', y = -0.15)
+#    elif frac == 1.0:
+#        sp2.set_title('(c)', y = -0.15)
 
     
     #fig = plt.figure(3)
@@ -353,16 +361,18 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     tick_label = 8
     cbar_tick_label = 8
     text_size = 8
-    xmin, xmax = -3.00001, 0.00001
-    ymin, ymax = -1.0, 1.2
+    xmin, xmax = -2.50001, -0.40001
+    ymin, ymax = -1.0, 1.00001
     
     #sp3 = plt.subplot(133)
     if frac == 0:
-        sp3.scatter(obsR_o1ha,obsR_o3hb,c='k',s=0.5, alpha = 0.5)
+        sp3.scatter(obsR_o1ha,obsR_o3hb,c='k',s=1, alpha = 0.3)
 #    plt.scatter(obsR_o1ha[bpt['sftoagn']],obsR_o3hb[bpt['sftoagn']],
 #                color='r',marker='s')
     sp3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),'k')
-    
+    sp3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
+                               'k-.')
+
     x = np.log10(np.divide(oi,halpha)) + 0.07
     y = np.log10(np.divide(oiii,hbeta)) + 0.04
     if fid:
@@ -394,19 +404,100 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     minorLocator = MultipleLocator(0.1)
     sp3.yaxis.set_minor_locator(minorLocator)
     if fid:
-        sp3.scatter(x_fid,y_fid,marker = 's', s = 100, c = frac_color[frac])
+        sp3.scatter(x_fid,y_fid,marker = 's', s = 150, c = frac_color[frac])
     
     if frac == 1:
         sp3.set_xlabel(r'$\rm log ([$O I$]$ 6300 / H$\alpha$)',fontsize=15)
     #plt.ylabel(r'$[$O III$]$ 5007 / H$\beta$',fontsize=15)
     #sp3.legend(title = 'AGN Fraction '+str(int(frac*100))+'%', loc = 'upper right')
 
-    
+for gal in gals:
+    plotflag = 0
+    print gal
+    if gal in nsaflag.index.values:
+        if nsaflag.loc[gal]['sftoagn']:
+            print 'NSA'
+            niiha = np.log10(nsa.loc[gal]['nii_6584_flux']/nsa.loc[gal]['h_alpha_flux'])
+            SII = nsa.loc[gal]['sii_6731_flux']
+            siiha = np.log10(SII/nsa.loc[gal]['h_alpha_flux'])
+            oiha = np.log10(nsa.loc[gal]['oi_6300_flux']/nsa.loc[gal]['h_alpha_flux'])
+            oiiihb = np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux'])
+            plotflag = 1
+    elif (gal in portflag.index.values) & (gal != 'rs0472'):
+        if portflag.loc[gal]['sftoagn']:
+            print 'Port'
+            niiha = np.log10(port.loc[gal]['Flux_NII_6583']/port.loc[gal]['Flux_Ha_6562'])
+            SII = port.loc[gal]['Flux_SII_6716'] + port.loc[gal]['Flux_SII_6730']
+            siiha = SII/port.loc[gal]['Flux_Ha_6562']
+            oiiihb = np.log10(port.loc[gal]['Flux_OIII_5006']/port.loc[gal]['Flux_Hb_4861'])
+            oiha = np.log10(port.loc[gal]['Flux_OI_6300']/port.loc[gal]['Flux_Ha_6562'])
+            plotflag = 1
+    if ~plotflag & (gal in jhuflag.index.values):
+        if jhuflag.loc[gal]['sftoagn']:
+            print 'JHU'
+            niiha = np.log10(full.loc[gal]['nii_6584_flux']/full.loc[gal]['h_alpha_flux'])
+            SII = full.loc[gal]['sii_6717_flux'] + full.loc[gal]['sii_6731_flux']
+            siiha = np.log10(SII/full.loc[gal]['h_alpha_flux'])
+            oiha = np.log10(full.loc[gal]['oi_6300_flux']/full.loc[gal]['h_alpha_flux'])
+            oiiihb = np.log10(full.loc[gal]['oiii_5007_flux']/full.loc[gal]['h_beta_flux'])
+    print niiha, siiha, oiha, oiiihb
+    sp1.scatter(niiha,oiiihb, c='r',marker = '*', s= 200, zorder = 1)#marker = (6,2,0), s=200)
+    sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200)#marker = (6,2,0), s=200)
+    sp3.scatter(oiha,oiiihb, c='r',marker = '*', s= 200, zorder = 1)#marker = (6,2,0), s=200)
+sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200, label = 'Targets for this proposal')
+#    for i, txt in enumerate([gal]):
+#        sp3.annotate(txt, (oiha, oiiihb))#marker = (6,2,0), s=200)
+#niiha = np.log10(nsa.loc[sami]['nii_6584_flux']/nsa.loc[sami]['h_alpha_flux'])
+#SII = nsa.loc[sami]['sii_6731_flux'] #+ nsa.loc[sami]['sii_6717_flux']
+#siiha = np.log10(SII/nsa.loc[sami]['h_alpha_flux'])
+#oiha = np.log10(nsa.loc[sami]['oi_6300_flux']/nsa.loc[sami]['h_alpha_flux'])
+#oiiihb = np.log10(nsa.loc[sami]['oiii_5007_flux']/nsa.loc[sami]['h_beta_flux'])
+#sp1.scatter(niiha,oiiihb, c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#sp2.scatter(siiha,oiiihb, c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#sp3.scatter(oiha,oiiihb, c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
+niiha = np.log10(full.loc[sami]['nii_6584_flux']/full.loc[sami]['h_alpha_flux'])
+SII = full.loc[sami]['sii_6731_flux'] + full.loc[sami]['sii_6717_flux']
+siiha = np.log10(SII/full.loc[sami]['h_alpha_flux'])
+oiha = np.log10(full.loc[sami]['oi_6300_flux']/full.loc[sami]['h_alpha_flux'])
+oiiihb = np.log10(full.loc[sami]['oiii_5007_flux']/full.loc[sami]['h_beta_flux'])
+sp1.scatter(niiha,oiiihb, c='lime',marker = '*', s= 100, edgecolor = 'k')
+sp2.scatter(siiha,oiiihb, c='lime',marker = '*', s= 100, 
+            label = 'SFing-AGN in SAMI', edgecolor = 'k')
+sp3.scatter(oiha,oiiihb, c='lime',marker = '*', s= 100, edgecolor = 'k')
+sp2.legend(loc = 'lower left', fontsize = 15)
+#for i, txt in enumerate(sami):
+#    sp3.annotate(txt, (oiha[i]+0.05, oiiihb[i]))#marker = (6,2,0), s=200)
+
+#gal = 'rs0909'
+#sp1.scatter(np.log10(nsa.loc[gal]['nii_6584_flux']/nsa.loc[gal]['h_alpha_flux']),
+#                    np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),
+#                             c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#SII = nsa.loc[gal]['sii_6731_flux']
+#sp2.scatter(np.log10(SII/nsa.loc[gal]['h_alpha_flux']),
+#            np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),
+#                     c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#sp3.scatter(np.log10(nsa.loc[gal]['oi_6300_flux']/nsa.loc[gal]['h_alpha_flux']),
+#            np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),
+#                     c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#gal = 'rs0323'
+#sp1.scatter(np.log10(nsa.loc[gal]['nii_6584_flux']/nsa.loc[gal]['h_alpha_flux']),
+#                    np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),
+#                             c='b',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#SII = nsa.loc[gal]['sii_6731_flux']
+#sp2.scatter(np.log10(SII/nsa.loc[gal]['h_alpha_flux']),
+#            np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),
+#                     c='b',marker = '*', s= 100)#marker = (6,2,0), s=200)
+#sp3.scatter(np.log10(nsa.loc[gal]['oi_6300_flux']/nsa.loc[gal]['h_alpha_flux']),
+#            np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),
+#                     c='b',marker = '*', s= 100)#marker = (6,2,0), s=200)
+
 #plt.savefig("Z_U-binary-agn0000.png",dpi=600)
 
-
-
-
+#o1ha = np.array(np.log10(full.loc[target]['oi_6300_flux']/full.loc[target]['h_alpha_flux']))
+#o3hb = np.array(np.log10(full.loc[target]['oiii_5007_flux']/full.loc[target]['h_beta_flux']))
+#for i, txt in enumerate(target):
+#    #print i,txt
+#    sp3.annotate(txt, (o1ha[i], o3hb[i]))#marker = (6,2,0), s=200)
 
 
 

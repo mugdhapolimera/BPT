@@ -40,7 +40,8 @@ full = 0
 sami = 0
 singlepanel = 0
 catalog = 1
-sdsscat = 'jhu'
+sdsscat = 'port'
+
 #sdsscat = 'port'
 #sdsscat = 'nsa'
 if sys.platform == 'linux2':
@@ -77,27 +78,43 @@ else:
         inputfile = 'RESOLVE_full_snr5_port.csv'
     if sdsscat == 'jhu':       
         inputfile = 'RESOLVE_full_snr5.csv'
+        #inputfile = 'RESOLVE_full_blend_dext_new.csv'
     if sdsscat == 'nsa':       
         inputfile = 'NSA_RESOLVE.csv'
+        #outputfile = 'resolve_emlineclass_full_snr5.csv'
     print 'RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
     else: 
-        outputfile = 'resolve_emlineclass_full_snr5.csv'
+        outputfile = 'resolve_emlineclass_full_snr5_'+sdsscat+'.csv'
 #xray = pd.read_csv('../xray/ECO+RESOLVE_xray_new.csv')
 #os.chdir('C:/Users/mugdhapolimera/github/xray/')
 #inputfile = 'XMM_AGN_mwdext.pkl'
-df = pd.read_csv(inputfile)
-fulldf = pd.read_csv('RESOLVE_full_snr5.csv')
+#inputfile = 'RESOLVE_full_blend_dext_new.csv'
+
+fulldf = pd.read_csv('RESOLVE_full_blend_dext_new.csv')
+df = fulldf
+df.index = df.name
 veronagn = pd.read_csv(r'../xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
 hmqagn = pd.read_csv(r'../xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
 broadagn = pd.read_csv(r'../xray/catalog_matching/BroadlineAgn_RESOLVE.csv')['eco+res_name']
 xray = pd.read_csv(r'../xray/ECO+RESOLVE_xray_new.csv')
-if he2_flag:
-    df = df[~np.isnan(df.Flux_HeII_4685)]
-    heii = df['Flux_HeII_4685']
-    heii_err = df['Flux_HeII_4685_Err']
+ra=df.radeg
+dec=df.dedeg
+flinsample = df.fl_insample
+grpcz = df.grpcz
+cz = df.cz
+infall = (ra > 22*15.) | (ra < 3*15.)
+inspring = (ra > 8.75*15.) & (ra < 15.75*15.)
+mgas = df.logmgas
+mstars = df.logmstar
+mbary = 10**mgas + 10**mstars
+inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & \
+(((flinsample | (np.log10(mbary) > 9.0)) & infall) | \
+        ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
+df = df[inobssample]
 
+df = pd.read_csv(inputfile)
 #define alternate catalog names
 if 'name' in df.keys():
     df['NAME'] = df['name']
@@ -108,6 +125,14 @@ if 'CATID' in df.keys():
 name = df['name']
 df['NAME'] = df['name']
 df.index = df.name
+
+df = df.loc[inobssample.index.values[inobssample]]
+
+if he2_flag:
+    df = df[~np.isnan(df.Flux_HeII_4685)]
+    print(len(df))
+    heii = df['Flux_HeII_4685']
+    heii_err = df['Flux_HeII_4685_Err']
 #df['name'] = df['resname']
 if eco: 
     resname = df['resname'] #for eco
@@ -151,35 +176,54 @@ def he2hblimitclass(log_NII_HA):
     return line(log_NII_HA) 
 
 def ratioerror(num,num_err,den, den_err):
-    err = (num/den) * np.sqrt((num_err/num)**2 + (den_err/den)**2)
-    return err
-#create line ratios/H-alpha and [OIII]/H-beta
-nii = df['nii_6584_flux']
-if 'nii_6548_flux' in df.keys():
-    nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
-    nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
-else:
-    nii_sum = df['nii_6584_flux']
-    nii_sum_err = df['nii_6584_flux_err']
+    err_num2 = (num_err/(num*np.log(10)))**2
+    err_den2 = (den_err/(den*np.log(10)))**2
+    return np.sqrt(err_num2 + err_den2)
 # note that the ratio uses only the stronger line, but for S/N reasons we add
 # the weaker and multiply by 3/4 since Chris Richardson says the canonical
 # line ratio is 3:1 (this needs to be updated with a more precise number)
-oiii = df['oiii_5007_flux']
-oiii_err = df['oiii_5007_flux_err']
-h_alpha = df['h_alpha_flux']
-h_alpha_err = df['h_alpha_flux_err']
-h_beta = df['h_beta_flux']
-h_beta_err = df['h_beta_flux_err']
-oi = df['oi_6300_flux']
-oi_err = df['oi_6300_flux_err']
-if 'sii_6717_flux' in df.keys():
-    sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+if sdsscat == 'port':
+    nii = df['Flux_NII_6583']
+    nii_sum = (df['Flux_NII_6583']+ df['Flux_NII_6547'])*3./4
+    nii_sum_err = (np.sqrt(df['Flux_NII_6547_Err']**2 + df['Flux_NII_6583_Err']**2))*3./4
+    oiii = df['Flux_OIII_5006']
+    oiii_err = df['Flux_OIII_5006_Err']
+    h_alpha = df['Flux_Ha_6562']
+    h_alpha_err = df['Flux_Ha_6562_Err']
+    h_beta = df['Flux_Hb_4861']
+    h_beta_err = df['Flux_Hb_4861_Err']
+    oi = df['Flux_OI_6300']
+    oi_err = df['Flux_OI_6300_Err']
+    sii_sum = df['Flux_SII_6716'] + df['Flux_SII_6730']
+    sii_sum_err = np.sqrt(df['Flux_SII_6716_Err']**2 + df['Flux_SII_6730_Err']**2)
 
-    sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
-else:
-    sii_sum = df['sii_6731_flux']
-
-    sii_sum_err = df['sii_6731_flux_err']
+if sdsscat == 'jhu' or sdsscat == 'nsa':
+    nii = df['nii_6584_flux']
+    if 'nii_6548_flux' in df.keys():
+        nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
+        nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
+    else:
+        nii_sum = df['nii_6584_flux']
+        nii_sum_err = df['nii_6584_flux_err']
+    # note that the ratio uses only the stronger line, but for S/N reasons we add
+    # the weaker and multiply by 3/4 since Chris Richardson says the canonical
+    # line ratio is 3:1 (this needs to be updated with a more precise number)
+    oiii = df['oiii_5007_flux']
+    oiii_err = df['oiii_5007_flux_err']
+    h_alpha = df['h_alpha_flux']
+    h_alpha_err = df['h_alpha_flux_err']
+    h_beta = df['h_beta_flux']
+    h_beta_err = df['h_beta_flux_err']
+    oi = df['oi_6300_flux']
+    oi_err = df['oi_6300_flux_err']
+    if 'sii_6717_flux' in df.keys():
+        sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+    
+        sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
+    else:
+        sii_sum = df['sii_6731_flux']
+    
+        sii_sum_err = df['sii_6731_flux_err']
 
 #nii = df['Flux_NII_6583']
 #nii_sum = (df['Flux_NII_6583']+ df['Flux_NII_6547'])*3./4
@@ -197,7 +241,7 @@ else:
 
 #Filter Data: all non-negative SEL fluxes and errors; Hbeta >3sigma
 gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & (oi > 0) &
-            (sii_sum > 0) & (h_beta > 0) & (h_beta > 3*h_beta_err) &
+            (sii_sum > 0) & (h_beta > 0) & (h_beta > 5*h_beta_err) &
             (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0) & 
             (oi_err > 0) & (sii_sum_err > 0))
 
@@ -206,7 +250,12 @@ snr = ((h_alpha > 5*h_alpha_err) & (nii_sum > 5*nii_sum_err) & (oiii > 5*oiii_er
 
 if he2_flag:
     he2data = (heii/heii_err >=5) & (heii_err > 0)
-    data = gooddata & he2data
+    gooddata = (h_beta > 0) & (h_beta > 5*h_beta_err) & \
+                (h_alpha_err > 0) & (nii_sum_err > 0) & \
+                (h_alpha > 0) & (nii_sum > 0)
+    snr = (nii_sum> 5*nii_sum_err) & (h_alpha > 5*h_alpha_err)
+    data = he2data
+    print(np.sum(he2data),np.sum(data))
 else:
     data = gooddata & snr #use ALL galaxy data within catalog
 
@@ -304,9 +353,11 @@ o3hb = np.log10(oiii/h_beta) # always the y-axis
 o1ha = np.log10(oi/h_alpha)
 s2ha = np.log10(sii_sum/h_alpha)
 n2ha = np.log10(nii/h_alpha)
-s2ha_err = ratioerror(sii_sum, sii_sum_err, h_alpha, h_alpha_err)
-o3hb_err = ratioerror(oiii, oiii_err, h_beta, h_beta_err)
-o1ha_err = ratioerror(oi, oi_err, h_alpha, h_alpha_err)
+s2ha_err = np.array(ratioerror(sii_sum, sii_sum_err, h_alpha, h_alpha_err))
+o3hb_err = np.array(ratioerror(oiii, oiii_err, h_beta, h_beta_err))
+o1ha_err = np.array(ratioerror(oi, oi_err, h_alpha, h_alpha_err))
+n2ha_err = np.array(ratioerror(nii, nii_sum_err, h_alpha, h_alpha_err))
+
 if he2_flag:
     he2hb = np.log10(heii/h_beta)
 
@@ -655,7 +706,7 @@ def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
         cmap(np.linspace(minval, maxval, n)))
   	return new_cmap
 sf_colors_map = truncate_colormap(cm.gray_r)
-ndx = np.where((df.NAME == 'rf0503') | (df.NAME == 'rs1195'))[0]
+ndx = []#np.where((df.NAME == 'rs1105') | (df.NAME == 'rs1375'))[0]
 xmin = refn2ha.min(); xmax = refn2ha.max()
 ymin = -1.25; ymax = 1.5
 nbins = 50
@@ -710,11 +761,12 @@ ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3,
 if he2_flag:
     agndata4, = ax1.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8,
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+#ndx = ['rs0756','rs0775']
 if len(ndx) > 0:
     ax1.plot(n2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
-                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs1105')
     ax1.plot(n2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
-                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
+                          markersize = 12, mfc = 'none', mew = 1, label = 'rs1375')
 plt.legend(loc=3, numpoints = 1, fontsize = 14)
 plt.show()
 xmin = refsiiha.min(); xmax = refsiiha.max()
@@ -839,6 +891,7 @@ if catalog:
     broad2, = ax1.plot(o1ha[broadagn], o3hb[broadagn],'ko', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
     midiragn2 = ax1.plot(o1ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
+ndx = ['rs0472','rs0775']
 if len(ndx) > 0:
     ax1.plot(o1ha[ndx[0]], o3hb[ndx[0]], 'ko',  
                           markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
@@ -858,3 +911,20 @@ c = SkyCoord(ra = list(sftoagn.radeg)*u.degree,
 sftoagn['h'],sftoagn['m'],sftoagn['s'] = c.ra.hms
 print(sftoagn)
 sftoagn.to_csv(sdsscat+'_sfagn.csv')
+error = 1
+if error:
+    ax1.errorbar(np.array(n2ha).flatten(), np.array(o3hb).flatten(), 
+                 xerr = n2ha_err.flatten(),
+                yerr = o3hb_err.flatten(),fmt = 'None', marker = 'None', 
+                alpha = 0.5, mew = 0, label = 'SF-to-AGN',
+                ecolor = 'k', zorder=0)
+    ax2.errorbar(np.array(s2ha).flatten(), np.array(o3hb).flatten(), 
+                 xerr = s2ha_err.flatten(),
+                yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', 
+                alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k',
+                zorder=0)
+    ax3.errorbar(np.array(o1ha).flatten(), np.array(o3hb).flatten(), 
+                 xerr = o1ha_err.flatten(),
+                yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', 
+                alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k', 
+                zorder=0)
