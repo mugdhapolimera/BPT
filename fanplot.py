@@ -3,33 +3,28 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.io.idl import readsav
 
-res = pd.read_csv('RESOLVE_live13Oct2016.csv')
-res_ext_t = Table.read('RESOLVE_SDSS_dext.fits')
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_blend_dext_new.csv'
 
-res_ext = res_ext_t.to_pandas()
-res['name'] = res['name'].str.strip() 
-res_ext.columns.values[0] = 'name'
-res_full = pd.merge(res, res_ext, on='name', how='left')
+res = pd.read_csv(inputfile)
+catalog = readsav('../SDSS_spectra/resolvecatalog.dat')
 
-col = res_full[['name', 'radeg', 'dedeg', 'cz', 'dist2d_nn1', 'logmh', 'grpn', 'r90', 'r50']]
 
-#targ = col[(col['dedeg'] < 5.)]
-targsamp = col[(col['name'] == 'rf0250') | (col['name'] == 'rf0266') | (col['name'] == 'rs0463') | (col['name'] == 'rs1268') | (col['name'] == 'rs1398')]
-
-cz = col[['cz']]
+cz = catalog['vlg'] #col[['cz']]
 z = cz/3e5
-radeg = col[['radeg']]
+radeg = catalog['ra']
 rahr = radeg/15
 rarad = radeg * (np.pi / 180.)
 
-cz_targ = targsamp[['cz']]
+sfagnnames = res.index.values
+sel = np.where(catalog['name'] == sfagnnames)
+cz_targ = catalog['vlg'][sel]
 z_targ = cz_targ/3e5
-radeg_targ = targsamp[['radeg']]
+radeg_targ = catalog['ra'][sel]
 rahr_targ = radeg_targ / 15
 rarad_targ = radeg_targ * (np.pi / 180.)
 
-labels = ['rf0250', 'rf0266', 'rs0463', 'rs1268', 'rs1398']
 
 thisr = 0.019222
 thistheta = 0.424053
@@ -52,15 +47,47 @@ xL=['0h',r'3h',r'6h',r'9h',\
 plt.xticks(xT, xL, fontsize = 20)
 plt.yticks(fontsize = 20)
 
-vlgmin=min(resvlg[where(inobssample)])
-vlgmax=max(resvlg[where(inobssample)]
-vlgboundf=[vlgmin,vlgmax,fltarr(1000)+vlgmax,vlgmin,fltarr(1000)+vlgmin]
-raradboundf=[330.,330.,findgen(1000)*(405.-330.)/999.+330.,405.,findgen(1000)*(330.-405.)/999.+405.]*!pi/180.
-vlgbounds=[vlgmin,vlgmax,fltarr(1000)+vlgmax,vlgmin,fltarr(1000)+vlgmin]
-raradbounds=[131.25,131.25,findgen(1000)*(236.25-131.25)/999.+131.25,236.25,findgen(1000)*(131.25-236.25)/999.+236.25]*!pi/180.
-!psym=0
-oplot,vlgboundf/70.,raradboundf,/polar
-oplot,vlgbounds/70.,raradbounds,/polar
+#vlgmin=min(resvlg[where(inobssample)])
+#vlgmax=max(resvlg[where(inobssample)]
+#vlgboundf=[vlgmin,vlgmax,fltarr(1000)+vlgmax,vlgmin,fltarr(1000)+vlgmin]
+#raradboundf=[330.,330.,findgen(1000)*(405.-330.)/999.+330.,405.,findgen(1000)*(330.-405.)/999.+405.]*!pi/180.
+#vlgbounds=[vlgmin,vlgmax,fltarr(1000)+vlgmax,vlgmin,fltarr(1000)+vlgmin]
+#raradbounds=[131.25,131.25,findgen(1000)*(236.25-131.25)/999.+131.25,236.25,findgen(1000)*(131.25-236.25)/999.+236.25]*!pi/180.
+#!psym=0
+#oplot,vlgboundf/70.,raradboundf,/polar
+#oplot,vlgbounds/70.,raradbounds,/polar
 #plt.title('RESOLVE Fan Plot', y = 1.08)
 
 #plt.show()
+
+fullres = pd.read_csv('RESOLVE_liveMay2020.csv')
+fullresndx = [np.where(catalog.name == x)[0][0] for x in list(fullres.name)]
+fullresvlg = catalog.vlg[fullresndx]
+
+volres = pd.read_csv('RESOLVE_inobssample.csv')
+volresndx = [np.where(catalog.name == x)[0][0] for x in list(volres.name)]
+volresvlg = catalog.vlg[volresndx]
+
+elres = pd.read_csv('RESOLVE_full_hasnr5_dext_jhu.csv')
+elresndx = [np.where(catalog.name == x)[0][0] for x in list(elres.name)]
+elresvlg = catalog.vlg[elresndx]
+
+selres = pd.read_csv('RESOLVE_full_snr5_dext_jhu.csv')
+selresndx = [np.where(catalog.name == x)[0][0] for x in list(selres.name)]
+selresvlg = catalog.vlg[selresndx]
+
+fullresdf = pd.DataFrame(data = {'name': fullres.name, 'vlg': fullresvlg, 
+                                 'rarad': fullres.radeg/180*np.pi})
+fullresdf.to_csv('fullres_vlg_rarad.csv')
+
+volresdf = pd.DataFrame(data = {'name': volres.name, 'vlg': volresvlg, 
+                                 'rarad': volres.radeg/180*np.pi})
+volresdf.to_csv('volres_vlg_rarad.csv')
+
+elresdf = pd.DataFrame(data = {'name': elres.name, 'vlg': elresvlg, 
+                                 'rarad': elres.radeg/180*np.pi})
+elresdf.to_csv('elres_vlg_rarad_jhu.csv')
+
+selresdf = pd.DataFrame(data = {'name': selres.name, 'vlg': selresvlg, 
+                                 'rarad': selres.radeg/180*np.pi})
+selresdf.to_csv('selres_vlg_rarad_jhu.csv')

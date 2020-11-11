@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<proposal schemaVersion="2021.1.1" tacCategory="Galaxy evolution">
+    <meta band3optionChosen="true" overrideAffiliate="false">
+        <attachment>C:\Users\mugdhapolimera\Desktop\UNC\Courses\Research\Proposals\Gemini Material\GemQ_2021A_Polimera-final.pdf</attachment>
+    </meta>
+    <semester year="2021" half="A"/>
+    <title>Merger-starburst-AGN connection in dwarf and intermediate mass galaxies in the z~0 RESOLVE Survey</title>
+    <abstract>Theory suggests a mass-dependent change in star formation (SF) vs. AGN feedback efficiency -- while AGN feedback limits SF activity in giants, SF feedback is predicted to limit AGN fuelling in dwarfs. This change should alter the merger-starburst-AGN connection for dwarfs vs. giants. We use a new multiple emission-line classification scheme to identify metal-poor star-forming dwarf AGN as well as traditional AGN in the z~0 RESOLVE survey -- a volume-limited, dwarf-dominated census of ~1500 galaxies. We find preliminary evidence of dwarf AGN preferring extended gas-rich hosts with high but recently moderated SF (likely non-mergers) vs. giant AGN preferring compact gas-poor hosts with lower but recently enhanced SF (likely mergers). To test whether a transition in feedback efficiency from SF-limiting-AGN to AGN-limiting-SF underlies these results, we request GMOS IFU spectroscopy for 20 targets spanning the transitional parameters. Using accurate signal decomposition at S/N&gt;30 per A, we will measure the strength and spatial extent of neutral gas SF outflows (seen in blue-shifted NaD absorption) and/or ionized gas AGN outflows (seen in broad Ha line wings). We will also identify off-center and/or weak AGN missed in lower S/N, unresolved spectroscopy. The proposed data will enable the first direct test of whether a change in feedback mechanisms causes the hitherto unexplored mass-dependency of the merger-starburst-AGN connection.  </abstract>
+    <scheduling>While we formally seek time on Gemini-N, our targets located at Dec~ 0 degrees allow for observations from both Gemini-N and S with very minor technical differences (verified using both ITCs). We kindly ask to be considered for both Gemini-N and S for this proposal.</scheduling>
+    <keywords>
+        <keyword>Outflows</keyword>
+        <keyword>Star formation</keyword>
+        <keyword>Starburst galaxies</keyword>
+        <keyword>Dwarf galaxies</keyword>
+        <keyword>Active galaxies</keyword>
+    </keywords>
+    <investigators>
+        <pi id="investigator-0">
+            <firstName>Mugdha</firstName>
+            <lastName>Polimera</lastName>
+            <status>Grad Thesis</status>
+            <gender>Woman</gender>
+            <email>mugpol@unc.edu</email>
+            <phone>+13174578703</phone>
+            <address>
+                <institution>University of North Carolina</institution>
+                <address>Department of Physics and Astronomy
+CB# 3255 Phillips Hall
+Chapel Hill
+NC
+27599-3255</address>
+                <country>USA</country>
+            </address>
+        </pi>
+        <coi id="investigator-1">
+            <firstName>Sheila</firstName>
+            <lastName>Kannappan</lastName>
+            <status>PhD</status>
+            <gender>None selected</gender>
+            <email>sheila@physics.unc.edu</email>
+            <phone></phone>
+            <institution>University of North Carolina</institution>
+        </coi>
+        <coi id="investigator-2">
+            <firstName>Derrick</firstName>
+            <lastName>Carr</lastName>
+            <status>Grad Thesis</status>
+            <gender>None selected</gender>
+            <email>derrcarr@live.unc.edu</email>
+            <phone></phone>
+            <institution>University of North Carolina</institution>
+        </coi>
+        <coi id="investigator-3">
+            <firstName>Mark </firstName>
+            <lastName>Norris</lastName>
+            <status>PhD</status>
+            <gender>None selected</gender>
+            <email>mnorris2@uclan.ac.uk</email>
+            <phone></phone>
+            <institution>University of Central Lancashire</institution>
+        </coi>
+        <coi id="investigator-4">
+            <firstName>Chris</firstName>
+            <lastName>Richardson</lastName>
+            <status>PhD</status>
+            <gender>None selected</gender>
+            <email>crichardson17@elon.edu</email>
+            <phone></phone>
+            <institution>Elon University</institution>
+        </coi>
+    </investigators>
+    <targets>
+        <sidereal epoch="J2000" id="target-0">
+            <name>rs0010</name>
+            <degDeg>
+                <ra>135.21255999999999630745151080191135406494140625</ra>
+                <dec>1.1612321999999721811036579310894012451171875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.64010048</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-1">
+            <name>rs1047</name>
+            <degDeg>
+                <ra>201.64021000000002459273673593997955322265625</ra>
+                <dec>2.17505429999999932988430373370647430419921875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">12.75450039</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-2">
+            <name>rs1143</name>
+            <degDeg>
+                <ra>204.620959999999968204065226018428802490234375</ra>
+                <dec>2.52847100000002455999492667615413665771484375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">12.95289993</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-3">
+            <name>rs0909</name>
+            <degDeg>
+                <ra>191.5344400000000177897163666784763336181640625</ra>
+                <dec>4.4435528000000203974195756018161773681640625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.55760002</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-4">
+            <name>rs1038</name>
+            <degDeg>
+                <ra>201.148519999999962237779982388019561767578125</ra>
+                <dec>1.5768742000000202096998691558837890625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">14.36760044</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-5">
+            <name>rs0472</name>
+            <degDeg>
+                <ra>171.741999999999961801222525537014007568359375</ra>
+                <dec>2.33300179999997681079548783600330352783203125</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">15.32409954</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-6">
+            <name>rs1163</name>
+            <degDeg>
+                <ra>205.0703899999999748615664429962635040283203125</ra>
+                <dec>2.44415359999999282081262208521366119384765625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">14.73999977</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-7">
+            <name>rs1014</name>
+            <degDeg>
+                <ra>199.8179499999999961801222525537014007568359375</ra>
+                <dec>3.9259240000000090731191448867321014404296875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">13.66149998</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-8">
+            <name>rs1200</name>
+            <degDeg>
+                <ra>206.0022699999999531428329646587371826171875</ra>
+                <dec>4.73451720000002751476131379604339599609375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">15.41100025</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-9">
+            <name>rs0432</name>
+            <degDeg>
+                <ra>169.6861699999999473220668733119964599609375</ra>
+                <dec>2.90923400000002629894879646599292755126953125</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">14.10330009</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-10">
+            <name>rs1091</name>
+            <degDeg>
+                <ra>203.5067000000000234649633057415485382080078125</ra>
+                <dec>1.096110899999985122121870517730712890625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">13.7027998</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-11">
+            <name>rs1178</name>
+            <degDeg>
+                <ra>205.245830000000069048837758600711822509765625</ra>
+                <dec>3.0697129999999788196873851120471954345703125</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.51129913</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-12">
+            <name>rs1150</name>
+            <degDeg>
+                <ra>204.7690499999999929059413261711597442626953125</ra>
+                <dec>2.163795100000015736441127955913543701171875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">12.55430031</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-13">
+            <name>rs1004</name>
+            <degDeg>
+                <ra>199.4895999999999958163243718445301055908203125</ra>
+                <dec>3.802392800000006900518201291561126708984375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.0340004</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-14">
+            <name>rs0978</name>
+            <degDeg>
+                <ra>198.05366000000003623426891863346099853515625</ra>
+                <dec>2.1210158000000092215486802160739898681640625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.7105999</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-15">
+            <name>rs1036</name>
+            <degDeg>
+                <ra>201.117629999999962819856591522693634033203125</ra>
+                <dec>4.774975199999971664510667324066162109375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">15.1892004</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-16">
+            <name>rs0087</name>
+            <degDeg>
+                <ra>143.5439999999999827196006663143634796142578125</ra>
+                <dec>0.24167741000002251894329674541950225830078125</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">14.83640003</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-17">
+            <name>rs0237</name>
+            <degDeg>
+                <ra>154.8228900000000294312485493719577789306640625</ra>
+                <dec>0.344484190000002854503691196441650390625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.08679962</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-18">
+            <name>rs0096</name>
+            <degDeg>
+                <ra>144.14740000000000463842297904193401336669921875</ra>
+                <dec>1.11655269999999973151716403663158416748046875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.97410011</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-19">
+            <name>rs0320</name>
+            <degDeg>
+                <ra>161.2817400000000134241417981684207916259765625</ra>
+                <dec>3.6746597999999721650965511798858642578125</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.22509956</magnitude>
+            </magnitudes>
+        </sidereal>
+    </targets>
+    <conditions>
+        <condition id="condition-0">
+            <name>CC 70%/Cirrus, IQ 70%/Good, SB 80%/Grey, WV Any</name>
+            <cc>70%/Cirrus</cc>
+            <iq>70%/Good</iq>
+            <sb>80%/Grey</sb>
+            <wv>Any</wv>
+        </condition>
+    </conditions>
+    <blueprints>
+        <gmosN>
+            <regime>optical</regime>
+            <ifu id="blueprint-0">
+                <name>GMOS-N IFU B600 None IFU 1 slit</name>
+                <visitor>false</visitor>
+                <altair>
+                    <none/>
+                </altair>
+                <filter>None</filter>
+                <disperser>B600</disperser>
+                <fpu>IFU 1 slit</fpu>
+            </ifu>
+        </gmosN>
+    </blueprints>
+    <observations>
+        <observation band="Band 1/2" enabled="true" target="target-0" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-1" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>92</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-2" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>81</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-3" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-4" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-5" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>89</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-6" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>72</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-7" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>78</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-8" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>92</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-9" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>83</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-10" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>67</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-11" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.41</progTime>
+            <partTime units="hr">0.141</partTime>
+            <time units="hr">1.551</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>89</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-12" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>97</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-13" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>89</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-14" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>94</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-15" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>75</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-16" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-17" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-18" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-19" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">1.13</progTime>
+            <partTime units="hr">0.11299999999999999</partTime>
+            <time units="hr">1.2429999999999999</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+    </observations>
+    <proposalClass>
+        <queue tooOption="None" key="f47e1f4b-4501-4815-8123-b234d6922a1b">
+            <ngo partnerLead="investigator-0">
+                <request>
+                    <time units="hr">28.56</time>
+                    <minTime units="hr">1.65</minTime>
+                </request>
+                <response>
+                    <receipt>
+                        <timestamp>2020-10-01T05:33:58.000Z</timestamp>
+                        <id>US-2021A-204</id>
+                        <contact>phase1help-us@gemini.edu</contact>
+                    </receipt>
+                </response>
+                <partner>us</partner>
+            </ngo>
+        </queue>
+    </proposalClass>
+</proposal>

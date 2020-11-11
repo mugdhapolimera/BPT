@@ -11,32 +11,42 @@ import os
 import matplotlib as mpl
 os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
 
-df = pd.read_csv('RESOLVE_full_snr5.csv')
+df = pd.read_csv('RESOLVE_snr5_master.csv')
 df.index = df.name
-flags = pd.read_csv('resolve_emlineclass_full_snr5.csv')
+flags = pd.read_csv('resolve_emlineclass_full_snr5_master.csv')
 flags.index = flags.galname
-df2 = pd.read_csv('RESOLVE_full_snr5_port.csv')
-df2.index = df2.name
-nsa = pd.read_csv('NSA_RESOLVE_smcdext.csv')
-nsa.index = nsa.resname
-#target = ['rf0547', 'rf0338', 'rf0306', 'rf0477']
-target = targetnames
-nov_target = ['rs0323','rs0933','rs0472', 'rs1055', 'rs0124'] 
+
+confidence = pd.read_csv('Confidence_RESOLVE.csv')
+confidence.index = confidence.name
+#df2 = pd.read_csv('RESOLVE_full_snr5_port.csv')
+#df2.index = df2.name
+#nsa = pd.read_csv('NSA_RESOLVE_smcdext.csv')
+#nsa.index = nsa.resname
+##target = ['rf0547', 'rf0338', 'rf0306', 'rf0477']
+#target = targetnames
+target = list(targetlist.index.values)
+#nov_target = ['rs0124', 'rs0421', 'rs0909', 'rs1105', 'rs1047']#, 'rs1038']
+nov_target = target
+#ifu = ['rs0150', 'rs0930', 'rs1143']
+#nov_target = ['rs0323','rs0933','rs0472', 'rs1055', 'rs0124'] 
 #rs1172 - low met
 #'rs0930', , 'rs1105', 'rs1021' - upper locus of met
-sami = ['rs0010','rs0775']
+sami = ['rs0010']#,'rs0775']
 #'rs0404-not in sample','rs0167',
-df.loc['rf0306','nii_6584_flux'] = nsa.loc['rf0306'].nii_6584_flux
-df.loc['rf0306','h_alpha_flux'] = nsa.loc['rf0306'].h_alpha_flux
-df.loc['rs0323','nii_6584_flux'] = nsa.loc['rs0323'].nii_6584_flux
-df.loc['rs0323','h_alpha_flux'] = nsa.loc['rs0323'].h_alpha_flux
-flags.loc['rf0547'] = flags.loc['rf0338']
-flags.loc['rf0306'] = flags.loc['rf0338']
-flags.loc['rf0702'] = flags.loc['rf0338']
-flags.loc['rf0105'] = flags.loc['rf0338']
-nonjhusfagn = [x for x in targetnames if x not in list(flags.index.values[flags.sftoagn])]
-flags.sftoagn.loc[nonjhusfagn] = True
-flags.defstarform.loc[nonjhusfagn] = False
+#df.loc['rf0306','nii_6584_flux'] = nsa.loc['rf0306'].nii_6584_flux
+#df.loc['rf0306','h_alpha_flux'] = nsa.loc['rf0306'].h_alpha_flux
+#df.loc['rs0323','nii_6584_flux'] = nsa.loc['rs0323'].nii_6584_flux
+#df.loc['rs0323','h_alpha_flux'] = nsa.loc['rs0323'].h_alpha_flux
+#flags.loc['rf0547'] = flags.loc['rf0338']
+#flags.loc['rf0306'] = flags.loc['rf0338']
+#flags.loc['rf0702'] = flags.loc['rf0338']
+#flags.loc['rf0105'] = flags.loc['rf0338']
+#nonjhusfagn = [x for x in targetnames if x not in list(flags.index.values[flags.sftoagn])]
+#flags.sftoagn.loc[nonjhusfagn] = True
+#flags.defstarform.loc[nonjhusfagn] = False
+
+#sel = flags.sftoagn
+sel = (flags.sftoagn) & (confidence.confidence_level > 0)
 N2 = np.log10(df.nii_6584_flux/df.h_alpha_flux)
 bad = ((N2<-2.5) | (N2>-0.3))
 Z_pp04 = 9.37+2.03*N2+1.26*N2**2+0.32*N2**3
@@ -44,17 +54,21 @@ Z_pp04[bad] = -99
 plt.figure()
 ax1 = plt.subplot()
 plt.plot(df.logmstar,Z_pp04 ,'k.', alpha = 0.3, label = 'All galaxies')
-plt.plot(df.logmstar.loc[flags.sftoagn], Z_pp04.loc[flags.sftoagn],
+plt.plot(df.logmstar.loc[sel], Z_pp04.loc[sel],
          'bs', mec = 'k', markersize = 10, label = 'SFing-AGN')
+plt.plot(df.logmstar.loc[nov_target], Z_pp04.loc[nov_target],
+         'bs', mec = 'k', markersize = 10)
 plt.plot(df.logmstar.loc[nov_target], Z_pp04.loc[nov_target],'r*', 
          markersize = 10, label = 'Targets for this proposal')
 plt.plot(df.logmstar.loc[sami], Z_pp04.loc[sami],'*', c = 'lime', 
          markersize = 10, label = 'SFing-AGN in SAMI')
+#plt.plot(df.logmstar.loc[ifu], Z_pp04.loc[ifu],'*', c = 'magenta', 
+#         markersize = 10, label = 'New IFU?')
 #plt.plot(df.logmstar.loc[target], Z_pp04.loc[target],'r*', 
 #         markersize = 10, label = 'Targets for this proposal')
 #for i, txt in enumerate(target):
 #    ax1.annotate(txt, (df.logmstar.loc[target][i], Z_pp04.loc[target][i]))
-oisel = df.name.loc[flags.sftoagn][(df.oi_6300_flux.loc[flags.sftoagn]/df.oi_6300_flux_err.loc[flags.sftoagn] > 10)]
+oisel = df.name.loc[sel][(df.oi_6300_flux.loc[sel]/df.oi_6300_flux_err.loc[sel] > 10)]
 #plt.plot(df.logmstar.loc[oisel], Z_pp04.loc[oisel],
 #         'rs', mfc = 'none', mec = 'r', markersize = 15, label = 'Strong [OI]')
 yaxis = np.linspace(np.min(Z_pp04[~bad])-0.1,np.max(Z_pp04[~bad])+0.1)
@@ -80,6 +94,8 @@ ax2.set_ylabel(r'[NII]/H$\alpha$', fontsize = 15)
 #    ax1.annotate(txt, (df.logmstar.loc[nov_target][i], Z_pp04.loc[nov_target][i]))
 #for i, txt in enumerate(sami):
 #    ax1.annotate(txt, (df.logmstar.loc[sami][i], Z_pp04.loc[sami][i]))
+#for i, txt in enumerate(ifu):
+#    ax1.annotate(txt, (df.logmstar.loc[ifu][i], Z_pp04.loc[ifu][i]))
 
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
@@ -88,8 +104,10 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
         cmap(np.linspace(minval, maxval, n)))
     return new_cmap
 
-ssfr_st = np.log10(df.sfr_nuv_wise) - df.logmstar
+ssfr_st = 10**(np.log10(df.sfr_nuv_wise) - df.logmstar)
 ssfr_lt = 1/(1+(1/(df.meanfsmgr)))
+fsmgr_st = 100*(10**6)*(ssfr_st)/(1-ssfr_st)
+fsmgr_lt = df.meanfsmgr
 g_s = np.log10(10**df.logmgas/10**df.logmstar)
 cmap = plt.get_cmap('gray',6)
 cmaplist = [cmap(i) for i in range(cmap.N)]
@@ -101,15 +119,55 @@ cmaplist[5] = (0.9,0.9,0.9,1.0)
 cmap = mpl.colors.LinearSegmentedColormap.from_list(
     'Custom cmap', cmaplist, cmap.N)
 #map = truncate_colormap(old_cmap,minval = 0.2,maxval = 0.8,n=6)
+keys = ['defstarform', 'defagn', 'composite', 'agntosf', 'sftoagn']
+
+fig,ax = plt.subplots()
+cax = ax.scatter(fsmgr_st, fsmgr_lt, marker = 'o', s=8, 
+                 c = g_s, cmap = cmap, label = 'All galaxies')
+fig.colorbar(cax,extend = 'min')
+sfagn = [x for x in sel.index.values \
+         if flags.loc[x].sftoagn & (x not in target)]   
+sfagnplt, = ax.plot(fsmgr_st.loc[sel], fsmgr_lt.loc[sel],
+            's', ms = 12,mec = 'b', mfc= 'none',
+            mew = 1, label = 'SFing-AGN')
+#ax.plot(fsmgr_st.loc[ifu], fsmgr_lt.loc[ifu],
+#            '*', ms = 12,mec = 'magenta', mfc= 'none',
+#            mew = 1, label = 'New IFU?')
+samiplt, = ax.plot(fsmgr_st.loc['rs0010'], fsmgr_lt.loc['rs0010'],'*', 
+         ms = 12,c = 'lime',mfc= 'none',mew = 2, 
+         label = 'SFing-AGN in SAMI')
+#ax.plot((fsmgr_st.loc['rs0775']-0.03), fsmgr_lt.loc['rs0775']+0.03,'*', 
+#         ms = 12,mec = 'lime',mfc= 'none',mew = 2)
+ax.plot(fsmgr_st.loc[nov_target], fsmgr_lt.loc[nov_target],
+            's', ms = 12,mec = 'b', mfc= 'none',
+            mew = 1)
+targetsplt, = ax.plot(fsmgr_st.loc[nov_target], fsmgr_lt.loc[nov_target],'*', 
+         ms = 12,mec = 'r',mfc= 'none',mew = 2, 
+         label = 'Targets for this proposal')
+galname = 'rs0323'
+ax.set_xlim(np.min(fsmgr_st), np.max(fsmgr_st))
+ax.set_ylim(np.min(fsmgr_lt), np.max(fsmgr_lt))
+plt.yscale('log')
+plt.xscale('log')
+plt.legend(handles = [cax, sfagnplt, targetsplt, samiplt], fontsize = 12)
+ax.set_xlabel(r'Short Term SFH $\left(\frac{M_*(<100 Myr)}{M_*(>100 Myr)}\right)$', fontsize = 15)
+ax.set_ylabel(r'Long Term SFH $\left(\frac{M_*(<1 Gyr)}{M_*(>1 Gyr)}\right)$', fontsize = 15)
+#for i, txt in enumerate(ifu):
+#    ax.annotate(txt, (fsmgr_st.loc[ifu][i], \
+#                      fsmgr_lt.loc[ifu][i]))
+
 fig,ax = plt.subplots()
 cax = ax.scatter(10**ssfr_st, ssfr_lt, marker = 'o', s=8, 
                  c = g_s, cmap = cmap, label = 'All galaxies')
 fig.colorbar(cax,extend = 'min')
-sfagn = [x for x in flags.sftoagn.index.values \
+sfagn = [x for x in sel.index.values \
          if flags.loc[x].sftoagn & (x not in target)]   
-ax.plot(10**ssfr_st.loc[flags.sftoagn], ssfr_lt.loc[flags.sftoagn],
-        's', ms = 12,mec = 'b', mfc= 'none',
-        mew = 1, label = 'SFing-AGN')
+ax.plot(10**ssfr_st.loc[sel], ssfr_lt.loc[sel],
+            's', ms = 12,mec = 'b', mfc= 'none',
+            mew = 1, label = 'SFing-AGN')
+ax.plot(10**ssfr_st.loc[nov_target], ssfr_lt.loc[nov_target],
+            's', ms = 12,mec = 'b', mfc= 'none',
+            mew = 1)
 ax.plot(10**ssfr_st.loc['rs0010'], ssfr_lt.loc['rs0010'],'*', 
          ms = 12,mec = 'lime',mfc= 'none',mew = 2, 
          label = 'SFing-AGN in SAMI')
@@ -138,14 +196,14 @@ ax.set_xlim(np.min(10**ssfr_st), np.max(10**ssfr_st))
 ax.set_ylim(np.min(ssfr_lt)-0.00001, np.max(ssfr_lt)+1.1)
 plt.yscale('log')
 plt.xscale('log')
-plt.legend(fontsize = 12)
+#plt.legend(fontsize = 12)
 ax.set_xlabel('Short Term sSFR', fontsize = 15)
 ax.set_ylabel('Long Term sSFR (x10$^9$)', fontsize = 15)
 
 #u_r = df['modelu_rcorr']#df['umag'] - df['rmag']
 #fig,ax = plt.subplots()
 #ax.plot(df.logmstar,u_r,'k.', alpha = 0.3, label = 'All galaxies')
-#ax.plot(df.logmstar.loc[flags.sftoagn], u_r.loc[flags.sftoagn],
+#ax.plot(df.logmstar.loc[sel], u_r.loc[sel],
 #         'bs', mec = 'k', markersize = 10, label = 'SFing-AGN')
 ##ax.plot(df.logmstar.loc[target], u_r.loc[target],'r*', 
 ##         markersize = 10, label = 'Targets for this proposal')
@@ -161,7 +219,7 @@ ax.set_ylabel('Long Term sSFR (x10$^9$)', fontsize = 15)
 
 #plt.figure()
 #plt.plot(df.logmstar,ssfr_st ,'k.', alpha = 0.3, label = 'All galaxies')
-#plt.plot(df.logmstar.loc[flags.sftoagn], ssfr_st.loc[flags.sftoagn],
+#plt.plot(df.logmstar.loc[sel], ssfr_st.loc[sel],
 #         'bs', mec = 'k', markersize = 10, label = 'SFing-AGN')
 #plt.plot(df.logmstar.loc[target], ssfr_st.loc[target],'r*', 
 #         markersize = 10, label = 'Targets for this proposal')
@@ -173,7 +231,7 @@ ax.set_ylabel('Long Term sSFR (x10$^9$)', fontsize = 15)
 #
 #plt.figure()
 #plt.plot(g_s,ssfr_st ,'k.', alpha = 0.3, label = 'All galaxies')
-#plt.plot(g_s.loc[flags.sftoagn], ssfr_st.loc[flags.sftoagn],
+#plt.plot(g_s.loc[sel], ssfr_st.loc[sel],
 #         'bs', mec = 'k', markersize = 10, label = 'SFing-AGN')
 #plt.plot(g_s.loc[target], ssfr_st.loc[target],'r*', 
 #         markersize = 10, label = 'Targets for this proposal')
@@ -236,33 +294,42 @@ df = df[inobssample]
 u_r = df['modelu_rcorr']
 
 X,Y,Z = density_estimation(df.logmstar,u_r)
-f20 = plt.figure()#(figsize=(8,8))
+fig,ax = plt.subplots()#(figsize=(8,8))
 plt.imshow(np.rot90(Z), cmap='bone_r',                                                    
           extent=[xmin, xmax, ymin, ymax], interpolation='gaussian')
 
-plt.plot(df.logmstar.loc[flags.index.values[flags.sftoagn]], 
-        u_r.loc[flags.index.values[flags.sftoagn]],
-         'bs', mec = 'k', markersize = 10, label = 'SFing-AGN')
+sfagnplt, = ax.plot(df.logmstar.loc[flags.index.values[sel]], 
+        u_r.loc[flags.index.values[sel]],
+         'bs', mec = 'k', markersize = 10)#, label = 'SFing-AGN'),
+samiplt, = ax.plot(df.logmstar.loc[sami], u_r.loc[sami],'*', c = 'lime', 
+         markersize = 10)#, label = 'SFing-AGN in SAMI'),
+ax.plot(df.logmstar.loc[nov_target], 
+        u_r.loc[nov_target],
+         'bs', mec = 'k', markersize = 10)
+targetsplt, = ax.plot(df.logmstar.loc[nov_target], u_r.loc[nov_target],'r*', 
+         markersize = 10)#, label = 'Targets for this proposal'),
 #ax.plot(df.logmstar.loc[target], u_r.loc[target],'r*', 
 #         markersize = 10, label = 'Targets for this proposal')
 #for i, txt in enumerate(target):
 #    plt.annotate(txt, (df.logmstar.loc[target][i], u_r.loc[target][i]))
-plt.plot(df.logmstar.loc[nov_target], u_r.loc[nov_target],'r*', 
-         markersize = 10, label = 'Targets for this proposal')
-plt.plot(df.logmstar.loc[sami], u_r.loc[sami],'*', c = 'lime', 
-         markersize = 10, label = 'SFing-AGN in SAMI')
+#plt.plot(df.logmstar.loc[ifu], u_r.loc[ifu],'*', c = 'magenta', 
+#         markersize = 10, label = 'New IFU?')
 #plt.plot(df.logmstar.loc[oisel], u_r.loc[oisel],
 #         'rs', mfc = 'none', mec = 'r', markersize = 15, label = 'Strong [OI]')
-plt.legend(fontsize = 12, loc = 'upper left')
+ax.legend(handles=[sfagnplt,targetsplt,samiplt], 
+          labels = ['SFing-AGN', 'Targets for this proposal','SFing-AGN in SAMI'],
+          fontsize = 12, loc = 'upper left')
 plt.xlabel(r'log(M${_{stellar}}$/M${_\odot}$)', fontsize = 15)
 plt.ylabel('u-r', fontsize = 15)
 plt.clim(0,1.8)
 plt.contour(X, Y, Z, cmap='summer')
-plt.savefig('gemini_u_r_nov_new.jpeg', quality = 95)
+#plt.savefig('gemini_u_r_nov_new.jpeg', quality = 95)
 #for i, txt in enumerate(nov_target):
 #    plt.annotate(txt, (df.logmstar.loc[nov_target][i], u_r.loc[nov_target][i]))
 #for i, txt in enumerate(sami):
 #    plt.annotate(txt, (df.logmstar.loc[sami][i], u_r.loc[sami][i]))
+#for i, txt in enumerate(ifu):
+#    plt.annotate(txt, (df.logmstar.loc[ifu][i], u_r.loc[ifu][i]))
 
 
 

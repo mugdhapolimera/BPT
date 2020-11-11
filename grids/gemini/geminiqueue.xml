@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<proposal schemaVersion="2020.2.1" tacCategory="Galaxy evolution">
+    <meta band3optionChosen="true" overrideAffiliate="false">
+        <attachment>F:\mugdhapolimera\Downloads\Gemini_Queue_2020B-merged (2).pdf</attachment>
+    </meta>
+    <semester year="2020" half="B"/>
+    <title>Finding Low Metallicity Dwarf AGN Candidates at z~0 using the RESOLVE Survey</title>
+    <abstract>Thus far, AGN in dwarf galaxies have been found mostly via Halpha line broadening reflecting ionized gas outflows, and the BPT diagnostic. However, theory suggests another class of dwarf AGN that may be intermittently fuelled as strong star-formation feedback -- typical in gas-rich, metal-poor dwarfs -- fluctuates. We devise a new classification scheme that identifies low-metallicity ‘star-forming AGN’ (SFing-AGN), by using the [OIII]/Hbeta vs. [NII]/Halpha (BPT), [SII]/Halpha, and [OI]/Halpha diagnostics together. Photoionization models show that SFing-AGN represent a new category of AGN candidates that appear as star-forming in the metallicity-sensitive BPT diagnostic but as AGN in the [SII] and/or [OI] diagnostics. Low S/N SDSS spectroscopy suggests SFing-AGN may be common in the dwarf-dominated volume-limited z~0 RESOLVE survey (~1500 galaxies), but we have high S/N IFU data confirming SFing-AGN status for only 1 galaxy. We request ~3.8 hours on Gemini-N for S/N&gt;20 GMOS IFU data to confirm 4 additional SFing-AGN with AGN-like [OI]/Halpha line ratios in the central kpc. These observations will determine whether we have identified a predicted, distinct class of dwarf AGN in low-metallicity star-forming galaxies. (Resubmission of successful proposal GS-2020A-FT-104; not observed due to COVID-19 shutdown).</abstract>
+    <scheduling></scheduling>
+    <keywords>
+        <keyword>Emission lines</keyword>
+        <keyword>Dwarf galaxies</keyword>
+        <keyword>Active galaxies</keyword>
+    </keywords>
+    <investigators>
+        <pi id="investigator-0">
+            <firstName>Mugdha</firstName>
+            <lastName>Polimera</lastName>
+            <status>Grad Thesis</status>
+            <gender>Woman</gender>
+            <email>mugpol@unc.edu</email>
+            <phone>3174578703</phone>
+            <address>
+                <institution>University of North Carolina</institution>
+                <address>Department of Physics and Astronomy
+CB# 3255 Phillips Hall
+Chapel Hill
+NC
+27599-3255</address>
+                <country>USA</country>
+            </address>
+        </pi>
+        <coi id="investigator-1">
+            <firstName>Sheila</firstName>
+            <lastName>Kannappan</lastName>
+            <status>PhD</status>
+            <gender>Woman</gender>
+            <email>sheila@physics.unc.edu</email>
+            <phone></phone>
+            <institution>University of North Carolina</institution>
+        </coi>
+        <coi id="investigator-2">
+            <firstName>Chris</firstName>
+            <lastName>Richardson</lastName>
+            <status>PhD</status>
+            <gender>Man</gender>
+            <email>crichardson17@elon.edu</email>
+            <phone></phone>
+            <institution>Elon University</institution>
+        </coi>
+        <coi id="investigator-3">
+            <firstName>Derrick</firstName>
+            <lastName>Carr</lastName>
+            <status>Grad Thesis</status>
+            <gender>Man</gender>
+            <email>derrcarr@live.unc.edu</email>
+            <phone></phone>
+            <institution>University of North Carolina</institution>
+        </coi>
+    </investigators>
+    <targets>
+        <sidereal epoch="J2000" id="target-0">
+            <name>rf0503</name>
+            <degDeg>
+                <ra>358.09448999999995066900737583637237548828125</ra>
+                <dec>-0.62866700000000719228410162031650543212890625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.079999923706055</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-1">
+            <name>rf0477</name>
+            <degDeg>
+                <ra>353.10546999999996842234395444393157958984375</ra>
+                <dec>-0.8469380000000228392309509217739105224609375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">15.430000305175781</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-2">
+            <name>rf0306</name>
+            <degDeg>
+                <ra>32.48745900000000119689502753317356109619140625</ra>
+                <dec>0.87655499999999619831214658915996551513671875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.479999542236328</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-3">
+            <name>rf0001</name>
+            <degDeg>
+                <ra>0.01343300000002045635483227670192718505859375</ra>
+                <dec>-1.11288899999999557621777057647705078125</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">17.31999969482422</magnitude>
+            </magnitudes>
+        </sidereal>
+    </targets>
+    <conditions>
+        <condition id="condition-0">
+            <name>CC 70%/Cirrus, IQ 70%/Good, SB 80%/Grey, WV Any</name>
+            <cc>70%/Cirrus</cc>
+            <iq>70%/Good</iq>
+            <sb>80%/Grey</sb>
+            <wv>Any</wv>
+        </condition>
+    </conditions>
+    <blueprints>
+        <gmosN>
+            <regime>optical</regime>
+            <ifu id="blueprint-0">
+                <name>GMOS-N IFU B600 None IFU 1 slit</name>
+                <visitor>false</visitor>
+                <altair>
+                    <none/>
+                </altair>
+                <filter>None</filter>
+                <disperser>B600</disperser>
+                <fpu>IFU 1 slit</fpu>
+            </ifu>
+        </gmosN>
+    </blueprints>
+    <observations>
+        <observation band="Band 1/2" enabled="true" target="target-2" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.87</progTime>
+            <partTime units="hr">0.08700000000000001</partTime>
+            <time units="hr">0.957</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>81</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-3" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.87</progTime>
+            <partTime units="hr">0.08700000000000001</partTime>
+            <time units="hr">0.957</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>81</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-1" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.87</progTime>
+            <partTime units="hr">0.08700000000000001</partTime>
+            <time units="hr">0.957</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>92</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-0" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.87</progTime>
+            <partTime units="hr">0.08700000000000001</partTime>
+            <time units="hr">0.957</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+            </meta>
+        </observation>
+    </observations>
+    <proposalClass>
+        <queue tooOption="None" key="e0f033d7-9ea6-4409-857e-b9e51c27d271">
+            <ngo partnerLead="investigator-0">
+                <request>
+                    <time units="hr">3.83</time>
+                    <minTime units="hr">0.0</minTime>
+                </request>
+                <response>
+                    <receipt>
+                        <timestamp>2020-04-07T15:34:34.000Z</timestamp>
+                        <id>US-2020B-054</id>
+                        <contact>phase1help-us@gemini.edu</contact>
+                    </receipt>
+                </response>
+                <partner>us</partner>
+            </ngo>
+        </queue>
+    </proposalClass>
+</proposal>

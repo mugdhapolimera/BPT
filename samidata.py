@@ -14,8 +14,16 @@ from astropy.table import Table as table
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from matplotlib import colors
+from matplotlib import patches
 import os
 from scipy.io import readsav
+import itertools
+from astropy import wcs
+from astropy.coordinates import SkyCoord as sky
+import matplotlib as mpl
+label_size = 15
+mpl.rcParams['xtick.labelsize'] = label_size 
+mpl.rcParams['ytick.labelsize'] = label_size 
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -44,18 +52,23 @@ def logerr(err,number):
     return log_err
 
 resdata = readsav('../SDSS_spectra/resolvecatalog.dat')
+resphot = readsav('../SDSS_spectra/resolvecatalogphot.dat')
+df = pd.read_csv('C:\Users\mugdhapolimera\github\SDSS_spectra\RESOLVE_snr5_master.csv')
+df.index = df.name
 galname = 'rs0010'
-#galname = 'rs0775'
-galname = 'rs0756'
+#galname = 'rs0022'
+#galname = 'rs0756'
 if galname == 'rs0775':
     folder = '71146' #rs0775
 if galname == 'rs0010':
     folder = '372320' #rs0010
-if galname == 'rs0013':
-    folder = '372374'
+if galname == 'rs0013': 
+    folder = '372374' #not SNR 5
 if galname == 'rs0756':
     folder = '85507'
-#folder = '372374' #rs0013 not SNR 5
+if galname == 'rs0022':
+    folder = '210660'
+
 os.chdir(r'C:\Users\mugdhapolimera\Desktop\UNC\Courses\Research\SAMI Data\/'+ folder)
 #filename = 'adaptive_1-comp.fits'
 #filename = 'adaptive_recom-comp.fits'
@@ -72,28 +85,32 @@ oi = fits.open(folder+'_OI6300_'+filename)[0].data#.flatten()
 oi_err = fits.open(folder+'_OI6300_'+filename)[1].data#.flatten()
 nii = fits.open(folder+'_NII6583_'+filename)[0].data#.flatten()
 nii_err = fits.open(folder+'_NII6583_'+filename)[1].data#.flatten()
-#sii = (fits.open(folder+'_SII6716_'+filename)[0].data + \
-#        fits.open(folder+'_SII6731_'+filename)[0].data**2).flatten()
-#sii_err = np.sqrt(fits.open(folder+'_SII6716_'+filename)[0].data**2 + \
-#              fits.open(folder+'_SII6731_'+filename)[0].data**2).flatten()
 sii_1 = fits.open(folder+'_SII6716_'+filename)[0].data#.flatten()
 sii_1_err = fits.open(folder+'_SII6716_'+filename)[1].data#.flatten()
 sii_2 = fits.open(folder+'_SII6731_'+filename)[0].data#.flatten()
 sii_2_err = fits.open(folder+'_SII6731_'+filename)[1].data#.flatten()
 sii = sii_1 + sii_2
-#pixelscale = 0.5 #arcsec/pix
+velfield = fits.open(folder+'_gas-velocity_default_recom-comp.fits')[0].data#.flatten()
+velhdu = fits.open(folder+'_gas-velocity_default_recom-comp.fits')[0].header
+
 cube_hdu = fits.open(folder+'_cube_red.fits')[0].header
+cube = fits.open(folder+'_cube_red.fits')[0].data
+#cube_hdu = fits.open(folder+'_adaptive_red.fits')[0].header
+#cube = fits.open(folder+'_adaptive_red.fits')[0].data
+
 bluecube_hdu = fits.open(folder+'_cube_blue.fits')[0].header
-cube = fits.open(folder+'_cube_red.fits')[0].data#.flatten()
 bluecube = fits.open(folder+'_cube_blue.fits')[0].data#.flatten()
+#bluecube_hdu = fits.open(folder+'_adaptive_blue.fits')[0].header
+#bluecube = fits.open(folder+'_adaptive_blue.fits')[0].data#.flatten()
 pixelscale = cube_hdu['CDELT1'] #deg/pix
 v = resdata['vhel'][np.where(resdata['name'] == galname)] #km/s
 z = v/3e5
-d = (v/70)*10**6 #Hubble's constant
-#pc = 2*3.14*d*pixelscale/360 #pc/pix
-pc = pixelscale *3600 #in arcsec
+d = (v/70)*10**6 #Hubble's law - d in pc
+pc = 2*np.pi*d*(pixelscale/360)/1000 #kpc/pix
+b_a = np.float(df.loc[galname].b_a)
+#pc = pixelscale *3600 #in arcsec/pix
 MAX = np.max(halpha[~np.isnan(halpha)])
-center = [[25],[25]]#np.where(halpha == MAX)
+center = [[int(cube_hdu['CRPIX1'])],[int(cube_hdu['CRPIX2'])]]#np.where(halpha == MAX)
 #center = [center[0][0], center[1][0]]
 dx = np.arange(np.shape(halpha)[0])- center[0]
 dy = np.arange(np.shape(halpha)[1])- center[1]
@@ -101,100 +118,216 @@ dxy = np.array(zip(dx,dy))
 r = np.zeros(halpha.shape)
 for i in range(len(dx)):
     for j in range(len(dy)):
-        r[i][j] = np.sqrt((pc*dx[i])**2 + (pc*-dy[j])**2)
-rndx = np.where(r<=2.05)
-sdss = cube[67:1990,rndx[0],rndx[1]]
-nans = np.where(np.isnan(sdss))
-sdss[nans] = 0
-sdss2arc = np.sum(sdss,axis=1)
+        r[i][j] = np.sqrt((pc*dx[i])**2 + (pc*-dy[j]/b_a)**2)
 
 hdu = cube_hdu
 lam0 = cube_hdu['CRVAL3']-((cube_hdu['CRPIX3']-1)*cube_hdu['CDELT3'])
 lam = (np.arange(cube_hdu['NAXIS3']))*cube_hdu['CDELT3'] + lam0
 bluelam0 = bluecube_hdu['CRVAL3']-((bluecube_hdu['CRPIX3']-1)*bluecube_hdu['CDELT3'])
 bluelam = (np.arange(bluecube_hdu['NAXIS3']))*bluecube_hdu['CDELT3'] + bluelam0
-plt.figure()
-plt.plot(lam,cube[:,25,25])
-plt.plot(bluelam,bluecube[:,25,25])
+###############################################################################
+# Calculate S/N from the continuum of the blue spectra
+###############################################################################
+start = 4500
+end = 4800
+startndx = np.where(abs(bluelam-start) == min(abs(bluelam-start)))[0][0]
+endndx = np.where(abs(bluelam-end) == min(abs(bluelam-end)))[0][0]
+bluesnr = np.zeros(np.shape(bluecube[0,:,:]))
+blue = fits.open(folder+'_cube_blue.fits')
+bluevar = blue[1].data
+for i,j in itertools.product(list(range(50)),list(range(50))):
+    spaxel = [i,j]
+    signal = np.nanmedian(bluecube[startndx:endndx,spaxel[0],spaxel[1]]) 
+    #in units of 10**(-16) erg /s /cm**2 /angstrom /pixel
+    noise = np.sqrt(np.nanmedian(bluevar[startndx:endndx,spaxel[0],spaxel[1]]))
+    bluesnr[i][j] = signal/noise
 
-sdss2arc = sdss2arc.T[:,None,None]
-hdu['NAXIS'] = 3
-hdu['NAXIS1'] = sdss2arc.shape[1]
-hdu['NAXIS2'] = sdss2arc.shape[2]
-hdu['NAXIS3'] = sdss2arc.shape[0]
+start = 6475
+end = 6615
+startndx = np.where(abs(lam-start) == min(abs(lam-start)))[0][0]
+endndx = np.where(abs(lam-end) == min(abs(lam-end)))[0][0]
+redsnr = np.zeros(np.shape(halpha))
+spaxel = [25,25] #center
+red = fits.open(folder+'_cube_red.fits')
+redvar = red[1].data
+for i,j in itertools.product(list(range(50)),list(range(50))):
+    spaxel = [i,j]
+    signal = 2*np.nanmedian(cube[startndx:endndx,spaxel[0],spaxel[1]]) 
+    #in units of 10**(-16) erg /s /cm**2 /angstrom /pixel
+    noise = np.sqrt(2*np.nanmedian(bluevar[startndx:endndx,spaxel[0],spaxel[1]]))
+    redsnr[i][j] = signal/noise
 
-#hdu['CRVAL3'] = hdu['CRVAL1']
-hdu['CRVAL1'] = 1
-hdu['CRVAL2'] = 1
+#plt.figure()
+#plt.plot(lam,cube[:,25,25])
+#plt.plot(bluelam,bluecube[:,25,25])
 
-hdu['CRPIX3'] = 1
-hdu['CRVAL3'] = lam[67]
-
-#hdu['CDELT3'] = hdu['CDELT1']
-#hdu['CD3_3'] = hdu['CD1_1']
-hdu['CDELT1'] = 1
-hdu['CDELT2'] = 1
+#Try to create "fake" SDSS spectrum from SAMI spectrum
+#rndx = np.where(r<=2.05)
+#sdss = cube[67:1990,rndx[0],rndx[1]]
+#nans = np.where(np.isnan(sdss))
+#sdss[nans] = 0
+#sdss2arc = np.sum(sdss,axis=1)
+#sdss2arc = sdss2arc.T[:,None,None]
+#hdu['NAXIS'] = 3
+#hdu['NAXIS1'] = sdss2arc.shape[1]
+#hdu['NAXIS2'] = sdss2arc.shape[2]
+#hdu['NAXIS3'] = sdss2arc.shape[0]
+#
+##hdu['CRVAL3'] = hdu['CRVAL1']
+#hdu['CRVAL1'] = 1
+#hdu['CRVAL2'] = 1
+#
+#hdu['CRPIX3'] = 1
+#hdu['CRVAL3'] = lam[67]
+#
+##hdu['CDELT3'] = hdu['CDELT1']
+##hdu['CD3_3'] = hdu['CD1_1']
+#hdu['CDELT1'] = 1
+#hdu['CDELT2'] = 1
 
 
 mesh = np.meshgrid(np.arange(50), np.arange(50))
 #To search for a particular wavelength
-ndx = np.where(abs(lam-6685) == min(abs(lam-6685)))[0][0]
-fig, ax = plt.subplots(1)
-ax.imshow(cube[ndx,:,:],norm = colors.Normalize(vmin = 0, vmax = 0.04439))
-cmap = colors.ListedColormap(['purple','orange','blue','yellow','green','red',\
-                              'cyan','magenta','magenta','magenta','magenta',\
-                              'magenta','magenta','magenta','magenta','magenta'])
-#plt.get_cmap('rainbow',7)#int(np.max(r)))
-cax = ax.scatter(mesh[0],mesh[1], s = 3, c = r, cmap = cmap)
-fig.colorbar(cax,extend = 'min')
+line = (1+z)*6561 #6300
+ndx = np.where(abs(lam-line) == min(abs(lam-line)))[0][0]
 
 ha_cen = halpha[center]
 hb_cen = hbeta[center]
 nii_cen = nii[center]
 sii_cen = sii[center]
+sii_cen_err = np.sqrt(sii_1[center]**2 + sii_2[center]**2)
 oi_cen = oi[center]
 oiii_cen = oiii[center]
 ha_cen_err = halpha_err[center]
 hb_cen_err = hbeta_err[center]
 nii_cen_err = nii_err[center]
-#sii_cen_err = sii_err[center]
 oi_cen_err = oi_err[center]
 oiii_cen_err = oiii_err[center]
-center = [center[0][0],center[1][0]]
-#halpha = halpha[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#hbeta = hbeta[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#nii   = nii[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#oi    = oi[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#oiii  = oiii[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#sii_1   = sii_1[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#sii_2   = sii_2[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#halpha_err = halpha_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#hbeta_err = hbeta_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#nii_err   = nii_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#oi_err    = oi_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#oiii_err  = oiii_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#sii_1_err   = sii_1_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#sii_2_err   = sii_2_err[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#r = r[center[0]-10:center[0]+10,center[1]-10:center[1]+10]
-#oi_full = oi
-#halpha_full = halpha
-#center = [[2],[4]]#np.where(halpha == MAX)
-##center = [center[0][0], center[1][0]]
-#ha_cen = halpha[center]
-#hb_cen = hbeta[center]
-#nii_cen = nii[center]
-#sii_cen = sii_1[center]+sii_2[center]
-#oi_cen = oi[center]
-#oiii_cen = oiii[center]
+#center = [center[0][0],center[1][0]]
 
 nans = [~np.isnan(halpha) & ~np.isnan(hbeta) & ~np.isnan(nii) & ~np.isnan(sii_1)
         & ~np.isnan(sii_2) & ~np.isnan(oi) & ~np.isnan(oiii)]
-err = [(nii/nii_err > 5) & (sii_1/sii_1_err > 5) & (sii_2/sii_2_err > 5) & 
-       (oi/oi_err > 5) & (oiii/oiii_err > 5) & (hbeta/hbeta_err > 5) & 
-       (halpha/halpha_err > 5)]
-sdss = (r <= 2.05)
-#good = (nans and err and sdss)
-good = pix
+snr = 5 #np.nanmedian(oi/oi_err)
+#err = [(nii/nii_err > snr) & (sii_1/sii_1_err > snr) & (sii_2/sii_2_err > snr) & 
+#       (oi/oi_err > snr) & (oiii/oiii_err > snr) & (hbeta/hbeta_err > snr) & 
+#       (halpha/halpha_err > snr)]
+err = [(halpha/halpha_err > snr)]
+snr = 10
+contsnr = (bluesnr > snr) & (redsnr > snr)
+good = nans and err and contsnr
+#good = good[0]
+ndxs = np.array(list(itertools.product(np.arange(50),np.arange(50))))
+ndxs = ndxs[good.ravel()]
+#ax.scatter(ndxs[:,0], ndxs[:,1], color = 'white', marker = 's')
+badndxs = np.array(list(itertools.product(np.arange(50),np.arange(50))))
+badndx = badndxs[~good.ravel()]
+
+from copy import copy
+cmap = copy(plt.cm.seismic)
+cmap.set_bad('gray',0.8)
+
+w = wcs.WCS(cube_hdu)
+w = w.dropaxis(2)
+xy = np.meshgrid(np.arange(50), np.arange(50))
+coords = w.all_pix2world(xy[0], xy[1],0)
+
+image = np.ma.masked_where(~good,np.log10(oi/halpha))
+#image = np.ma.masked_where(~good,(halpha))
+
+goodimage = np.ma.masked_where(((bluesnr < 5) & (redsnr < 5)),np.log10(oi/halpha))
+#goodimage = np.ma.masked_where(((bluesnr < 5) & (redsnr < 5)),(halpha))
+goodimage[:,0:15] = np.nan
+goodimage[:,34:] = np.nan
+fig = plt.figure()
+ax = plt.subplot(projection = w)
+#ax.imshow(cube[ndx,:,:],norm = colors.Normalize(vmin = 0, vmax = 0.04439), 
+#          cmap = 'inferno')
+cax = ax.imshow(goodimage,
+                norm = colors.Normalize(vmin = -1.4, vmax = -1.0), 
+                cmap = 'seismic')
+cax = ax.imshow(image,norm = colors.Normalize(vmin = -1.4, vmax = -1.0), 
+          cmap = cmap)
+#cax = ax.imshow(goodimage,
+#                norm = colors.Normalize(vmin = 0.09, vmax = 1.0), 
+#                cmap = 'seismic')
+#cax = ax.imshow(image,norm = colors.Normalize(vmin = 0.09, vmax = 1.0), 
+#          cmap = cmap)
+ax.plot(25,25,'x', c = 'black')
+#cmap = colors.ListedColormap(['purple','orange','blue','yellow','green','red',\
+#                              'cyan','black','white','lime','purple'])#,\
+#                              'magenta','magenta','magenta','magenta','magenta',
+#                              'magenta','magenta','magenta','magenta','magenta'])
+#cmap = plt.get_cmap('rainbow_r',18)#int(np.max(r)))
+#boundaries = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0])#,
+#                       5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0])
+#norm = colors.BoundaryNorm(boundaries, cmap.N, clip=True)
+#cax = ax.scatter(mesh[0],mesh[1], s = 3, c = r, cmap = cmap, norm = norm)
+
+#Want to plot annuli at every 0.5 kpc; 5 pixels = 1 kpc
+#for i in range(0,30,5):
+#    #To add annulus with 0.5 kpc diameter 
+##    e1 = patches.Ellipse((25,25), width = b_a*0.5*i, height = 0.5*i, 
+##                         linewidth = 2, fill = False, zorder = 2)
+##    ax.add_patch(e1)
+#    #To add annulus with 1 kpc radius
+#    e1 = patches.Ellipse((25,25), width = b_a*i*2, height = 2*i, 
+#                         linewidth = 2, fill = False, zorder = 2, color = 'g')
+#    ax.add_patch(e1)
+Re = rescatphot.radr50p[rescat.name == galname] #in arcsec
+Re_deg = Re/3600.0
+height = 2*Re/(pixelscale*3600)
+Re_kpc = 2*np.pi*d*(Re_deg/360)/1000 #kpc/pix
+
+e_Re = patches.Ellipse((25,25), width = b_a*height, height = height, 
+                         linewidth = 2, fill = False, zorder = 2, ls = '--',
+                         color = 'black')
+ax.add_patch(e_Re)
+e1 = patches.Ellipse((25,25), width = b_a*5*2, height = 2*5, 
+                     linewidth = 2, fill = False, zorder = 2, color = 'yellow')
+ax.add_patch(e1)
+    
+cb = fig.colorbar(cax,extend = 'min')
+ax.set_xlabel('RA')
+ax.set_ylabel('Dec')
+ax.coords[0].set_ticklabel(size=10.0)
+ax.coords[1].set_ticklabel(size=10.0)
+cb.ax.tick_params(labelsize=10.0)
+#fig.xticks(fontsize=15)
+#ax.tick_params(axis = 'both',labelsize = 10)
+#ax.scatter(badndx[:,1], badndx[:,0], color = 'gray', marker = 's', alpha = 0.7,
+#           edgecolors = 'none')
+
+goodvel = np.ma.masked_where(((bluesnr < 5) & (redsnr < 5)),(velfield[0,:,:]))
+
+fig = plt.figure()
+ax = plt.subplot(projection = w)
+cax = ax.imshow(velfield[0,:,:],
+                norm = colors.Normalize(vmin = -75, vmax = 75), 
+                cmap = 'seismic')
+fig.colorbar(cax,extend = 'min')
+ax.set_xlabel('RA')
+ax.set_ylabel('Dec')
+ax.plot(25,25,'x', c = 'black')
+
+halpha = halpha[good]
+hbeta = hbeta[good]
+nii = nii[good]
+sii_1 = sii_1[good]
+sii_2 = sii_2[good]
+oi = oi[good]
+oiii = oiii[good]
+r = r[good]
+halpha_err = halpha_err[good]
+hbeta_err = hbeta_err[good]
+nii_err = nii_err[good]
+sii_1_err = sii_1_err[good]
+sii_2_err = sii_2_err[good]
+oi_err = oi_err[good]
+oiii_err = oiii_err[good]
+fig,(ax1,ax2,ax3) = plt.subplots(1,3,sharey = True)
+
+plt.title(galname+' SNR > '+str(snr))
+good = (r <= 3.05)
 halpha = halpha[good]
 hbeta = hbeta[good]
 nii = nii[good]
@@ -211,47 +344,26 @@ sii_2_err = sii_2_err[good]
 oi_err = oi_err[good]
 oiii_err = oiii_err[good]
 
-good = (r <= 5.0)
-halpha = halpha[good]
-hbeta = hbeta[good]
-nii = nii[good]
-sii_1 = sii_1[good]
-sii_2 = sii_2[good]
-oi = oi[good]
-oiii = oiii[good]
-r = r[good]
-halpha_err = halpha_err[good]
-hbeta_err = hbeta_err[good]
-nii_err = nii_err[good]
-sii_1_err = sii_1_err[good]
-sii_2_err = sii_2_err[good]
-oi_err = oi_err[good]
-oiii_err = oiii_err[good]
-
-catid = [folder]*len(halpha)
-data = list(zip(catid, hbeta, hbeta_err,oiii, oiii_err, oi, oi_err,
-                halpha, halpha_err, nii, nii_err, sii_1, sii_1_err, sii_2, sii_2_err))
-names = ['CATID',
-         'h_beta_flux', 'h_beta_flux_err', 
-       'oiii_5007_flux', 'oiii_5007_flux_err',
-       'oi_6300_flux', 'oi_6300_flux_err', 
-       'h_alpha_flux','h_alpha_flux_err',
-       'nii_6584_flux', 'nii_6584_flux_err', 
-       'sii_6717_flux','sii_6717_flux_err',
-       'sii_6731_flux', 'sii_6731_flux_err']
-
-df = pd.DataFrame(data, columns = names)
-df.to_csv(folder+'.csv')
+#catid = [folder]*len(halpha)
+#data = list(zip(catid, hbeta, hbeta_err,oiii, oiii_err, oi, oi_err,
+#                halpha, halpha_err, nii, nii_err, sii_1, sii_1_err, sii_2, sii_2_err))
+#names = ['CATID',
+#         'h_beta_flux', 'h_beta_flux_err', 
+#       'oiii_5007_flux', 'oiii_5007_flux_err',
+#       'oi_6300_flux', 'oi_6300_flux_err', 
+#       'h_alpha_flux','h_alpha_flux_err',
+#       'nii_6584_flux', 'nii_6584_flux_err', 
+#       'sii_6717_flux','sii_6717_flux_err',
+#       'sii_6731_flux', 'sii_6731_flux_err']
+#
+#df = pd.DataFrame(data, columns = names)
+#df.to_csv(folder+'.csv')
 sii = sii_1 + sii_2
 sii_err = np.sqrt(sii_1_err**2 + sii_2_err**2)
 n2ha = np.log10(nii/halpha)
 s2ha = np.log10(sii/halpha)
 o1ha= np.log10(oi/halpha)
 o3hb = np.log10(oiii/hbeta)
-#n2ha_err = logerr(ratioerror(nii, nii_err, halpha, halpha_err),n2ha)
-#s2ha_err = logerr(ratioerror(sii, sii_err, halpha, halpha_err),s2ha)
-#o1ha_err = logerr(ratioerror(oi, oi_err, halpha, halpha_err),o1ha)
-#o3hb_err = logerr(ratioerror(oiii, oiii_err, hbeta, hbeta_err),o3hb)
 n2ha_err = ratioerror(nii, nii_err, halpha, halpha_err)
 s2ha_err = ratioerror(sii, sii_err, halpha, halpha_err)
 o1ha_err = ratioerror(oi, oi_err, halpha, halpha_err)
@@ -260,60 +372,57 @@ o3hb_err = ratioerror(oiii, oiii_err, hbeta, hbeta_err)
 refn2ha = np.linspace(-3.0, 0.35)
 refoiha = np.linspace(-2.5, -0.4)
 refsiiha = np.linspace(-2, 0.32,100)
+
 xlims = [-1.0,0.0]
-ylims = [-0.2,0.35]
-cmap = plt.get_cmap('rainbow',int(np.max(r)/0.5))
-fig,(ax1,ax2,ax3) = plt.subplots(1,3,sharey = True)#'NII Scatter Plot')
+ylims = [-0.15,0.4]
+cmap = plt.get_cmap('rainbow_r',10)#int(np.max(r)/0.5))
+boundaries = np.array([0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5])#, 4.0])#, 4.5, 5.0])
+norm = colors.BoundaryNorm(boundaries, cmap.N, clip=True)
+
+#NII plot
 ax1.plot(refn2ha, n2hamain(refn2ha), 'k', 
                   label = 'ke01 Theoretical Maximum Starburst Line')
 ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
                       'k-.', label = 'Ka03 Composite Line')
-#ax1.plot(n2ha, o3hb, 'k.', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 
-#SII/OIII plot
-#fig,ax2 = plt.subplots(322)#'SII Scatter Plot')
+#SII plot
 ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
 ax2.plot(refsiiha[refsiiha > -0.32], s2halinseyf(refsiiha[refsiiha > -0.32]),
                   'k--', label = 'Liner/Seyfert Division')
-#ax2.plot(s2ha, o3hb, 'k.', markersize = 5, \
-#                    alpha = 0.5, label = 'SF')
-#ax2.plot(np.log10(sii_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ro', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
 ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
 #ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 
-#OI/OIII plot
-#fig ,ax3= plt.subplots(323)#'OI Scatter Plot')
+#OI plot
 ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
                   'k', label = 'Ke01 Theoretical Maximum Starburst Line')
 ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
                   'k-.', label = 'Ka03 Composite Line')
-#ax3.set_ylim(ylims)
 ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),'k--', 
          label = 'Ke06 Liner/Seyfert Division Line')
 ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
 #ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-#ax3.plot(o1ha, o3hb, 'k.', alpha = 0.5, 
-#                    markersize = 5, label = 'SF')
-#ax3.plot(np.log10(oi_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ro', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
+
 if error:
     ax1.errorbar(n2ha.flatten(), o3hb.flatten(), xerr = n2ha_err.flatten(),
                 yerr = o3hb_err.flatten(),fmt = 'None', marker = 'None', 
                 alpha = 0.5, mew = 0, label = 'SF-to-AGN',
-                ecolor = 'k', zorder=0)
+                ecolor = 'k', zorder=0, norm = norm)
     ax2.errorbar(s2ha.flatten(), o3hb.flatten(), xerr = s2ha_err.flatten(),
                 yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', c = r,
                 alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k',
-                zorder=0)
+                zorder=0, norm = norm)
     ax3.errorbar(o1ha.flatten(), o3hb.flatten(), xerr = o1ha_err.flatten(),
                 yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', c = r,
                 alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k', 
-                zorder=0)
-cax = ax1.scatter(n2ha, o3hb,c = r, cmap = cmap)
-cax = ax2.scatter(s2ha, o3hb,c = r, cmap = cmap)
-cax = ax3.scatter(o1ha, o3hb,c = r, cmap = cmap)
-fig.colorbar(cax,extend = 'min')
+                zorder=0, norm = norm)
+cax = ax1.scatter(n2ha, o3hb,c = r, cmap = cmap, norm = norm)
+cax = ax2.scatter(s2ha, o3hb,c = r, cmap = cmap, norm = norm)
+cax = ax3.scatter(o1ha, o3hb,c = r, cmap = cmap, norm = norm)
+fig.colorbar(cax,extend = 'min', ticks = boundaries, boundaries= boundaries)
+
+#Plotting the center with a bigger marker
 ax1.plot(np.log10(nii_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ko', \
          mfc = 'none', mew = 2, markersize = 15)#, label = 'Definite Star Forming')
 ax2.plot(np.log10(sii_cen/ha_cen), np.log10(oiii_cen/hb_cen), 'ko', \
@@ -327,11 +436,7 @@ ax2.scatter(np.log10(sii_cen/ha_cen), np.log10(oiii_cen/hb_cen), marker = 'o', \
 ax3.scatter(np.log10(oi_cen/ha_cen), np.log10(oiii_cen/hb_cen), marker = 'o', \
          s = 175, c = [0.0], cmap = cmap)#, label = 'Definite Star Forming')
 
-#ax3.errorbar(-0.9, 0.3, xerr = ratioerror(oi_cen,oi_cen/10,ha_cen,ha_cen/20),
-#            yerr = ratioerror(oiii_cen,oiii_cen/20,hb_cen,hb_cen/10), 
-#                marker = 'o', c = 'k')
-#rs1105
-df = pd.read_csv('C:\Users\mugdhapolimera\github\SDSS_spectra\RESOLVE_full_snr5.csv')
+df = pd.read_csv('C:\Users\mugdhapolimera\github\SDSS_spectra\RESOLVE_snr5_master.csv')
 df.index = df.name
 sdss_oi = df.oi_6300_flux.loc[galname]
 sdss_oi_err = df.oi_6300_flux_err.loc[galname]
@@ -342,136 +447,52 @@ sdss_ha_err = df.h_alpha_flux_err.loc[galname]
 sdss_hb = df.h_beta_flux.loc[galname]
 sdss_hb_err = df.h_beta_flux_err.loc[galname]
 
+#Plotting SAMI errorbar
 ax3.errorbar(-1.05, 0.3, xerr = ratioerror(oi_cen,oi_cen_err,ha_cen,ha_cen_err),
                 yerr = ratioerror(oiii_cen,oiii_cen_err,hb_cen,hb_cen_err), 
                 marker = 'o', c = 'k')
+#Plotting SDSS errorbar
 ax3.errorbar(-1.2, 0.3, xerr = ratioerror(sdss_oi,sdss_oi_err,sdss_ha,sdss_ha_err),
             yerr = ratioerror(sdss_oiii,sdss_oiii_err,sdss_hb,sdss_hb_err), 
                 marker = 'o', c = 'k')
-ax3.errorbar(-0.9, 0.3, xerr = ratioerror(sdss_oi,sdss_oi/23,sdss_ha,sdss_ha/43),
-            yerr = ratioerror(sdss_oiii,sdss_oiii/30,sdss_hb,sdss_hb/28), 
+#Plotting expected GEMINI errorbar
+ax3.errorbar(-0.9, 0.3, xerr = ratioerror(sdss_oi,sdss_oi/37,sdss_ha,sdss_ha/78),
+            yerr = ratioerror(sdss_oiii,sdss_oiii/40,sdss_hb,sdss_hb/33), 
                 marker = 'o', c = 'k')
 ax3.set_xlim(-1.6,-0.8)
 ax2.set_xlim(-0.5,-0.1)
 ax1.set_xlim(xlims)
 ax1.set_ylim(ylims)
 
-#df = pd.read_csv('C:\Users\mugdhapolimera\github\SDSS_spectra\RESOLVE_full_snr5_port.csv')
-#df.index = df.name
-#galname = 'rs1375'
-#sdss_oi = df.Flux_OI_6300.loc[galname]
-#sdss_oi_err = df.Flux_OI_6300_Err.loc[galname]
-#sdss_sii = df.Flux_SII_6716.loc[galname]+df.Flux_SII_6730.loc[galname]
-#sdss_sii_err = df.Flux_SII_6730_Err.loc[galname]
-#sdss_oiii =  df.Flux_OIII_5006.loc[galname]
-#sdss_oiii_err = df.Flux_OIII_5006_Err.loc[galname]
-#sdss_ha = df.Flux_Ha_6562.loc[galname]
-#sdss_ha_err = df.Flux_Ha_6562_Err.loc[galname]
-#sdss_hb = df.Flux_Hb_4861.loc[galname]
-#sdss_hb_err = df.Flux_Hb_4861_Err.loc[galname]
-#
-#ax3.errorbar(np.log10(sdss_oi/sdss_ha), np.log10(sdss_oiii/sdss_hb), 
-#             xerr = ratioerror(sdss_oi,sdss_oi_err,sdss_ha,sdss_ha_err),
-#            yerr = ratioerror(sdss_oiii,sdss_oiii_err,sdss_hb,sdss_hb_err), 
-#                marker = 'o', c = 'k')
-#ax2.errorbar(np.log10(sdss_sii/sdss_ha), np.log10(sdss_oiii/sdss_hb), 
-#             xerr = ratioerror(sdss_sii,sdss_sii_err,sdss_ha,sdss_ha_err),
-#            yerr = ratioerror(sdss_oiii,sdss_oiii_err,sdss_hb,sdss_hb_err), 
-#                marker = 'o', c = 'k')
+line = (1+z)*6561 #6300
+ndx = np.where(abs(lam-line) == min(abs(lam-line)))[0][0]
+spec = fits.open('372320_annular_red.fits')[0].data
+goodspec = np.ma.masked_where(np.isnan(spec[ndx,:,:]),spec[ndx,:,:])
 
-#ax3.errorbar(np.log10(sdss_oi/sdss_ha),np.log10(sdss_oiii/sdss_hb),
-#             xerr = ratioerror(sdss_oi,sdss_oi_err,sdss_ha,sdss_ha_err),
-#            yerr = ratioerror(sdss_oiii,sdss_oiii_err,sdss_hb,sdss_hb_err), 
-#                marker = 'o', c = 'k')
+cmap = copy(plt.cm.seismic)
+cmap.set_bad('gray',0.8)
 
-#df = pd.read_csv(folder+'_smcdext.csv')
-##create line ratios/H-alpha and [OIII]/H-beta
-#nii_2 = df['nii_6584_flux']
-#nii_sum = df['nii_6584_flux']
-#nii_sum_err = df['nii_6584_flux_err']**2
-## note that the ratio uses only the stronger line, but for S/N reasons we add
-## the weaker and multiply by 3/4 since Chris Richardson says the canonical
-## line ratio is 3:1 (this needs to be updated with a more precise number)
-#oiii = df['oiii_5007_flux']
-#oiii_err = df['oiii_5007_flux_err']
-#h_alpha = df['h_alpha_flux']
-#h_alpha_err = df['h_alpha_flux_err']
-#h_beta = df['h_beta_flux']
-#h_beta_err = df['h_beta_flux_err']
-#oi = df['oi_6300_flux']
-#oi_err = df['oi_6300_flux_err']
-#sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
-#sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
-#
-##Filter Data: all non-negative SEL fluxes and errors; Hbeta >3sigma
-#gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & (oi > 0) &
-#            (sii_sum > 0) & (h_beta > 0) & (h_beta > 3*h_beta_err) &
-#            (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0) & 
-#            (oi_err > 0) & (sii_sum_err > 0))
-#
-#data = gooddata #use ALL galaxy data within catalog
-#nii = nii[data]
-#nii_sum = nii_sum[data]
-#oiii = oiii[data]
-#oiii_err = oiii_err[data]
-#oi = oi[data]
-#oi_err = oi_err[data]
-#sii_sum = sii_sum[data]
-#sii_sum_err = sii_sum_err[data]
-#h_beta = h_beta[data]
-#h_beta_err = h_beta_err[data]
-#h_alpha = h_alpha[data]
-#h_alpha_err = h_alpha_err[data]
-#
-#fig = plt.figure('NII Scatter Plot - deextincted')
-#ax1 = fig.add_subplot(111)
-#ax1.set_xlim(-1.5,0.5)
-#ax1.set_ylim(-1.0,1.0)
-#ax1.plot(refn2ha, n2hamain(refn2ha), 'k', 
-#                  label = 'ke01 Theoretical Maximum Starburst Line')
-#ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
-#                      'k-.', label = 'Ka03 Composite Line')
-#ax1.plot(n2ha, o3hb, 'k.', alpha = 0.5, markersize = 5)#, label = 'Definite Star Forming')
-#ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
-#ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-#if error: 
-#    ax1.errorbar(n2ha.flatten(), o3hb.flatten(), xerr = n2ha_err.flatten(),
-#                            yerr = o3hb_err.flatten(), fmt = 'b.', alpha = 0.5,
-#                        markersize = 8, mew = 0, label = 'SF-to-AGN', ecolor = 'k')
-#
-##SII/OIII plot
-#fig = plt.figure('SII Scatter Plot - deextincted')
-#ax2 = fig.add_subplot(111)
-#ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
-#ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
-#                  'k--', label = 'Liner/Seyfert Division')
-#ax2.set_xlim(-1.5, 0.5)
-#ax2.set_ylim(-1.0,1.0)
-#ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
-#ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-#ax2.plot(s2ha, o3hb, 'k.', markersize = 5, 
-#                    alpha = 0.5, label = 'SF')
-#if error:
-#    ax2.errorbar(s2ha.flatten(), o3hb.flatten(), xerr = s2ha_err.flatten(),
-#                            yerr = o3hb_err.flatten(), fmt = 'b.', alpha = 0.5,
-#                        markersize = 8, mew = 0, label = 'SF-to-AGN', ecolor = 'k')
-#
-##OI/OIII plot
-#fig = plt.figure('OI Scatter Plot - deextincted')
-#ax3 = fig.add_subplot(111)
-#ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-#                  'k', label = 'Ke01 Theoretical Maximum Starburst Line')
-#ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-#                  'k-.', label = 'Ka03 Composite Line')
-##ax3.set_xlim(-2.0, -0.4)
-##ax3.set_ylim(-1.0,1.0)
-#ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
-#                               'k--', label = 'Ke06 Liner/Seyfert Division Line')
-#ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
-#ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-#ax3.plot(o1ha, o3hb, 'k.', alpha = 0.5, 
-#                    markersize = 5, label = 'SF')
-#if error:
-#    ax3.errorbar(o1ha.flatten(), o3hb.flatten(), xerr = o1ha_err.flatten(),
-#                                yerr = o3hb_err.flatten(), fmt = 'b.', alpha = 0.5,
-#                            markersize = 8, mew = 0, label = 'SF-to-AGN', ecolor = 'k')
+fig = plt.figure()
+ax = plt.subplot(projection = w)
+cax = ax.imshow(goodspec,
+                norm = colors.Normalize(vmin = np.nanmin(goodspec), vmax = np.nanmax(goodspec)), 
+                cmap = cmap)
+fig.colorbar(cax,extend = 'min')
+ax.set_xlabel('RA')
+ax.set_ylabel('Dec')
+ax.plot(25,25,'x', c = 'black')
+plt.figure()
+plt.plot(lam,spec[:,25,25])
+
+spec = fits.open('372320_spectrum_1-4-arcsec_red.fits')[0].data
+plt.figure()
+plt.plot(lam/(1+z),spec*(1+z),'k')
+plt.axvline(x = 6562.8,ymin = 0, ymax = 1,color = 'orange',ls = '--')
+plt.axvline(x = 6583.45,ymin = 0, ymax = 1,color = 'orange',ls = '--')
+plt.axvline(x = 6548.05,ymin = 0, ymax = 1,color = 'orange',ls = '--')
+plt.xlabel('Wavelength (Angstroms)')
+plt.ylabel('Flux (arbitraty units)')
+
+spec = fits.open('372320_spectrum_re_blue.fits')[0].data
+plt.figure()
+plt.plot(bluelam,spec)

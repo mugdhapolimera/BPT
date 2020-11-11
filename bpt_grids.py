@@ -19,8 +19,10 @@ from marginalize_grid import marginalize
 #res_data = '../../../data/resolve_plusmetandemline-Hood.pkl'
 res_data = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5.pkl'
 res_den = pd.read_pickle(res_data)
-full = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5.csv')
+full = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5_dext_jhu.csv')#RESOLVE_full_snr5.csv')
 full.index = full.name
+jhu = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5.csv')
+jhu.index = jhu.name
 port = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_snr5_port.csv')
 port.index = port.name
 obsR_nii = res_den['nii_6584_flux']
@@ -89,12 +91,16 @@ grid = 'BPASS'
 qfix = 0
 if grid == 'BPASS':
     #CSF
-    sim = pd.read_csv('C:/Users/mugdhapolimera/github/izi/Richardson-0-0_1-0agn-BPASS-Binary-CSF-n=1e2-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3.csv')
+    name = 'Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-SSP-n=1e2-20Myr-intrinsic-open-CMNM-coincident'
+    #name = 'Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-CSF-n=1e2-250Myr-intrinsic-open-CMNM-coincident'
+    #name = 'Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-CSF-n=1e3-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3-unified-2'
+    sim = pd.read_csv('C:\Users\mugdhapolimera\github\izi\\'+name+'.csv')
+    #C:/Users/mugdhapolimera/github/izi/Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-CSF-n=1e2-15Myr-emergent-open.csv')
     
     #SSP
     #sim = pd.read_csv('C:/Users/mugdhapolimera/github/izi/Richardson-0-0_1-0agn-BPASS-Binary-SSP-n=1e2-1.0Myr-NichollsCE-D_G-RR14_Fstar_0_3.csv')
                       
-    #Richardson-0-0_1-0agn-M-5_0-BPASS-Binary-CSF-n=1e3-40.0Myr-NichollsCE-D_G-RR14_Fstar_0_3-unified.csv')
+    #
     
     #sim = sim0
     #lowz, highz = marginalize(sim0)
@@ -102,15 +108,16 @@ if grid == 'BPASS':
         sim= sim[(sim["LOGQ"] == 7.227)] #> 6.9) & (sim["LOGQ"] < 8.9)]
         sim= sim[(sim["LOGZ"] > np.log10(0.1))] #== np.log10(0.3))] 
     else:
-        sim= sim[(sim["LOGQ"] > 6.9) & (sim["LOGQ"] < 8.9)]
-        sim= sim[(sim["LOGZ"] == np.log10(0.3))] 
+        sim= sim[(sim["LOGQ"] < 8.9)]  #(sim["LOGQ"] > 6.9) & 
+        sim = sim[sim["LOGZ"] > np.log10(0.15)]
+#        sim= sim[(sim["LOGZ"] == np.log10(0.3))] 
 
 if grid == 'L10':
     gridfile = r'C:/Users/mugdhapolimera/github/izi/l09_high_csf_n1e2_6.0Myr_new.fits'
     grid0 = Table.read(gridfile, format='fits')
     sim = grid0.to_pandas()
 
-bpt = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/resolve_emlineclass_full_snr5.csv')
+bpt = pd.read_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/resolve_emlineclass_dext_snr5_jhu.csv')
 bpt.index = bpt['galname']
 
 #rms = np.sqrt(np.mean(np.log10(res_den.oi_6300_flux_err[bpt['defstarform']]/res_den.oi_6300_flux[bpt['defstarform']]))**2)
@@ -127,10 +134,10 @@ if grid =='BPASS' :
 else:
     agn = [0]
 
-metal_colors = [plt.cm.BuPu(i) for i in np.linspace(0.15, 1, metals)]
-u_colors = [plt.cm.YlOrRd(i) for i in np.linspace(0.15, 1, ionps)]
+metal_colors = [plt.cm.hot(i) for i in np.linspace(0., 0.9, metals)]
+u_colors = [plt.cm.ocean(i) for i in np.linspace(0., 0.9, ionps)]
 z50_colors = ['green']
-def truncate_colormap(cmap, minval=0.15, maxval=1.0, n=256):
+def truncate_colormap(cmap, minval=0., maxval=0.9, n=256):
   	new_cmap = colors.LinearSegmentedColormap.from_list(
         'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
         cmap(np.linspace(minval, maxval, n)))
@@ -138,17 +145,24 @@ def truncate_colormap(cmap, minval=0.15, maxval=1.0, n=256):
 #metal_colors_map = truncate_colormap(cm.Blues, n = metals)
 #u_colors_map = truncate_colormap(cm.Reds, n = ionps)
 
-metal_colors_map = truncate_colormap(cm.BuPu, n = metals)
-u_colors_map = truncate_colormap(cm.YlOrRd, n = ionps)
+metal_list = [0.2, 0.3, 0.4, 0.5, 0.7, 1., 1.5, 2. ]
+ionps_list = [6.5, 6.7, 6.9 , 7.2, 7.5, 7.7, 8. , 8.2, 8.5, 8.7]
+metal_colors_map = truncate_colormap(cm.hot, n = metals)
+metalbounds = metal_list
+metalnorm = colors.BoundaryNorm(metalbounds, metal_colors_map.N)
 
-metal_list = [0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 1., 1.5, 2. ]
-ionps_list = [6.9 , 7.2, 7.5, 7.7, 8. , 8.2, 8.5, 8.7]
-f, (sp1, sp2, sp3) = plt.subplots(1,3, sharey = True)
-fid = 1  
+u_colors_map = truncate_colormap(cm.ocean, n = ionps)
+ubounds = ionps_list
+unorm = colors.BoundaryNorm(ubounds, u_colors_map.N)
+
+fid = 0
 frac_color = {0: 'b', 0.5: 'fuchsia', 1:'brown'}
-gals = nov_target#['rf0006', 'rf0073','rf0503']#,'rs0463']#, 'rs0814']
+#gals = ['rs0124', 'rs0421', 'rs0909', 'rs1105', 'rs1047']
+#['rf0006', 'rf0073','rf0503']#,'rs0463']#, 'rs0814']
 #gnuplot, rainbow, winter, spring, viridis, magma
+z_50 = 0
 for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
+    #fig = plt.figure()
     if "oiii5007" in sim.keys(): #grid == 'L10':
         simdata = sim[sim['AGNFRAC']==frac]
         oiii = np.array(simdata["oiii5007"])
@@ -174,10 +188,10 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     halpha = halpha.reshape((metals,ionps))
     oi = oi.reshape((metals,ionps))
     sii = sii.reshape((metals,ionps))
-    if qfix: 
-        ndx = np.where(simdata.LOGZ == np.log10(0.4))[0][0]
-    else:
-        ndx = np.where(simdata.LOGQ == 7.227)[0][0]
+#    if qfix: 
+#        ndx = np.where(simdata.LOGZ == np.log10(0.4))[0][0]
+#    else:
+#        ndx = np.where(simdata.LOGQ == 7.227)[0][0] #6.977
     if grid == 'L10':
         ndx = sim.LOGQ[:ionps].argsort()
         oiii = oiii[:,ndx]
@@ -191,23 +205,26 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     # Plot
     #
     
-    #fig = plt.figure('AGN Fraction '+str(frac) + ' at 1.0 Z_solar')
-    label_size = 8
-    tick_label = 8
-    cbar_tick_label = 8
-    text_size = 8
+    #fig = plt.figure('AGN Fraction '+str(frac))
+    f, (sp1, sp2, sp3) = plt.subplots(1,3, sharey = True)
+
+    label_size = 10
+    tick_label = 10
+    cbar_tick_label = 10
+    text_size = 10
     xmin, xmax = -2.00001, 0.30001
-    ymin, ymax = -1.0, 1.2
+    ymin, ymax = -1.5, 1.5
     
-    if frac == 0:
+#    if frac == 0:
         
-        sp1.scatter(obsR_n2ha,obsR_o3hb,c='k',s=0.5, alpha = 0.3)
+    sp1.scatter(obsR_n2ha,obsR_o3hb,c='k', marker = '.',
+                    alpha = 0.3, edgecolor = 'none')
 
         
     #plt.scatter(obsR_n2ha[bpt['sftoagn']],obsR_o3hb[bpt['sftoagn']],color='r',marker='s')
     
-    sp1.plot(refn2ha, n2hamain(refn2ha),'k')
-    sp1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),'k--')
+    sp1.plot(refn2ha, n2hamain(refn2ha),'k',zorder = 0)
+    sp1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),'k--',zorder = 0)
     
     x = np.log10(np.divide(nii,halpha))
     y = np.log10(np.divide(oiii,hbeta))
@@ -218,16 +235,17 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
         else:
             x_fid = x[ndx,0]
             y_fid = y[ndx,0]
-
+            print(y_fid)
 #    z50_x = x[8]
 #    z50_y = y[8]
     
     sp1.set_prop_cycle(cycler('color',metal_colors))
-#    sp1.plot(np.transpose(x),np.transpose(y), lw = 2)
-    sp1.set_prop_cycle(cycler('color',z50_colors))
-#    plt.plot(np.transpose(z50_x),np.transpose(z50_y), lw = 5)
+    sp1.plot(np.transpose(x),np.transpose(y), lw = 2)
+    if z_50:
+        sp1.set_prop_cycle(cycler('color',z50_colors))
+        sp1.plot(np.transpose(z50_x),np.transpose(z50_y), lw = 5)
     sp1.set_prop_cycle(cycler('color',u_colors))
-#    sp1.plot(x,y,ls='--')
+    sp1.plot(x,y,ls='--')
     sp1.set_xlim(xmin,xmax)
     sp1.set_ylim(ymin,ymax)
     sp1.axes.tick_params(axis='both',which='both',top='on',right='on',
@@ -242,35 +260,10 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     if fid:
         sp1.scatter(x_fid,y_fid,marker = 's', s = 150, c = frac_color[frac])
     
-    if frac == 1:
-        sp1.set_xlabel(r'$\rm log([$N II$]$ 6584 / H$\alpha)$',fontsize=15)
+#    if frac == 1:
+    sp1.set_xlabel(r'$\rm log([$N II$]$ 6584 / H$\alpha)$',fontsize=15)
     sp1.set_ylabel(r'$\rm log([$O III$]$ 5007 / H$\beta$)',fontsize=15)
-    
-    if metals > 1:
-        Z = 10**np.unique(sim.LOGZ)
-        sm = plt.cm.ScalarMappable(cmap=metal_colors_map,
-                                   norm=colors.Normalize(vmin=min(Z), vmax=max(Z)))
-        sm._A = []
-        smaxes = inset_axes(sp1, width=0.06, height=1.0, loc=4, 
-                bbox_to_anchor=(0.1, 0.17), bbox_transform=sp1.figure.transFigure)
-        cbar = plt.colorbar(sm,cax=smaxes)
-        cbar.ax.set_title(r'Z / Z$_{\odot}$',fontsize=cbar_tick_label)
-        cbar.set_ticks(np.linspace(0.15,2.0, metals))
-        cbar.set_ticklabels(metal_list)
-        cbar.ax.tick_params(labelsize=cbar_tick_label) 
-        
-        q = np.unique(sim.LOGQ)
-        sm = plt.cm.ScalarMappable(cmap=u_colors_map,
-                                   norm=colors.Normalize(vmin=min(q), vmax=max(q)))
-        sm._A = []
-        smaxes = inset_axes(sp1, width=0.06, height=1.0, loc=4, 
-                bbox_to_anchor=(0.18, 0.17), bbox_transform=sp1.figure.transFigure)
-        cbar = plt.colorbar(sm,cax=smaxes)
-        cbar.ax.set_title(r'log $q$',fontsize=cbar_tick_label)
-        cbar.set_ticks(np.linspace(6.977,8.727, ionps))
-        cbar.set_ticklabels(ionps_list)
-        cbar.ax.tick_params(labelsize=cbar_tick_label) 
-    
+       
     
     #fig = plt.figure(2)
     
@@ -282,14 +275,15 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     ymin, ymax = -1.5, 1.2
     
     #sp2 = plt.subplot(132)
-    if frac == 0:
+#    if frac == 0:
         
-        sp2.scatter(obsR_s2ha,obsR_o3hb,c='k',s=1, alpha = 0.3)
+    sp2.scatter(obsR_s2ha,obsR_o3hb,c='k',marker = '.',
+                    alpha = 0.3, edgecolor = 'none')
     #plt.scatter(obsR_s2ha[bpt['sftoagn']],obsR_o3hb[bpt['sftoagn']],
     #            color='r',marker='s')
-    sp2.plot(refsiiha, s2hamain(refsiiha),'k')
+    sp2.plot(refsiiha, s2hamain(refsiiha),'k',zorder = 0)
     sp2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
-                  'k-.')
+                  'k-.',zorder = 0)
 
 #    plt.plot(refsiiha-0.09,main_sii,'k')
     
@@ -302,13 +296,13 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
         else:
             x_fid = x[ndx,0]
             y_fid = y[ndx,0]
-
+            print(y_fid)
 #    z50_x = x[8]
 #    z50_y = y[8]
     
 #    cmap = plt.get_cmap('rainbow',len(simdata))
-    #sp2.set_prop_cycle(cycler('color',metal_colors))
-#    sp2.plot(np.transpose(x),np.transpose(y), 'g', lw = 2)
+    sp2.set_prop_cycle(cycler('color',metal_colors))
+    sp2.plot(np.transpose(x),np.transpose(y), lw = 2)
     #sp2.plot(x,y, 'g', lw = 2)
     
 #    if x.shape[0] == 1:
@@ -325,11 +319,13 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
 #    else:
 #        for i in range(len(simdata)-1):
 #            sp2.plot(x[i:i+2],y[i:i+2], c = color[i], lw = 2)
-    #    sp2.set_prop_cycle(cycler('color',z50_colors))
-#    plt.plot(np.transpose(z50_x),np.transpose(z50_y), lw = 5)
-    #sp2.set_prop_cycle(cycler('color',u_colors))
+    if z_50:
+        sp2.set_prop_cycle(cycler('color',z50_colors))
+        sp2.plot(np.transpose(z50_x),np.transpose(z50_y), lw = 5)
+    sp2.set_prop_cycle(cycler('color',u_colors))
+    sp2.plot(x,y,ls='--')
     sp2.set_xlim(xmin,xmax)
-    sp2.set_ylim(ymin,ymax)
+#    sp2.set_ylim(ymin,ymax)
     sp2.axes.tick_params(axis='both',which='both',top='on',right='on',
                          direction='in')
     #plt.xticks([-2.5,-1.5,-0.5, 0.5])
@@ -343,8 +339,8 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     if fid:
         sp2.scatter(x_fid,y_fid,marker = 's', s = 150, c = frac_color[frac])
     
-    if frac == 1:
-        sp2.set_xlabel(r'$\rm log([$S II$]$ 6717 + 6731/ H$\alpha)$',fontsize=15)
+    #if frac == 1:
+    sp2.set_xlabel(r'$\rm log([$S II$]$ 6717 + 6731/ H$\alpha)$',fontsize=15)
     #plt.ylabel(r'$[$O III$]$ 5007 / H$\beta$',fontsize=15)
 
 #    if frac == 0:
@@ -354,6 +350,37 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
 #    elif frac == 1.0:
 #        sp2.set_title('(c)', y = -0.15)
 
+    if (frac == 0.5) & (metals > 1):
+        Z = 10**np.unique(sim.LOGZ)
+        sm = plt.cm.ScalarMappable(cmap=metal_colors_map,
+                                   norm=colors.Normalize(vmin=min(Z)-0.1, vmax=max(Z)+0.1))
+    
+        sm._A = []
+        smaxes = inset_axes(sp2, width=0.25, height=1.7, loc=4, 
+                bbox_to_anchor=(0.42, 0.15), bbox_transform=sp2.figure.transFigure)
+        cbar = plt.colorbar(sm,cax=smaxes,
+                            ticks=metalbounds, 
+                            boundaries=[0.15, 0.25, 0.35, 0.45,0.6, 0.85, 1.25 , 1.75, 2.5]
+                            , format='%1i')
+        cbar.ax.set_title(r'Z / Z$_{\odot}$',fontsize=13)#cbar_tick_label)
+        cbar.set_ticks(metalbounds)
+        cbar.set_ticklabels(metal_list)
+        cbar.ax.tick_params(labelsize=13)#cbar_tick_label) 
+        
+        q = np.unique(sim.LOGQ)
+        sm = plt.cm.ScalarMappable(cmap=u_colors_map,
+                                   norm=colors.Normalize(vmin=min(q), vmax=max(q)))
+        sm._A = []
+        smaxes = inset_axes(sp2, width=0.25, height=1.7, loc=4, 
+                bbox_to_anchor=(0.48, 0.15), bbox_transform=sp2.figure.transFigure)
+        cbar = plt.colorbar(sm,cax=smaxes,
+                            ticks=ubounds, 
+                            boundaries=[6.4, 6.6, 6.8, 7.0, 7.45, 7.6, 7.86, 8.1, 8.34, 8.6, 8.8],
+                            format='%1i')
+        cbar.ax.set_title(r'log $q$',fontsize=13)#cbar_tick_label)
+        cbar.set_ticks(ubounds)#np.linspace(min(q), max(q),ionps))
+        cbar.set_ticklabels(ionps_list)
+        cbar.ax.tick_params(labelsize=13)#cbar_tick_label) 
     
     #fig = plt.figure(3)
     
@@ -365,16 +392,18 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     ymin, ymax = -1.0, 1.00001
     
     #sp3 = plt.subplot(133)
-    if frac == 0:
-        sp3.scatter(obsR_o1ha,obsR_o3hb,c='k',s=1, alpha = 0.3)
+#    if frac == 0:
+    sp3.scatter(obsR_o1ha,obsR_o3hb,marker = '.',
+                    c='k', alpha = 0.3, edgecolor = 'none')
 #    plt.scatter(obsR_o1ha[bpt['sftoagn']],obsR_o3hb[bpt['sftoagn']],
 #                color='r',marker='s')
-    sp3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),'k')
+    sp3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),'k', 
+             zorder = 0)
     sp3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
-                               'k-.')
+                               'k-.',zorder = 0)
 
-    x = np.log10(np.divide(oi,halpha)) + 0.07
-    y = np.log10(np.divide(oiii,hbeta)) + 0.04
+    x = np.log10(np.divide(oi,halpha))# + 0.07
+    y = np.log10(np.divide(oiii,hbeta))# + 0.04
     if fid:
         if x.shape[0] == 1:
             x_fid = x[0,ndx]
@@ -382,19 +411,20 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
         else:
             x_fid = x[ndx,0]
             y_fid = y[ndx,0]
-
+            print(y_fid)
 #    z50_x = x[8]
 #    z50_y = y[8]
     
     sp3.set_prop_cycle(cycler('color',metal_colors))
-#    sp3.plot(np.transpose(x),np.transpose(y), lw = 2)
-#    sp3.set_prop_cycle(cycler('color',z50_colors))
-    #plt.plot(np.transpose(z50_x),np.transpose(z50_y), lw = 5)
+    sp3.plot(np.transpose(x),np.transpose(y), lw = 2)
+    if z_50:
+        sp3.set_prop_cycle(cycler('color',z50_colors))
+        sp3.plot(np.transpose(z50_x),np.transpose(z50_y), lw = 5)
     sp3.set_prop_cycle(cycler('color',u_colors))
-#    sp3.plot(x,y,ls='--')
+    sp3.plot(x,y,ls='--')
    
     sp3.set_xlim(xmin,xmax)
-    sp3.set_ylim(ymin,ymax)
+    #sp3.set_ylim(ymin,ymax)
     #sp1.axes.tick_params(axis='both',which='both',top='on',right='on',direction='in')
     #plt.xticks([-3.0, -2.5,-1.5,-0.5])
     #plt.yticks([-1.0,0.0,1.0])
@@ -406,11 +436,11 @@ for frac in [0,0.5,1]:#0.16,0.32,0.5,1]:
     if fid:
         sp3.scatter(x_fid,y_fid,marker = 's', s = 150, c = frac_color[frac])
     
-    if frac == 1:
-        sp3.set_xlabel(r'$\rm log ([$O I$]$ 6300 / H$\alpha$)',fontsize=15)
+    #if frac == 1:
+    sp3.set_xlabel(r'$\rm log ([$O I$]$ 6300 / H$\alpha$)',fontsize=15)
     #plt.ylabel(r'$[$O III$]$ 5007 / H$\beta$',fontsize=15)
     #sp3.legend(title = 'AGN Fraction '+str(int(frac*100))+'%', loc = 'upper right')
-
+gals = []
 for gal in gals:
     plotflag = 0
     print gal
@@ -428,7 +458,7 @@ for gal in gals:
             print 'Port'
             niiha = np.log10(port.loc[gal]['Flux_NII_6583']/port.loc[gal]['Flux_Ha_6562'])
             SII = port.loc[gal]['Flux_SII_6716'] + port.loc[gal]['Flux_SII_6730']
-            siiha = SII/port.loc[gal]['Flux_Ha_6562']
+            siiha = np.log10(SII/port.loc[gal]['Flux_Ha_6562'])
             oiiihb = np.log10(port.loc[gal]['Flux_OIII_5006']/port.loc[gal]['Flux_Hb_4861'])
             oiha = np.log10(port.loc[gal]['Flux_OI_6300']/port.loc[gal]['Flux_Ha_6562'])
             plotflag = 1
@@ -444,30 +474,50 @@ for gal in gals:
     sp1.scatter(niiha,oiiihb, c='r',marker = '*', s= 200, zorder = 1)#marker = (6,2,0), s=200)
     sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200)#marker = (6,2,0), s=200)
     sp3.scatter(oiha,oiiihb, c='r',marker = '*', s= 200, zorder = 1)#marker = (6,2,0), s=200)
-sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200, label = 'Targets for this proposal')
+#sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200, label = 'Targets for this proposal')
+'''
+#for gal in gals:
+#    plotflag = 0
+#    print gal
+#    niiha = np.log10(full.loc[gal]['nii_6584_flux']/full.loc[gal]['h_alpha_flux'])
+#    SII = full.loc[gal]['sii_6717_flux'] + full.loc[gal]['sii_6731_flux']
+#    siiha = np.log10(SII/full.loc[gal]['h_alpha_flux'])
+#    oiha = np.log10(full.loc[gal]['oi_6300_flux']/full.loc[gal]['h_alpha_flux'])
+#    oiiihb = np.log10(full.loc[gal]['oiii_5007_flux']/full.loc[gal]['h_beta_flux'])
+#    sp1.scatter(niiha,oiiihb, c='r',marker = '*', s= 200, zorder = 1)#marker = (6,2,0), s=200)
+#    sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200)#marker = (6,2,0), s=200)
+#    sp3.scatter(oiha,oiiihb, c='r',marker = '*', s= 200, zorder = 1)#marker = (6,2,0), s=200)
+#sp2.scatter(siiha,oiiihb, c='r',marker = '*', s= 200, label = 'Targets for this proposal')
+#'''
 #    for i, txt in enumerate([gal]):
 #        sp3.annotate(txt, (oiha, oiiihb))#marker = (6,2,0), s=200)
+
+sami = ['rs0010']
+niiha = np.log10(jhu.loc[sami]['nii_6584_flux']/jhu.loc[sami]['h_alpha_flux'])
+SII = jhu.loc[sami]['sii_6731_flux'] + jhu.loc[sami]['sii_6717_flux']
+siiha = np.log10(SII/jhu.loc[sami]['h_alpha_flux'])
+oiha = np.log10(jhu.loc[sami]['oi_6300_flux']/jhu.loc[sami]['h_alpha_flux'])
+oiiihb = np.log10(jhu.loc[sami]['oiii_5007_flux']/jhu.loc[sami]['h_beta_flux'])
+
 #niiha = np.log10(nsa.loc[sami]['nii_6584_flux']/nsa.loc[sami]['h_alpha_flux'])
 #SII = nsa.loc[sami]['sii_6731_flux'] #+ nsa.loc[sami]['sii_6717_flux']
 #siiha = np.log10(SII/nsa.loc[sami]['h_alpha_flux'])
 #oiha = np.log10(nsa.loc[sami]['oi_6300_flux']/nsa.loc[sami]['h_alpha_flux'])
 #oiiihb = np.log10(nsa.loc[sami]['oiii_5007_flux']/nsa.loc[sami]['h_beta_flux'])
-#sp1.scatter(niiha,oiiihb, c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
-#sp2.scatter(siiha,oiiihb, c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
-#sp3.scatter(oiha,oiiihb, c='c',marker = '*', s= 100)#marker = (6,2,0), s=200)
-niiha = np.log10(full.loc[sami]['nii_6584_flux']/full.loc[sami]['h_alpha_flux'])
-SII = full.loc[sami]['sii_6731_flux'] + full.loc[sami]['sii_6717_flux']
-siiha = np.log10(SII/full.loc[sami]['h_alpha_flux'])
-oiha = np.log10(full.loc[sami]['oi_6300_flux']/full.loc[sami]['h_alpha_flux'])
-oiiihb = np.log10(full.loc[sami]['oiii_5007_flux']/full.loc[sami]['h_beta_flux'])
-sp1.scatter(niiha,oiiihb, c='lime',marker = '*', s= 100, edgecolor = 'k')
-sp2.scatter(siiha,oiiihb, c='lime',marker = '*', s= 100, 
-            label = 'SFing-AGN in SAMI', edgecolor = 'k')
-sp3.scatter(oiha,oiiihb, c='lime',marker = '*', s= 100, edgecolor = 'k')
-sp2.legend(loc = 'lower left', fontsize = 15)
+
+################################################################
+#To plot SAMI targets
+################################################################
+#sp1.scatter(niiha,oiiihb, c='lime',marker = '*', s= 200, edgecolor = 'k')
+#sp2.scatter(siiha,oiiihb, c='lime',marker = '*', s= 200, 
+#            label = 'SFing-AGN in SAMI', edgecolor = 'k')
+#sp3.scatter(oiha,oiiihb, c='lime',marker = '*', s= 200, edgecolor = 'k')
+
+
+#sp2.legend(loc = 'lower left', fontsize = 15)
 #for i, txt in enumerate(sami):
 #    sp3.annotate(txt, (oiha[i]+0.05, oiiihb[i]))#marker = (6,2,0), s=200)
-
+#
 #gal = 'rs0909'
 #sp1.scatter(np.log10(nsa.loc[gal]['nii_6584_flux']/nsa.loc[gal]['h_alpha_flux']),
 #                    np.log10(nsa.loc[gal]['oiii_5007_flux']/nsa.loc[gal]['h_beta_flux']),

@@ -28,8 +28,10 @@ import matplotlib
 import matplotlib.cm as cm
 import matplotlib.colors as colors
 matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+matplotlib.rcParams.update({'font.size': 20})
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.stats import binom_conf_interval
 
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
@@ -38,12 +40,13 @@ resolve = 1
 eco = 0
 full = 0
 sami = 0
-singlepanel = 0
-catalog = 1
-sdsscat = 'port'
-
+singlepanel = 1
+catalog = 0
 #sdsscat = 'port'
+
+sdsscat = 'jhu'
 #sdsscat = 'nsa'
+#sdsscat = 'master'
 if sys.platform == 'linux2':
         os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
 
@@ -52,20 +55,27 @@ else:
 
 
 if full: 
-    inputfile = 'ECO+RESOLVE_filter_new.csv'
-    print 'ECO RESULTS'
+    inputfile = 'ECO+RESOLVE_snr5_dext_'+sdsscat+'.csv'
+    print 'ECO+RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'eco+resolve_emlineclass_filter_he2.csv'
     else: 
-        outputfile = 'eco+resolve_emlineclass_filter.csv'
+        outputfile = 'eco+resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
 elif eco: 
     #inputfile = 'ECO_filter_new.csv'
-    inputfile = 'ECO_full_snr5_port.csv'
+    if sdsscat == 'jhu':
+        inputfile = 'ECO_full_dext_snr5_jhu.csv' #'ECO_full_bary_jhu.csv'#'ECO_full_snr5.csv'
+    if sdsscat == 'port':
+        inputfile = 'ECO_full_snr5_dext_port.csv' #'ECO_full_bary_port.csv'#'ECO_full_snr5_port.csv'
+    if sdsscat == 'nsa':       
+        inputfile = 'ECO_full_snr5_dext_nsa.csv'
+    if sdsscat == 'master':       
+        inputfile = 'ECO_snr5_master_hasnr5.csv' #bary.csv'
     print 'ECO RESULTS'
     if he2_flag:
-        outputfile = 'eco_emlineclass_filter_he2.csv'
+        outputfile = 'eco_emlineclass_filter_he2_new.csv'
     else: 
-        outputfile = 'eco_emlineclass_filter_new.csv'
+        outputfile = 'eco_emlineclass_dext_snr5_'+sdsscat+'.csv' #'eco_emlineclass_full_bary_'+sdsscat+'_new.csv'
 elif sami: 
     os.chdir('C:/Users/mugdhapolimera/Desktop/UNC/Courses/Research/SAMI Data/')
     inputfile = '71146/71146.csv'
@@ -75,58 +85,64 @@ elif sami:
 else:
     #inputfile = 'RESOLVE_filter_new.csv'
     if sdsscat == 'port':       
-        inputfile = 'RESOLVE_full_snr5_port.csv'
+        #inputfile = 'RESOLVE_full_bary_port.csv'
+        inputfile = 'RESOLVE_full_dext_port.csv'
     if sdsscat == 'jhu':       
-        inputfile = 'RESOLVE_full_snr5.csv'
+        #inputfile = 'RESOLVE_full_bary_jhu.csv'
+        inputfile = 'RESOLVE_full_hasnr5_dext_jhu.csv'
         #inputfile = 'RESOLVE_full_blend_dext_new.csv'
     if sdsscat == 'nsa':       
-        inputfile = 'NSA_RESOLVE.csv'
+        inputfile = 'RESOLVE_full_snr5_dext_nsa.csv'
         #outputfile = 'resolve_emlineclass_full_snr5.csv'
+    if sdsscat == 'master':       
+        inputfile = 'RESOLVE_snr5_master_new.csv'
     print 'RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
     else: 
-        outputfile = 'resolve_emlineclass_full_snr5_'+sdsscat+'.csv'
+        outputfile = 'resolve_emlineclass_full_hasnr5_jhu.csv'#'resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
 #xray = pd.read_csv('../xray/ECO+RESOLVE_xray_new.csv')
 #os.chdir('C:/Users/mugdhapolimera/github/xray/')
 #inputfile = 'XMM_AGN_mwdext.pkl'
 #inputfile = 'RESOLVE_full_blend_dext_new.csv'
 
-fulldf = pd.read_csv('RESOLVE_full_blend_dext_new.csv')
-df = fulldf
-df.index = df.name
-veronagn = pd.read_csv(r'../xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
-hmqagn = pd.read_csv(r'../xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
-broadagn = pd.read_csv(r'../xray/catalog_matching/BroadlineAgn_RESOLVE.csv')['eco+res_name']
-xray = pd.read_csv(r'../xray/ECO+RESOLVE_xray_new.csv')
-ra=df.radeg
-dec=df.dedeg
-flinsample = df.fl_insample
-grpcz = df.grpcz
-cz = df.cz
-infall = (ra > 22*15.) | (ra < 3*15.)
-inspring = (ra > 8.75*15.) & (ra < 15.75*15.)
-mgas = df.logmgas
-mstars = df.logmstar
-mbary = 10**mgas + 10**mstars
-inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & \
-(((flinsample | (np.log10(mbary) > 9.0)) & infall) | \
-        ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
-df = df[inobssample]
-
+fulldf = pd.read_csv('ECO_full_blend_dext_new.csv')
+#df = fulldf
 df = pd.read_csv(inputfile)
+if 'source' not in df.keys():
+    df['source'] = sdsscat
+#veronagn = pd.read_csv(r'../xray/catalog_matching/VeronAgnMatched.csv')['eco+res_name']
+#hmqagn = pd.read_csv(r'../xray/catalog_matching/HMQAgnMatched.csv')['eco+res_name']
+#broadagn = pd.read_csv(r'../xray/catalog_matching/BroadlineAgn_RESOLVE.csv')['eco+res_name']
+#xray = pd.read_csv(r'../xray/ECO+RESOLVE_xray_new.csv')
+#df.index = df.name
+#ra=df.radeg
+#dec=df.dedeg
+#flinsample = df.fl_insample
+#grpcz = df.grpcz
+#cz = df.cz
+#infall = (ra > 22*15.) | (ra < 3*15.)
+#inspring = (ra > 8.75*15.) & (ra < 15.75*15.)
+#mgas = df.logmgas
+#mstars = df.logmstar
+#mbary = 10**mgas + 10**mstars
+#inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & \
+#(((flinsample | (np.log10(mbary) > 9.0)) & infall) | \
+#        ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
+#df = df[inobssample]
+
 #define alternate catalog names
 if 'name' in df.keys():
     df['NAME'] = df['name']
-if 'resname' in df.keys():
-    df['name'] = df['resname']
+#if (sdsscat == 'nsa') & ('resname' in df.keys()):
+#    df['name'] = df['resname']
 if 'CATID' in df.keys():
     df['NAME'] = df['CATID']
 name = df['name']
 df['NAME'] = df['name']
 df.index = df.name
-
-df = df.loc[inobssample.index.values[inobssample]]
+#df = df.loc[econsanames]
+#df = df.loc[inobssample.index.values[inobssample]]
 
 if he2_flag:
     df = df[~np.isnan(df.Flux_HeII_4685)]
@@ -144,14 +160,19 @@ if resolve:
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
     return 1.3 + (0.61 / (log_NII_HA - 0.05))
+def n2halocus(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
+    return 1.1 + (0.61 / (log_NII_HA + 0.08))
 def n2hamain(log_NII_HA): #main line for NII/H-alpha from equation 5, Kewley 2006
     return 1.19 + (0.61 / (log_NII_HA - 0.47))
+#    return 0.57 + (0.13 / (log_NII_HA - 0.003))
 def s2hamain(log_SII_HA): #main line for SII/H-alpha from equation 2, Kewley 2006
     return 1.30 + (0.72 / (log_SII_HA - 0.32))
+    #return 0.58 + (0.04 / (log_SII_HA +0.012))
 def s2halinseyf(log_SII_HA): #liner/seyfert divider for SII/H-alpha
     return 0.76 + 1.89*log_SII_HA
 def o1hamain(log_OI_HA): #main line for OI/H-alpha from equation 3, Kewley 2006
     return 1.33 + (0.73 / (log_OI_HA + 0.59))
+    #return 0.61 + (0.056 / (log_OI_HA + 0.40))
 def o1halinseyf(log_OI_HA): #liner/seyfert divider for OI/H-alpha
     return 1.3 + 1.18*log_OI_HA
 def o1hacrit(log_OI_HA): #boundary for OI/H-alpha
@@ -197,14 +218,19 @@ if sdsscat == 'port':
     sii_sum = df['Flux_SII_6716'] + df['Flux_SII_6730']
     sii_sum_err = np.sqrt(df['Flux_SII_6716_Err']**2 + df['Flux_SII_6730_Err']**2)
 
-if sdsscat == 'jhu' or sdsscat == 'nsa':
+if sdsscat == 'jhu' or sdsscat == 'nsa' or sdsscat == 'master':
+    
     nii = df['nii_6584_flux']
     if 'nii_6548_flux' in df.keys():
         nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
         nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
-    else:
+    else:        
         nii_sum = df['nii_6584_flux']
         nii_sum_err = df['nii_6584_flux_err']
+    #nii_sum[df.source == 'nsa'] = df['nii_6584_flux']
+    #nii_sum_err[df.source == 'nsa'] = df['nii_6584_flux_err']
+
+    #nii = nii_sum
     # note that the ratio uses only the stronger line, but for S/N reasons we add
     # the weaker and multiply by 3/4 since Chris Richardson says the canonical
     # line ratio is 3:1 (this needs to be updated with a more precise number)
@@ -218,12 +244,14 @@ if sdsscat == 'jhu' or sdsscat == 'nsa':
     oi_err = df['oi_6300_flux_err']
     if 'sii_6717_flux' in df.keys():
         sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
-    
+
         sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
     else:
         sii_sum = df['sii_6731_flux']
     
         sii_sum_err = df['sii_6731_flux_err']
+#    sii_sum[df.source == 'nsa'] = df['sii_6731_flux']
+#    sii_sum_err[df.source == 'nsa'] = df['sii_6731_flux_err']
 
 #nii = df['Flux_NII_6583']
 #nii_sum = (df['Flux_NII_6583']+ df['Flux_NII_6547'])*3./4
@@ -257,8 +285,9 @@ if he2_flag:
     data = he2data
     print(np.sum(he2data),np.sum(data))
 else:
-    data = gooddata & snr #use ALL galaxy data within catalog
-
+    data = df.name > 0 #gooddata #& snr #use ALL galaxy data within catalog
+if sdsscat == 'master':
+    data = df.name > 0
 #print total points shared with alternate catalog
 if full: 
     sel = (np.where(data)[0]) #for eco
@@ -268,12 +297,11 @@ elif resolve:
     sel = (np.where(data & econame)[0]) #for resolve
 print ''
 print 'TOTAL DATA WITH ALTERNATE CATALOG NAME: ', len(sel)
-df = df[data]
-df.index = np.arange(len(df))
-df.index = df.name
+#df = df[data]
 
 nii = nii[data]
 nii_sum = nii_sum[data]
+nii_sum_err = nii_sum_err[data]
 oiii = oiii[data]
 oiii_err = oiii_err[data]
 oi = oi[data]
@@ -285,65 +313,37 @@ h_beta_err = h_beta_err[data]
 h_alpha = h_alpha[data]
 h_alpha_err = h_alpha_err[data]
 
-nii = df['nii_6584_flux']
-if 'nii_6548_flux' in df.keys():
-    nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
-    nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
-else:
-    nii_sum = df['nii_6584_flux']
-    nii_sum_err = df['nii_6584_flux_err']
-# note that the ratio uses only the stronger line, but for S/N reasons we add
-# the weaker and multiply by 3/4 since Chris Richardson says the canonical
-# line ratio is 3:1 (this needs to be updated with a more precise number)
-oiii = df['oiii_5007_flux']
-oiii_err = df['oiii_5007_flux_err']
-h_alpha = df['h_alpha_flux']
-h_alpha_err = df['h_alpha_flux_err']
-h_beta = df['h_beta_flux']
-h_beta_err = df['h_beta_flux_err']
-oi = df['oi_6300_flux']
-oi_err = df['oi_6300_flux_err']
-if 'sii_6717_flux' in df.keys():
-    sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
-
-    sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
-else:
-    sii_sum = df['sii_6731_flux']
-
-    sii_sum_err = df['sii_6731_flux_err']
+#nii = df['nii_6584_flux']
+##if 'nii_6548_flux' in df.keys():
+#nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
+#nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
+##else:
+## note that the ratio uses only the stronger line, but for S/N reasons we add
+## the weaker and multiply by 3/4 since Chris Richardson says the canonical
+## line ratio is 3:1 (this needs to be updated with a more precise number)
+#oiii = df['oiii_5007_flux']
+#oiii_err = df['oiii_5007_flux_err']
+#h_alpha = df['h_alpha_flux']
+#h_alpha_err = df['h_alpha_flux_err']
+#h_beta = df['h_beta_flux']
+#h_beta_err = df['h_beta_flux_err']
+#oi = df['oi_6300_flux']
+#oi_err = df['oi_6300_flux_err']
+#if 'sii_6717_flux' in df.keys():
+#    sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+#
+#    sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
+#else:
+#    sii_sum = df['sii_6731_flux']
+#
+#    sii_sum_err = df['sii_6731_flux_err']
 
 if he2_flag:
     heii = heii[data] # 3-sigma cut for HeII selection
-subsetname = df.NAME
-midir = ['rs0059' , 'rs0082' , 'rs0083' , 'rs0086' , 'rs0094' , 'rs0137' , 
-         'rs0146' , 'rs0158' , 'rs0164' , 'rs0180' , 'rs0200' , 'rs0199' , 
-         'rs0219' , 'rs0223' , 'rs0228' , 'rs0238' , 'rs0261' , 'rs0298' , 
-         'rs0304' , 'rs0317' , 'rs0325' , 'rs0327' , 'rs0346' , 'rs0349' , 
-         'rs0352' , 'rs0357' , 'rs0382' , 'rs0387' , 'rs0447' , 'rs0489' , 
-         'rs0499' , 'rs0507' , 'rs0527' , 'rs0583' , 'rs0584' , 'rs0635' , 
-         'rs0659' , 'rs0743' , 'rs0752' , 'rs0759' , 'rs0771' , 'rs0775' , 
-         'rs0789' , 'rs0793' , 'rs0796' , 'rs0807' , 'rs0814' , 'rs0817' , 
-         'rs0856' , 'rs0857' , 'rs0858' , 'rs0863' , 'rs0864' , 'rs0895' , 
-         'rs0898' , 'rs0905' , 'rs0910' , 'rs0924' , 'rs1347' , 'rs0952' , 
-         'rs0979' , 'rs0987' , 'rs0990' , 'rs1011' , 'rs1019' , 'rs1063' , 
-         'rs1073' , 'rs1113' , 'rs1139' , 'rs1155' , 'rs1170' , 'rs1181' , 
-         'rs1194' , 'rs1227' , 'rs1368' , 'rs1374' , 'rs1380' , 'rs1388' , 
-         'rs1397' , 'rs1256' , 'rs1285' , 'rs1295' , 'rs1305' , 'rs1306' , 
-         'rf0001' , 'rf0514' , 'rf0517' , 'rf0519' , 'rf0006' , 'rf0531' , 
-         'rf0535' , 'rf0538' , 'rf0042' , 'rf0058' , 'rf0059' , 'rf0552' , 
-         'rf0064' , 'rf0065' , 'rf0555' , 'rf0073' , 'rf0077' , 'rf0108' , 
-         'rf0572' , 'rf0120' , 'rf0576' , 'rf0591' , 'rf0189' , 'rf0598' , 
-         'rf0192' , 'rf0199' , 'rf0204' , 'rf0206' , 'rf0605' , 'rf0207' , 
-         'rf0608' , 'rf0218' , 'rf0614' , 'rf0246' , 'rf0623' , 'rf0260' , 
-         'rf0628' , 'rf0629' , 'rf0632' , 'rf0633' , 'rf0634' , 'rf0289' , 
-         'rf0308' , 'rf0661' , 'rf0662' , 'rf0676' , 'rf0680' , 'rf0685' , 
-         'rf0686' , 'rf0690' , 'rf0691' , 'rf0694' , 'rf0372' , 'rf0373' , 
-         'rf0712' , 'rf0718' , 'rf0721' , 'rf0722' , 'rf0400' , 'rf0736' , 
-         'rf0738' , 'rf0740' , 'rf0743' , 'rf0422' , 'rf0746' , 'rf0750' , 
-         'rf0430' , 'rf0755' , 'rf0439' , 'rf0454' , 'rf0762' , 'rf0765' , 
-         'rf0485' , 'rf0493' , 'rf0494' , 'rf0497' , 'rf0780' , 'rf0501' , 
-         'rf0504' , 'rf0791' , 'rf0344' ]
-midiragn = [x for x in midir if x in subsetname]
+subsetname = df.NAME[data]
+if sdsscat =='nsa':
+    df = df[data]
+#    df.to_csv('NSA_ECO_snr5.csv')
 #length of data to be used for debugging
 datalen = np.sum(data)
 
@@ -352,11 +352,11 @@ datalen = np.sum(data)
 o3hb = np.log10(oiii/h_beta) # always the y-axis
 o1ha = np.log10(oi/h_alpha)
 s2ha = np.log10(sii_sum/h_alpha)
-n2ha = np.log10(nii/h_alpha)
+n2ha = np.log10(nii_sum/h_alpha)
 s2ha_err = np.array(ratioerror(sii_sum, sii_sum_err, h_alpha, h_alpha_err))
 o3hb_err = np.array(ratioerror(oiii, oiii_err, h_beta, h_beta_err))
 o1ha_err = np.array(ratioerror(oi, oi_err, h_alpha, h_alpha_err))
-n2ha_err = np.array(ratioerror(nii, nii_sum_err, h_alpha, h_alpha_err))
+n2ha_err = np.array(ratioerror(nii_sum, nii_sum_err, h_alpha, h_alpha_err))
 
 if he2_flag:
     he2hb = np.log10(heii/h_beta)
@@ -407,7 +407,7 @@ compsel = compsel1  #composite galaxies
 seyfsel = agnsel1 & seyfselr #Seyfert AGN galaxies
 linersel = agnsel1 & linerselr #LINER AGN galaxies
 ambigsel1 = sfsel1 & (agnsel2 | agnsel3) #SF in first plot, AGN in subsequent plot
-ambigsel2 = agnsel1 & (sfsel2 | sfsel3) #AGN in first plot, SF in subsequent plot
+ambigsel2 = np.array(agnsel1) & (np.array(sfsel2) | np.array(sfsel3)) #AGN in first plot, SF in subsequent plot
 ambagnsel = agnsel1 & ~seyfselr & ~linerselr & ~(sfsel2 | sfsel3) #Ambiguous AGN
 
 sftoagn1 = sfsel1 & agnsel2
@@ -441,9 +441,11 @@ ambigsel1pts = (len(np.where(ambigsel1)[0]))
 ambigsel2pts = (len(np.where(ambigsel2)[0]))
 if he2_flag:
     heiiselpts = (len(np.where(agnsel4)[0]))
-    totalselpts = sfselpts+seyfselpts+linerselpts+compselpts+agnselpts+ambigsel1pts+ambigsel2pts+heiiselpts
+    totalselpts = sfselpts+seyfselpts+linerselpts+compselpts+agnselpts+\
+    ambigsel1pts+ambigsel2pts+heiiselpts
 else:
-    totalselpts = sfselpts+seyfselpts+linerselpts+compselpts+agnselpts+ambigsel1pts+ambigsel2pts
+    totalselpts = sfselpts+seyfselpts+linerselpts+compselpts+agnselpts+\
+    ambigsel1pts+ambigsel2pts
 sfpercent = float(sfselpts)/float(datalen)*100
 seyfpercent = float(seyfselpts)/float(datalen)*100
 linerpercent = float(linerselpts)/float(datalen)*100
@@ -458,7 +460,7 @@ if 'logmstar' in df.keys():
 else:
     dwarf = (fulldf.loc[df.name].logmstar < 9.5)
     giant = (fulldf.loc[df.name].logmstar > 9.5)
-agn = (ambigsel1|seyfsel|linersel|ambagnsel|compsel)
+agn = (ambigsel1|seyfsel|linersel|ambagnsel|compsel|ambigsel2)
 dwarfagn = dwarf & agn
 giantagn = giant & agn
 
@@ -482,7 +484,7 @@ print ''
 
 print ("AGN in Dwarf Galaxies: "), 100*round(np.sum(dwarfagn)/float(np.sum(dwarf)),2), ("%")
 print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant)),2), ("%")
-print ("SF-AGN in dwarfs: "), np.sum(ambigsel1 & dwarf)
+print ("AGN in dwarfs: "), np.sum(agn & dwarf)
 print ("Number of Dwarfs:"), np.sum(dwarf)
 ###PLOTS###
 #reference points in x-direction for demarcation lines on plots
@@ -498,7 +500,7 @@ if resolve == 1:
     ax1.set_xlim(-1.5,0.5)
     ax1.set_ylim(-1.0,1.0)
     main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', 
-                      label = 'ke01 Theoretical Maximum Starburst Line')
+                      label = 'Ke01 Maximum Starburst Line')
     composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
                           'k-.', label = 'Ka03 Composite Line')
     sfsel1, = ax1.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
@@ -555,7 +557,7 @@ if resolve == 1:
     #plt.figure('OI Scatter Plot')
     ax3 = plt.subplot(223)
     main3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-                      'k', label = 'Ke01 Theoretical Maximum Starburst Line')
+                      'k', label = 'Ke01 Maximum Starburst Line')
     comp3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
                       'k-.', label = 'Ka03 Composite Line')
     liner2, = ax3.plot(refoiha[refoiha > -1.1], o1halinseyf(refoiha[refoiha > -1.1]),
@@ -591,7 +593,7 @@ if resolve == 1:
         ax4 = plt.subplot(111)
         main4, = ax4.plot(refn2ha[refn2ha < -0.15], 
                           he2hbmain(refn2ha[refn2ha < -0.15]), 
-                          'k',  label = 'Main Line')
+                          'k',  label = 'Ke01 Theoretical Maximum Starburst Line')
         liner4, = ax4.plot(refn2ha[refn2ha < 0.1], 
                            he2hblimit(refn2ha[refn2ha < 0.1]), 
                            'k--', label = 'Composite Line (Plot 1)')
@@ -710,7 +712,7 @@ ndx = []#np.where((df.NAME == 'rs1105') | (df.NAME == 'rs1375'))[0]
 xmin = refn2ha.min(); xmax = refn2ha.max()
 ymin = -1.25; ymax = 1.5
 nbins = 50
-fig = plt.figure('NII Plot')
+fig = plt.figure()
 ax1 = fig.add_subplot(111)
 
 definite = np.column_stack((n2ha[defagn|sfsel], o3hb[defagn|sfsel]))
@@ -726,9 +728,9 @@ k = kde.gaussian_kde(agn_contour.T)
 agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
 ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
                shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
-main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Main Line')
+main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Theoretical Maximum Starburst Line (Ke01)')
 composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 
-'k-.', label = 'Composite Line')
+'k-.', label = 'Composite Line (Ka03)')
 ax1.set_xlim(-1.7,0.4)
 ax1.set_ylim(-1.0,1.0)
 ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1], 'bs',
@@ -737,6 +739,10 @@ ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1], 'bs',
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Composite')
+defagndata1, = ax1.plot(n2ha[defagn], o3hb[defagn], 'rs', alpha = 0.5, 
+                      markersize = 8, mew = 0, label = 'Definite AGN')
+missing, = ax1.plot(n2ha.loc[missing], o3hb.loc[missing], 'ks', alpha = 1, 
+                      markersize = 8, mew = 0, label = 'Definite AGN')
 
 #xraypt, = ax1.plot(n2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
 #                         mfc ='none', mew = 2, label = 'X-ray Selected')
@@ -754,10 +760,15 @@ if catalog:
     midiragn1 = ax1.plot(n2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+
 ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
                         mew = 1, mec = 'y', label = 'AGN-to-SF')
-ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3, 
-            colors='k', corner_mask = True, extend = 'both')
+#ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3, 
+#            colors='k', corner_mask = True, extend = 'both')
+#if 'rs0672' in list(df.name):
+#    largegrp, = ax1.plot(n2ha['rs0672'], o3hb['rs0672'], 'ks', alpha = 1, 
+#                      markersize = 8, mew = 0, label = 'AGN in Large Groups')
+
 if he2_flag:
     agndata4, = ax1.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8,
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
@@ -767,14 +778,14 @@ if len(ndx) > 0:
                           markersize = 12, mfc = 'none', mew = 1, label = 'rs1105')
     ax1.plot(n2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
                           markersize = 12, mfc = 'none', mew = 1, label = 'rs1375')
-plt.legend(loc=3, numpoints = 1, fontsize = 14)
-plt.show()
+ax1.legend(loc=3, numpoints = 1)#, fontsize = 14)
+
 xmin = refsiiha.min(); xmax = refsiiha.max()
 ymin = -1.25; ymax = 1.5
 nbins = 50
 
-fig = plt.figure('SII Plot')
-ax1 = fig.add_subplot(111)
+fig = plt.figure()
+ax2 = fig.add_subplot(111)
 
 definite = np.column_stack((s2ha[defagn|sfsel], o3hb[defagn|sfsel]))
 xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
@@ -787,60 +798,71 @@ xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j,
                                 ymin_agn:ymax_agn:nbins*1j]
 k = kde.gaussian_kde(agn_contour.T)
 agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
-ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3,
-            colors='k')
-ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+#ax2.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3,
+#            colors='k')
+ax2.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
                shading='gouraud', cmap=sf_colors_map)
-main1, = ax1.plot(refsiiha, s2hamain(refsiiha), 'k', label = 'Main Line')
-ax1.set_xlim(-1.2,0.2)
-ax1.set_ylim(-1,1)
-compdata1, = ax1.plot(s2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
+main1, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k', label = 'Main Line')
+ax2.set_xlim(-1.2,0.2)
+ax2.set_ylim(-1,1)
+compdata1, = ax2.plot(s2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Composite')
-#ax1.errorbar(s2ha[ambigsel1], o3hb[ambigsel1],
+agn1, = ax2.plot(s2ha[defagn], o3hb[defagn], 'rs', alpha = 0.5, 
+                      markersize = 8, mew = 0, label = 'Definite AGN')
+#ax2.errorbar(s2ha[ambigsel1], o3hb[ambigsel1],
 #                            yerr = o3hb_err[ambigsel1], xerr = s2ha_err[ambigsel1],
 #                            fmt= 's',c = 'b', alpha = 0.5) 
-ax1.plot(s2ha[ambigsel1], o3hb[ambigsel1],
+ax2.plot(s2ha[ambigsel1], o3hb[ambigsel1],
                             'bs', alpha = 0.5, 
                             ms = 8, mew = 0, label = 'SF-to-AGN')
 
-#lowsfagnpt, = ax1.plot(s2ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
+#lowsfagnpt, = ax2.plot(s2ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 if catalog:
-    #xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+    #xraypt, = ax2.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
     #                         mfc ='none', mew = 2, label = 'X-Ray Detected')
-    xrayagn, = ax1.plot(s2ha[xray.name[xray['xrayagn']]], 
+    xrayagn, = ax2.plot(s2ha[xray.name[xray['xrayagn']]], 
                              o3hb[xray.name[xray['xrayagn']]],
                         'rx', markersize = 8, mfc ='none', mew = 2, 
                         label = 'X-Ray AGN')
-    veron2, = ax1.plot(s2ha[veronagn], o3hb[veronagn],'ks', 
+    veron2, = ax2.plot(s2ha[veronagn], o3hb[veronagn],'ks', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
-    hmq2, = ax1.plot(s2ha[hmqagn], o3hb[hmqagn],'k^', 
+    hmq2, = ax2.plot(s2ha[hmqagn], o3hb[hmqagn],'k^', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
-    broad2, = ax1.plot(s2ha[broadagn], o3hb[broadagn],'ko', 
+    broad2, = ax2.plot(s2ha[broadagn], o3hb[broadagn],'ko', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
-    midiragn2 = ax1.plot(s2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
-ax1.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
-ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-ambig2data1, = ax1.plot(s2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
+    midiragn2 = ax2.plot(s2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
+ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
+ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+ambig2data1, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
                         mew = 1, mec = 'y',label = 'AGN-to-SF')
-if len(ndx) > 0:
-    ax1.plot(s2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
-                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
-    ax1.plot(s2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
-                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
-ax1.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
+#if 'rs0672' in list(df.name):
+#    largegrp, = ax2.plot(s2ha['rs0672'], o3hb['rs0672'], 'ks', alpha = 1, 
+#                      markersize = 8, mew = 0, label = 'AGN in Large Groups')
+#if len(ndx) > 0:
+#    ax2.plot(s2ha[ndx[0]], o3hb[ndx[0]], 'ko',  
+#                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
+#    ax2.plot(s2ha[ndx[1]], o3hb[ndx[1]], 'ro',  
+#                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
+ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
                   'k--', label = 'Liner/Seyfert Division')
+#ax2.errorbar(np.array(s2ha[flags.agntosf]).flatten(), 
+#             np.array(o3hb[flags.agntosf]).flatten(), 
+#             xerr = s2ha_err[flags.agntosf].flatten(),
+#            yerr = o3hb_err[flags.agntosf].flatten(), 
+##            fmt = 'None', marker = 'gs', 
+#            mew = 2 ,  zorder  = 1)
+
 if he2_flag:
-    agndata4, = ax1.plot(s2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, 
+    agndata4, = ax2.plot(s2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, 
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-plt.show()
 
 #OI Plot
 xmin = refoiha.min(); xmax = 0#refoiha.max()
 ymin = -1.25; ymax = 1.5
 nbins = 50
-fig = plt.figure('OI Plot')
-ax1 = fig.add_subplot(111)
+fig = plt.figure()
+ax3 = fig.add_subplot(111)
 
 definite = np.column_stack((o1ha[defagn|sfsel], o3hb[defagn|sfsel]))
 xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
@@ -853,78 +875,151 @@ xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j,
                                 ymin_agn:ymax_agn:nbins*1j]
 k = kde.gaussian_kde(agn_contour.T)
 agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
-ax1.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3, 
-            colors='k')
-ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+#ax3.contour(xgrid_agn, ygrid_agn, agn_contour_z.reshape(xgrid_agn.shape), 3, 
+#            colors='k')
+ax3.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
                shading='gouraud', cmap=sf_colors_map)
-composite_fake, = ax1.plot(refoiha[refoiha < -0.75], 
+composite_fake, = ax3.plot(refoiha[refoiha < -0.75], 
                            o1hamain(refoiha)[refoiha < -0.75], 'k-.', 
                            label = 'Ka03 Composite Line')
-main1, = ax1.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 'k', 
+main1, = ax3.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 'k', 
                   label = 'Ke01 Maximum Starburst Line')
-ax1.set_xlim(-2.1,-0.2)
-ax1.set_ylim(-1,1)
-compdata1, = ax1.plot(o1ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
+ax3.set_xlim(-2.1,-0.2)
+ax3.set_ylim(-1,1)
+compdata1, = ax3.plot(o1ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Composite')
-#ax1.errorbar(o1ha[ambigsel1], o3hb[ambigsel1], xerr = o1ha_err[ambigsel1],
+defagndata1, = ax3.plot(o1ha[defagn], o3hb[defagn], 'rs', alpha = 0.5, 
+                      markersize = 8, mew = 0, label = 'Definite AGN')
+#ax3.errorbar(o1ha[ambigsel1], o3hb[ambigsel1], xerr = o1ha_err[ambigsel1],
 #                            yerr = o3hb_err[ambigsel1], fmt = 'b.', alpha = 0.5,
 #                        markersize = 8, mew = 0, label = 'SF-to-AGN', ecolor = 'k')
-ax1.plot(o1ha[ambigsel1], o3hb[ambigsel1], 'bs', alpha = 0.5,
+ax3.plot(o1ha[ambigsel1], o3hb[ambigsel1], 'bs', alpha = 0.5,
                         markersize = 8, mew = 0, label = 'SF-to-AGN')
-ax1.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
-ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-ambig2data1, = ax1.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
+ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
+ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+ambig2data1, = ax3.plot(o1ha[ambigsel2], o3hb[ambigsel2],'g^', markersize = 10,
                         mew = 1, mec = 'y', label = 'AGN-to-SF')
-#lowsfagnpt, = ax1.plot(o1ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
+#lowsfagnpt, = ax3.plot(o1ha[lowsfagn], o3hb[lowsfagn],'ks', markersize = 8,
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 if catalog:
-    #xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
+    #xraypt, = ax3.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
     #                         mfc ='none', mew = 2, label = 'X-Ray Detected')
-    xrayagn, = ax1.plot(o1ha[xray.name[xray['xrayagn']]], 
+    xrayagn, = ax3.plot(o1ha[xray.name[xray['xrayagn']]], 
                              o3hb[xray.name[xray['xrayagn']]],
                         'rx', markersize = 8, mfc ='none', mew = 2, 
                         label = 'X-Ray AGN')
-    veron2, = ax1.plot(o1ha[veronagn], o3hb[veronagn],'ks', 
+    veron2, = ax3.plot(o1ha[veronagn], o3hb[veronagn],'ks', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
-    hmq2, = ax1.plot(o1ha[hmqagn], o3hb[hmqagn],'k^', 
+    hmq2, = ax3.plot(o1ha[hmqagn], o3hb[hmqagn],'k^', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
-    broad2, = ax1.plot(o1ha[broadagn], o3hb[broadagn],'ko', 
+    broad2, = ax3.plot(o1ha[broadagn], o3hb[broadagn],'ko', 
                        mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
-    midiragn2 = ax1.plot(o1ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
+    midiragn2 = ax3.plot(o1ha.loc[midiragn], o3hb.loc[midiragn], 'k>', label = 'Mid-IR AGN')    
 ndx = ['rs0472','rs0775']
-if len(ndx) > 0:
-    ax1.plot(o1ha[ndx[0]], o3hb[ndx[0]], 'ko',  
-                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
-    ax1.plot(o1ha[ndx[1]], o3hb[ndx[1]], 'ro',  
-                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
-ax1.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
+#if len(ndx) > 0:
+#    ax3.plot(o1ha[ndx[0]], o3hb[ndx[0]], 'ko',  
+#                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0010')
+#    ax3.plot(o1ha[ndx[1]], o3hb[ndx[1]], 'ro',  
+#                          markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
+ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
                                'k--', label = 'Ke06 Liner/Seyfert Division Line')
+#if 'rs0672' in list(df.name):
+#    largegrp, = ax3.plot(o1ha['rs0672'], o3hb['rs0672'], 'ks', alpha = 1, 
+#                      markersize = 8, mew = 0, label = 'Dwarf AGN-to-SF')
 
 if he2_flag:
-    agndata4, = ax1.plot(o1ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, 
+    agndata4, = ax3.plot(o1ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, 
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-plt.show()
 
 sftoagn = df[ambigsel1 & dwarf][['radeg','dedeg']]
 c = SkyCoord(ra = list(sftoagn.radeg)*u.degree, 
              dec=list(sftoagn.dedeg)*u.degree, frame='icrs')
 sftoagn['h'],sftoagn['m'],sftoagn['s'] = c.ra.hms
-print(sftoagn)
-sftoagn.to_csv(sdsscat+'_sfagn.csv')
-error = 1
+#print(sftoagn)
+#sftoagn.to_csv(sdsscat+'_sfagn.csv')
+print(100.0*np.sum(dwarfagn)/np.sum(dwarf), \
+      100.0*binom_conf_interval(np.sum(dwarfagn),np.sum(dwarf)) - \
+      (100.0*np.sum(dwarfagn)/np.sum(dwarf)))
+error = 0
 if error:
-    ax1.errorbar(np.array(n2ha).flatten(), np.array(o3hb).flatten(), 
-                 xerr = n2ha_err.flatten(),
-                yerr = o3hb_err.flatten(),fmt = 'None', marker = 'None', 
-                alpha = 0.5, mew = 0, label = 'SF-to-AGN',
-                ecolor = 'k', zorder=0)
-    ax2.errorbar(np.array(s2ha).flatten(), np.array(o3hb).flatten(), 
-                 xerr = s2ha_err.flatten(),
-                yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', 
-                alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k',
-                zorder=0)
-    ax3.errorbar(np.array(o1ha).flatten(), np.array(o3hb).flatten(), 
-                 xerr = o1ha_err.flatten(),
-                yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', 
-                alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k', 
-                zorder=0)
+#    ax1.errorbar(np.array(n2ha).flatten(), np.array(o3hb).flatten(), 
+#                 xerr = n2ha_err.flatten(),
+#                yerr = o3hb_err.flatten(),fmt = 'None', marker = 'None', 
+#                alpha = 0.5, mew = 0, label = 'SF-to-AGN',
+#                ecolor = 'k', zorder=0)
+#    ax2.errorbar(np.array(s2ha).flatten(), np.array(o3hb).flatten(), 
+#                 xerr = s2ha_err.flatten(),
+#                yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', 
+#                alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k',
+#                zorder=0)
+#    ax3.errorbar(np.array(o1ha).flatten(), np.array(o3hb).flatten(), 
+#                 xerr = o1ha_err.flatten(),
+#                yerr = o3hb_err.flatten(), fmt = 'None', marker = 'None', 
+#                alpha = 0.5, mew = 0, label = 'SF-to-AGN', ecolor = 'k', 
+#                zorder=0)
+    order = 10
+    ax1.errorbar(np.array(n2ha[flags.agntosf]).flatten(), 
+                 np.array(o3hb[flags.agntosf]).flatten(), 
+                 xerr = n2ha_err[flags.agntosf].flatten(),
+                yerr = o3hb_err[flags.agntosf].flatten(),
+                fmt = 'none', ecolor = 'k',#marker = 'None', 
+                mew = 2,  zorder  = order)
+    ax2.errorbar(np.array(s2ha[flags.agntosf]).flatten(), 
+                 np.array(o3hb[flags.agntosf]).flatten(), 
+                 xerr = s2ha_err[flags.agntosf].flatten(),
+                yerr = o3hb_err[flags.agntosf].flatten(), 
+                fmt = 'none', ecolor = 'k',#marker = 'gs', 
+                mew = 2 ,  zorder  = order)
+    ax3.errorbar(np.array(o1ha[flags.agntosf]).flatten(), 
+                 np.array(o3hb[flags.agntosf]).flatten(), 
+                 xerr = o1ha_err[flags.agntosf].flatten(),
+                yerr = o3hb_err[flags.agntosf].flatten(),
+                fmt = 'none', ecolor = 'k',#marker = 'None', 
+                mew = 2, zorder = order)
+
+#    n2ha_port = np.log10(df[flags.agntosf]['Flux_NII_6583']/df[flags.agntosf]['Flux_Ha_6562'])
+#    o3hb_port = np.log10(df[flags.agntosf]['Flux_OIII_5006']/df[flags.agntosf]['Flux_Hb_4861'])
+#    s2ha_port = np.log10((df[flags.agntosf]['Flux_SII_6730']+df[flags.agntosf]['Flux_SII_6716']) \
+#                /df[flags.agntosf]['Flux_Ha_6562'])
+#    o1ha_port = np.log10(df[flags.agntosf]['Flux_OI_6300']/df[flags.agntosf]['Flux_Ha_6562'])
+#
+#
+#    n2ha_port_err = np.array(ratioerror(df[flags.agntosf]['Flux_NII_6583'], 
+#                                        df[flags.agntosf]['Flux_NII_6583_Err'], 
+#                                        df[flags.agntosf]['Flux_Ha_6562'], 
+#                                        df[flags.agntosf]['Flux_Ha_6562_Err']))
+#    o1ha_port_err = np.array(ratioerror(df[flags.agntosf]['Flux_OI_6300'], 
+#                                        df[flags.agntosf]['Flux_OI_6300_Err'], 
+#                                        df[flags.agntosf]['Flux_Ha_6562'], 
+#                                        df[flags.agntosf]['Flux_Ha_6562_Err']))
+#    s2err = np.sqrt(df[flags.agntosf]['Flux_SII_6730_Err']**2+\
+#                    df[flags.agntosf]['Flux_SII_6716_Err']**2)
+#    s2ha_port_err = np.array(ratioerror((df[flags.agntosf]['Flux_SII_6730']+df[flags.agntosf]['Flux_SII_6716']), 
+#                                        s2err, 
+#                                        df[flags.agntosf]['Flux_Ha_6562'], 
+#                                        df[flags.agntosf]['Flux_Ha_6562_Err']))
+#    o3hb_port_err = np.array(ratioerror(df[flags.agntosf]['Flux_OIII_5006'], 
+#                                        df[flags.agntosf]['Flux_OIII_5006_Err'], 
+#                                        df[flags.agntosf]['Flux_Hb_4861'], 
+#                                        df[flags.agntosf]['Flux_Hb_4861_Err']))
+#
+#    ax1.errorbar(np.array(n2ha_port).flatten(), 
+#                 np.array(o3hb_port).flatten(), 
+#                 xerr = n2ha_port_err.flatten(),
+#                yerr = o3hb_port_err.flatten(),
+#                fmt = 'none', ecolor = 'k',#marker = 'None', 
+#                mew = 2,  zorder  = order)
+#    ax2.errorbar(np.array(s2ha_port).flatten(), 
+#                 np.array(o3hb_port).flatten(), 
+#                 xerr = s2ha_port_err.flatten(),
+#                yerr = o3hb_port_err.flatten(), 
+#                fmt = 'none', ecolor = 'k',#marker = 'gs', 
+#                mew = 2 ,  zorder  = order)
+#    ax3.errorbar(np.array(o1ha_port).flatten(), 
+#                 np.array(o3hb_port).flatten(), 
+#                 xerr = o1ha_port_err.flatten(),
+#                yerr = o3hb_port_err.flatten(),
+#                fmt = 'none', ecolor = 'k',#marker = 'None', 
+#                mew = 2, zorder = order)
+
+plt.show()

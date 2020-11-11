@@ -31,8 +31,8 @@ print 'RESOLVE RESULTS'
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_bpt1_filter.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_filter_new.pkl'
-df = pd.read_pickle(inputfile) #ECO catalog
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_bpt1snr5_dext_jhu.csv' #RESOLVE_full_hasnr5_dext_jhu.csv'
+df = pd.read_csv(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
 #dat = Table.read(inputfile, format='fits')
@@ -63,6 +63,8 @@ def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 200
     return 1.3 + (0.61 / (log_NII_HA - 0.05))
 def n2hamain(log_NII_HA): #main line for NII/H-alpha from equation 5, Kewley 2006
     return 1.19 + (0.61 / (log_NII_HA - 0.47))
+    #A*tanh(theta) + B
+    #return ((-30.787 + 1.1358*log_NII_HA + 0.27297*(log_NII_HA**2))*np.tanh(5.7409*log_NII_HA)-31.093)
 def s2hamain(log_SII_HA): #main line for SII/H-alpha from equation 2, Kewley 2006
     return 1.30 + (0.72 / (log_SII_HA - 0.32))
 def s2halinseyf(log_SII_HA): #liner/seyfert divider for SII/H-alpha
@@ -199,13 +201,12 @@ agnsel = agnsel1  #Seyfert AGN galaxies
 
 emlineclass = sfsel ^ compsel ^ agnsel
 #print np.sum(emlineclass)
-
-if save:
-        dfout = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
+flags = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                            'defagn':agnsel})
-        dfout.to_csv('resolve_emlineclass_bpt1_new.csv',index=False)
+        
+if save:
+        flags.to_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/resolve_emlineclass_full_bpt1snr5_jhu.csv',index=False)
     
-
 #create alternate catalog name-based agn selector, print len
 #agn = (np.where(agnsel1 & resname)[0]) #for eco
 agn = (np.where(agnsel1 & econame)[0]) #for resolve
@@ -262,6 +263,12 @@ ax.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 #data, = ax.plot(n2ha, o3hb, 'k.')
 sfdata1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', markersize = 3, alpha = 0.5, label = 'SF')
+sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0073')], 
+                             o3hb.iloc[np.where(flags.galname == 'rf0073')],
+                             'bs', markersize = 8, alpha = 0.5)
+sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0503')], 
+                             o3hb.iloc[np.where(flags.galname == 'rf0503')],
+                             'gs', markersize = 8, alpha = 0.5)
 agndata1, = ax.plot(n2ha[agnsel], o3hb[agnsel],'rs', markersize = 8, label = 'Definite AGN')
 compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'bs', markersize = 8, label = 'Composite')
 #comp2he2, = ax.plot(n2ha[agnsel4], o3hb[agnsel4], 'y*', label = 'HeII-selected AGN')

@@ -35,14 +35,15 @@ matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
-save = 1
+save = 0
 resolve = 1
 eco = 0
 full = 0
 sami = 0
 singlepanel = 0
-catalog = 1
-sdsscat = 'jhu'
+catalog = 0
+sdsscat = 'master'
+#sdsscat = 'jhu'
 #sdsscat = 'port'
 #sdsscat = 'nsa'
 if sys.platform == 'linux2':
@@ -81,6 +82,8 @@ else:
         inputfile = 'RESOLVE_full_snr5.csv'
     if sdsscat == 'nsa':       
         inputfile = 'NSA_RESOLVE.csv'
+    if sdsscat == 'master':       
+        inputfile = 'RESOLVE_snr5_master.csv'
     print 'RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'resolve_emlineclass_filter_he2_new.csv'
@@ -121,6 +124,8 @@ if resolve:
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
     return 1.3 + (0.61 / (log_NII_HA - 0.05))
+def n2halocus(log_NII_HA): #locus of SF galaxies from Kewley 2013
+    return 1.1 + (0.61 / (log_NII_HA + 0.08))
 def n2hamain(log_NII_HA): #main line for NII/H-alpha from equation 5, Kewley 2006
     return 1.19 + (0.61 / (log_NII_HA - 0.47))
 def s2hamain(log_SII_HA): #main line for SII/H-alpha from equation 2, Kewley 2006
@@ -267,34 +272,12 @@ else:
 
 if he2_flag:
     heii = heii[data] # 3-sigma cut for HeII selection
-midir = ['rs0059' , 'rs0082' , 'rs0083' , 'rs0086' , 'rs0094' , 'rs0137' , 
-         'rs0146' , 'rs0158' , 'rs0164' , 'rs0180' , 'rs0200' , 'rs0199' , 
-         'rs0219' , 'rs0223' , 'rs0228' , 'rs0238' , 'rs0261' , 'rs0298' , 
-         'rs0304' , 'rs0317' , 'rs0325' , 'rs0327' , 'rs0346' , 'rs0349' , 
-         'rs0352' , 'rs0357' , 'rs0382' , 'rs0387' , 'rs0447' , 'rs0489' , 
-         'rs0499' , 'rs0507' , 'rs0527' , 'rs0583' , 'rs0584' , 'rs0635' , 
-         'rs0659' , 'rs0743' , 'rs0752' , 'rs0759' , 'rs0771' , 'rs0775' , 
-         'rs0789' , 'rs0793' , 'rs0796' , 'rs0807' , 'rs0814' , 'rs0817' , 
-         'rs0856' , 'rs0857' , 'rs0858' , 'rs0863' , 'rs0864' , 'rs0895' , 
-         'rs0898' , 'rs0905' , 'rs0910' , 'rs0924' , 'rs1347' , 'rs0952' , 
-         'rs0979' , 'rs0987' , 'rs0990' , 'rs1011' , 'rs1019' , 'rs1063' , 
-         'rs1073' , 'rs1113' , 'rs1139' , 'rs1155' , 'rs1170' , 'rs1181' , 
-         'rs1194' , 'rs1227' , 'rs1368' , 'rs1374' , 'rs1380' , 'rs1388' , 
-         'rs1397' , 'rs1256' , 'rs1285' , 'rs1295' , 'rs1305' , 'rs1306' , 
-         'rf0001' , 'rf0514' , 'rf0517' , 'rf0519' , 'rf0006' , 'rf0531' , 
-         'rf0535' , 'rf0538' , 'rf0042' , 'rf0058' , 'rf0059' , 'rf0552' , 
-         'rf0064' , 'rf0065' , 'rf0555' , 'rf0073' , 'rf0077' , 'rf0108' , 
-         'rf0572' , 'rf0120' , 'rf0576' , 'rf0591' , 'rf0189' , 'rf0598' , 
-         'rf0192' , 'rf0199' , 'rf0204' , 'rf0206' , 'rf0605' , 'rf0207' , 
-         'rf0608' , 'rf0218' , 'rf0614' , 'rf0246' , 'rf0623' , 'rf0260' , 
-         'rf0628' , 'rf0629' , 'rf0632' , 'rf0633' , 'rf0634' , 'rf0289' , 
-         'rf0308' , 'rf0661' , 'rf0662' , 'rf0676' , 'rf0680' , 'rf0685' , 
-         'rf0686' , 'rf0690' , 'rf0691' , 'rf0694' , 'rf0372' , 'rf0373' , 
-         'rf0712' , 'rf0718' , 'rf0721' , 'rf0722' , 'rf0400' , 'rf0736' , 
-         'rf0738' , 'rf0740' , 'rf0743' , 'rf0422' , 'rf0746' , 'rf0750' , 
-         'rf0430' , 'rf0755' , 'rf0439' , 'rf0454' , 'rf0762' , 'rf0765' , 
-         'rf0485' , 'rf0493' , 'rf0494' , 'rf0497' , 'rf0780' , 'rf0501' , 
-         'rf0504' , 'rf0791' , 'rf0344' ]
+midir = ['rs0137', 'rs0200', 'rs0261', 'rs0325', 'rs0507', 'rs0764', 'rs0771', 
+         'rs0796', 'rs0814', 'rs0817', 'rs0924', 'rs1006', 'rs1117', 'rs1139',
+         'rs1194', 'rs1227', 'rs1374', 'rs1240', 'rs1397', 'rs1305', 'rf0001',
+         'rf0006', 'rf0025', 'rf0065', 'rf0073', 'rf0084', 'rf0108', 'rf0192', 
+         'rf0623', 'rf0632', 'rf0690', 'rf0372', 'rf0373', 'rf0721', 'rf0400', 
+         'rf0738', 'rf0743', 'rf0750', 'rf0765', 'rf0493', 'rf0504']
 midiragn = [x for x in midir if x in df.NAME]
 #length of data to be used for debugging
 datalen = np.sum(data)
@@ -566,10 +549,12 @@ if singlepanel ==1:
         ax1 = fig.add_subplot(111)
         ax1.set_xlim(-1.5,0.5)
         ax1.set_ylim(-1.0,1.0)
-        main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', 
-                          label = 'Ke01 Theoretical Maximum Starburst Line')
+        main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k')#, 
+#                          label = 'Ke01 Theoretical Maximum Starburst Line')
+        #main1, = ax1.plot(refn2ha, n2halocus(refn2ha), 'k', 
+        #          label = 'ke01 Theoretical Maximum Starburst Line')
         composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
-                              'k-.', label = 'Ka03 Composite Line')
+                              'k-.')#, label = 'Ka03 Composite Line')
         sfsel1, = ax1.plot(n2ha[sfsel], o3hb[sfsel], 'ko', alpha = 0.1, 
                            markersize = 5)#, label = 'Definite Star Forming')
         compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', 
@@ -601,13 +586,21 @@ if singlepanel ==1:
         if he2_flag:
             agndata4, = ax1.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', 
                 markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-        
+        ax1_2 = ax1.twiny()
+        xticks = np.arange(-1.5, 0.75, 0.25) 
+        ax1_2.set_xticks(np.linspace(0,1,len(xticks)))#np.arange(7.8,9.2,0.2))
+        float_formatter = lambda x: "%.2f" % x
+        Z = (15.614 + xticks)/1.754
+        Z_label = ["%.2f" % z for z in Z]
+        ax1_2.set_xticklabels(Z_label)
+        ax1_2.set_xlabel(r'12 + log(O/H)', fontsize = 22)
+
         #SII/OIII plot
         fig = plt.figure('SII Scatter Plot')
         ax2 = fig.add_subplot(111)
-        main2, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
+        main2, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k')#,  label = 'Ke01 Line')
         liner, = ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
-                          'k--', label = 'Liner/Seyfert Division')
+                          'k--')#, label = 'Liner/Seyfert Division')
         ax2.set_xlim(-1.5, 0.5)
         ax2.set_ylim(-1.0,1.0)
         ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
@@ -644,9 +637,9 @@ if singlepanel ==1:
         fig = plt.figure('OI Scatter Plot')
         ax3 = fig.add_subplot(111)
         main3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-                          'k', label = 'Ke01 Theoretical Maximum Starburst Line')
+                          'k')#, label = 'Ke01 Theoretical Maximum Starburst Line')
         comp3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-                          'k-.', label = 'Ka03 Composite Line')
+                          'k-.')#, label = 'Ka03 Composite Line')
         liner2, = ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
                            'k--', label = 'Ke06 Liner/Seyfert Division Line')
         ax3.set_xlim(-2.0, -0.4)
@@ -682,23 +675,23 @@ if singlepanel ==1:
                 markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
         #plt.legend(bbox_to_anchor=(1.25, 1),loc=2, borderaxespad=0., 
         #           numpoints = 1, fontsize = 14)
-catalog = 1            
+            
 if catalog:
     #xraypt, = ax1.plot(s2ha[xray.name], o3hb[xray.name],'kx', markersize = 8,
     #                         mfc ='none', mew = 2, label = 'X-Ray Detected')
-    xrayagn, = ax1.plot(n2ha[xray.name[xray['xrayagn']]], 
-                             o3hb[xray.name[xray['xrayagn']]],
-                        'yx', markersize = 12, mfc ='none', mew = 2, 
-                        label = 'X-Ray AGN')
-    veron2, = ax1.plot(n2ha[veronagn], o3hb[veronagn],'ks', 
-                       mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
-    hmq2, = ax1.plot(n2ha[hmqagn], o3hb[hmqagn],'k^', 
-                       mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
-    broad2, = ax1.plot(n2ha[broadagn], o3hb[broadagn],'ko', 
-                       mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
-    midiragn2 = ax1.plot(n2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', mfc = 'y',
+#    xrayagn, = ax1.plot(n2ha[xray.name[xray['xrayagn']]], 
+#                             o3hb[xray.name[xray['xrayagn']]],
+#                        'yx', markersize = 12, mfc ='none', mew = 2, 
+#                        label = 'X-Ray AGN')
+#    veron2, = ax1.plot(n2ha[veronagn], o3hb[veronagn],'ks', 
+#                       mfc = 'none', markersize = 12, mew = 2, label = 'Veron AGN')
+#    hmq2, = ax1.plot(n2ha[hmqagn], o3hb[hmqagn],'k^', 
+#                       mfc = 'none', markersize = 12, mew = 2, label = 'HMQ AGN')
+#    broad2, = ax1.plot(n2ha[broadagn], o3hb[broadagn],'ko', 
+#                       mfc = 'none', markersize = 12, mew = 2, label = 'Broadline AGN')
+    midiragn2 = ax1.plot(n2ha.loc[midiragn], o3hb.loc[midiragn], 'k>', mfc = 'lime',
                          markersize = 12, label = 'Mid-IR AGN')
-    ax1.legend()    
+    ax1.legend(loc = 'lower left')    
 ndx = []
 if len(ndx) > 0:
     ax1.plot(o1ha[ndx[0]], o3hb[ndx[0]], 'ko',  
@@ -706,3 +699,39 @@ if len(ndx) > 0:
     ax1.plot(o1ha[ndx[1]], o3hb[ndx[1]], 'ro',  
                           markersize = 12, mfc = 'none', mew = 1, label = 'rs0775')
 
+fig, ax1 = plt.subplots()
+#ax1.plot(n2ha[sfsel],o3hb[sfsel],'ko', alpha = 0.3)
+from scipy.optimize import curve_fit
+def locus(log_NII_HA,a, b,c): #composite minimum line from equation 1, Kewley 2006
+    return (a / (log_NII_HA +b)) + c
+lim = (n2ha < -0.4)
+popt, pcov = curve_fit(locus, n2ha.loc[sfsel & lim], o3hb.loc[sfsel & lim], 
+    bounds=([0,-0.1,0], [0.7, 0.1, 2]))
+print(popt)
+#ax1.plot(n2ha.loc[sfsel & lim], o3hb.loc[sfsel & lim], 'k.')
+ax1.plot(refn2ha[refn2ha < 0], locus(refn2ha[refn2ha < 0], *popt), 'r-')
+ax1.set_xlim(-1.5,0.5)
+ax1.set_ylim(-1.0,1.0)
+        
+from scipy.optimize import minimize, fmin_cobyla
+
+
+dist = []
+for P in zip(n2ha,o3hb):
+#    def objective(X):
+#        x,y = X
+#        return np.sqrt((x - P[0])**2 + (y - P[1])**2)
+#    def c1(X):
+#        x,y = X
+#        return locus(x, *popt) - y
+#    X = fmin_cobyla(objective, x0=[0.5,0.5], cons=[c1])
+    def disp(x):
+        y = locus(x,*popt)
+        return -np.sqrt((x - P[0])**2 + (y - P[1])**2)
+    mindist = minimize(disp, x0 = [0.5,0.5], method='Nelder-Mead', tol=1e-6)
+    dist.append(disp(mindist,P))
+
+dist = np.array(dist)
+cmap = plt.get_cmap('nipy_spectral')#int(np.max(r)))
+cax = ax1.scatter(n2ha, o3hb,marker = '.', c = dist, cmap = cmap)
+fig.colorbar(cax)

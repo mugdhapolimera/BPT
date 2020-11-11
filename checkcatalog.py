@@ -20,7 +20,7 @@ sfagn = np.array(['rf0117', 'rf0192', 'rf0238', 'rf0338', 'rf0342', 'rf0376',
 
 df = readsav('resolvecatalog.dat')
 
-ndx = [x for x in range(len(df.name)) if df.name[x] .decode("utf-8") in sfagn]
+ndx = [x for x in range(len(df.name)) if df.name[x] .decode("utf-8") in targetnames]
 for i in ndx:
     print(df.name[i].decode("utf-8"),df.broaddate[i].decode("utf-8"))
     

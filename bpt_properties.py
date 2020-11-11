@@ -13,15 +13,18 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
-path = os.path.dirname(os.path.realpath(__file__))
+#path = os.path.dirname(os.path.realpath(__file__))
+os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
 he2_flag = 0
 if he2_flag:
     flags = pd.read_csv('resolve_emlineclass_filtered_he2.csv')
 else:
-    flags = pd.read_csv('resolve_emlineclass_filtered.csv')
+    flags = pd.read_csv('resolve_emlineclass_full_snr5_master_new.csv')
 
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_filtered.pkl'
-full_df = pd.read_pickle(inputfile)
+flags.index = flags.galname
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_snr5_master_new.csv'
+full_df = pd.read_csv(inputfile)
+full_df.index = full_df.name
 df = full_df.loc[flags.galname]
 
 results_izi = 'C:/Users/mugdhapolimera/github/izi/results/IZI_Z_filtered.txt'
@@ -29,12 +32,15 @@ full_Z = np.genfromtxt(results_izi, dtype = None, names= True)
 Z = full_Z[list(x for x in range(len(full_Z)) if full_Z['Name'][x] in list(flags.galname))]
         
 
-os.chdir('C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/')
-results_nb = pd.read_csv("results_izi_prior/RESOLVE_param_estimates.csv")
-Z_index = (results_nb['Parameter'] == 'LOGZ')
-full_Z_nb = results_nb[Z_index]
-full_Z_nb.index = full_Z_nb['Galaxy Name']
-Z_nb = full_Z_nb.loc[flags.galname]
+#os.chdir('C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/')
+#results_nb = pd.read_csv("results_izi_prior/RESOLVE_param_estimates.csv")
+results_nb = pd.read_csv("C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_snr5_master_csf_nicholls_fstar30_agn.txt", 
+                     sep = '\s+', names = ["name", "Estimate", "err_up", "err_down"])
+
+#Z_index = (results_nb['Estimate'] == 'LOGZ')
+#full_Z_nb = results_nb[Z_index]
+results_nb.index = results_nb.name
+Z_nb = results_nb.loc[flags.galname]
 
 results_izi = 'C:/Users/mugdhapolimera/github/izi/results/IZI_Z_prior2.txt'
 full_Z1 = np.genfromtxt(results_izi, dtype = None, names= True)
@@ -239,100 +245,100 @@ for key in keys:
         plt.xlabel('Group Halo Mass')
         plt.ylabel('Galaxy Baryonic Mass')
         
-plt.figure()
-for key in keys:
-        sel = df.iloc[np.where(flags[key])[0]]
-            
-        Z_sel = Z_nb.loc[sel.NAME]['Estimate']
-        
-        plt.plot(sel.logmstar, Z_sel, marker[key], label = key)
-        plt.legend(borderaxespad=0., loc = 4)
-        plt.xlabel('Stellar Mass')
-        plt.ylabel('Metallicity')
-        plt.title('M-Z Relation using NebulaBayes + Levesque Grid')
+#plt.figure()
+#for key in keys:
+#        sel = df.iloc[np.where(flags[key])[0]]
+#            
+#        Z_sel = Z_nb.loc[sel.NAME]['Estimate']
+#        
+#        plt.plot(sel.logmstar, Z_sel, marker[key], label = key)
+#        plt.legend(borderaxespad=0., loc = 4)
+#        plt.xlabel('Stellar Mass')
+#        plt.ylabel('Metallicity')
+#        plt.title('M-Z Relation using NebulaBayes + Levesque Grid')
 
-m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
-plt.plot(m_z[:,0], m_z[:,1],'r')
-#From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
-m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
-z = 8.96 + 0.31*m - 0.23*(m**2) - 0.017*(m**3) + 0.046*(m**4)
-#plt.ylim(-0.2, 1.2)
-plt.plot(m+10,z)
+#m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
+#plt.plot(m_z[:,0], m_z[:,1],'r')
+##From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
+#m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
+#z = 8.96 + 0.31*m - 0.23*(m**2) - 0.017*(m**3) + 0.046*(m**4)
+##plt.ylim(-0.2, 1.2)
+#plt.plot(m+10,z)
+#
+#plt.figure()
+#for key in keys:
+#        sel = df.iloc[np.where(flags[key])[0]]
+#            
+#        Z_sel_ndx = Z[list(x for x in range(len(Z)) if Z['Name'][x] in sel.NAME)]
+#        Z_sel = Z_sel_ndx['Z_Estimate']
+#        plt.plot(sel.logmstar, Z_sel, marker[key], label = key)
+#        plt.legend(borderaxespad=0., loc = 4)
+#        plt.xlabel('Stellar Mass')
+#        plt.ylabel('Metallicity')
+#        plt.title('M-Z Relation using IZI (Python + GPy) without Prior')
+#m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
+#plt.plot(m_z[:,0], m_z[:,1],'r')
+##From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
+#m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
+#z = 8.96 + 0.31*m - 0.23*(m**2) - 0.017*(m**3) + 0.046*(m**4)
+#plt.ylim(8, 9.2)
+#plt.plot(m+10,z)
 
-plt.figure()
-for key in keys:
-        sel = df.iloc[np.where(flags[key])[0]]
-            
-        Z_sel_ndx = Z[list(x for x in range(len(Z)) if Z['Name'][x] in sel.NAME)]
-        Z_sel = Z_sel_ndx['Z_Estimate']
-        plt.plot(sel.logmstar, Z_sel, marker[key], label = key)
-        plt.legend(borderaxespad=0., loc = 4)
-        plt.xlabel('Stellar Mass')
-        plt.ylabel('Metallicity')
-        plt.title('M-Z Relation using IZI (Python + GPy) without Prior')
-m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
-plt.plot(m_z[:,0], m_z[:,1],'r')
-#From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
-m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
-z = 8.96 + 0.31*m - 0.23*(m**2) - 0.017*(m**3) + 0.046*(m**4)
-plt.ylim(8, 9.2)
-plt.plot(m+10,z)
-
-plt.figure()
-for key in keys:
-        sel = df.iloc[np.where(flags[key])[0]]
-            
-        Z_sel_ndx = Z1[list(x for x in range(len(Z1)) if Z1['Name'][x] in sel.NAME)]
-        Z_sel = Z_sel_ndx['Z_Estimate']
-        plt.plot(sel.logmstar, Z_sel, marker[key], label = key)
-        plt.legend(borderaxespad=0., loc = 4)
-        plt.xlabel('Stellar Mass')
-        plt.ylabel('Metallicity')
-        plt.title('M-Z Relation using IZI (Python + GPy) with Prior')
-m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
-plt.plot(m_z[:,0], m_z[:,1],'r')
-#From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
-m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
-z = 8.96 + 0.31*m - 0.23*(m**2) - 0.017*(m**3) + 0.046*(m**4)
-plt.ylim(8, 9.2)
-plt.plot(m+10,z)
-
-plt.figure()
-bins = np.arange(7.6,9.1,0.1)
-for key in keys:
-        sel = df.iloc[np.where(flags[key])[0]]
-        Z_sel = Z_nb.loc[sel.NAME]['Estimate']
-        plt.hist(Z_sel, histtype = 'step', 
-                         bins = bins,linewidth = 5, label = key)
-        plt.legend()
-        plt.xlabel('Metallicity (NebulaBayes + Levesque Grid)')
-        plt.ylabel('Number')
-
-plt.figure()
-bins = np.arange(7.6,9.1,0.1)
-for key in keys:
-        sel = df.iloc[np.where(flags[key])[0]]
-            
-        Z_sel_ndx = Z[list(x for x in range(len(Z)) if Z['Name'][x] in sel.NAME)]
-        Z_sel = Z_sel_ndx['Z_Estimate']
-        plt.hist(Z_sel, histtype = 'step', 
-                        bins = bins, linewidth = 5, label = key)
-        plt.legend(borderaxespad=0., loc = 2)
-        plt.xlabel('Metallicity (IZI - Python + Gpy)')
-        plt.ylabel('Number')
-
-plt.figure()
-bins = np.arange(7.6,9.1,0.1)
-for key in keys:
-        sel = df.iloc[np.where(flags[key])[0]]
-            
-        Z_sel_ndx = Z1[list(x for x in range(len(Z1)) if Z1['Name'][x] in sel.NAME)]
-        Z_sel = Z_sel_ndx['Z_Estimate']
-        plt.hist(Z_sel, histtype = 'step', 
-                        bins = bins, linewidth = 5, label = key)
-        plt.legend(borderaxespad=0., loc = 2)
-        plt.xlabel('Metallicity (IZI - Python + Gpy) without Prior')
-        plt.ylabel('Number')
+#plt.figure()
+#for key in keys:
+#        sel = df.iloc[np.where(flags[key])[0]]
+#            
+#        Z_sel_ndx = Z1[list(x for x in range(len(Z1)) if Z1['Name'][x] in sel.NAME)]
+#        Z_sel = Z_sel_ndx['Z_Estimate']
+#        plt.plot(sel.logmstar, Z_sel, marker[key], label = key)
+#        plt.legend(borderaxespad=0., loc = 4)
+#        plt.xlabel('Stellar Mass')
+#        plt.ylabel('Metallicity')
+#        plt.title('M-Z Relation using IZI (Python + GPy) with Prior')
+#m_z = np.loadtxt('C:\Users\mugdhapolimera\github\BPT\BPT\BPT\M-Z_Tremonti04.txt')
+#plt.plot(m_z[:,0], m_z[:,1],'r')
+##From Manucci 2010 - Polynomial of M-Z relationship marginalized over SFR
+#m = np.linspace(8.5 - 10, max(df.logmstar) - 10, 100)
+#z = 8.96 + 0.31*m - 0.23*(m**2) - 0.017*(m**3) + 0.046*(m**4)
+#plt.ylim(8, 9.2)
+#plt.plot(m+10,z)
+#
+#plt.figure()
+#bins = np.arange(7.6,9.1,0.1)
+#for key in keys:
+#        sel = df.iloc[np.where(flags[key])[0]]
+#        Z_sel = Z_nb.loc[sel.NAME]['Estimate']
+#        plt.hist(Z_sel, histtype = 'step', 
+#                         bins = bins,linewidth = 5, label = key)
+#        plt.legend()
+#        plt.xlabel('Metallicity (NebulaBayes + Levesque Grid)')
+#        plt.ylabel('Number')
+#
+#plt.figure()
+#bins = np.arange(7.6,9.1,0.1)
+#for key in keys:
+#        sel = df.iloc[np.where(flags[key])[0]]
+#            
+#        Z_sel_ndx = Z[list(x for x in range(len(Z)) if Z['Name'][x] in sel.NAME)]
+#        Z_sel = Z_sel_ndx['Z_Estimate']
+#        plt.hist(Z_sel, histtype = 'step', 
+#                        bins = bins, linewidth = 5, label = key)
+#        plt.legend(borderaxespad=0., loc = 2)
+#        plt.xlabel('Metallicity (IZI - Python + Gpy)')
+#        plt.ylabel('Number')
+#
+#plt.figure()
+#bins = np.arange(7.6,9.1,0.1)
+#for key in keys:
+#        sel = df.iloc[np.where(flags[key])[0]]
+#            
+#        Z_sel_ndx = Z1[list(x for x in range(len(Z1)) if Z1['Name'][x] in sel.NAME)]
+#        Z_sel = Z_sel_ndx['Z_Estimate']
+#        plt.hist(Z_sel, histtype = 'step', 
+#                        bins = bins, linewidth = 5, label = key)
+#        plt.legend(borderaxespad=0., loc = 2)
+#        plt.xlabel('Metallicity (IZI - Python + Gpy) without Prior')
+#        plt.ylabel('Number')
 
 '''plt.figure()
 for key in keys:

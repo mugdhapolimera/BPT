@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<proposal schemaVersion="2020.1.1" tacCategory="Galaxy evolution">
+    <meta band3optionChosen="false" overrideAffiliate="false">
+        <attachment>F:\mugdhapolimera\Downloads\Gemini FT January (2).pdf</attachment>
+    </meta>
+    <semester year="2020" half="A"/>
+    <title>Finding Low Metallicity Dwarf AGN Candidates at z~0 using the RESOLVE Survey</title>
+    <abstract>Thus far, AGN in dwarf galaxies have been found mostly via Halpha line broadening reflecting ionized gas outflows, and the BPT diagnostic. However, theory suggests another class of dwarf AGN that may be intermittently fuelled as strong star-formation feedback -- typical in gas-rich, low-metallicity dwarfs -- fluctuates. We devise a new classification scheme that identifies low-metallicity ‘star-forming AGN’ (SFing-AGN), using a combination of the [NII]/Halpha (BPT), [SII]/Halpha, and [OI]/Halpha vs [OIII]/Hbeta diagnostics. Photoionization models show that SFing-AGN represent a new category of AGN candidates that appear as star-forming in the metallicity-sensitive BPT diagnostic but as AGN in the [SII] and/or [OI] diagnostics. Low S/N SDSS spectroscopy suggests SFing-AGN may be common in the z~0 RESOLVE survey, a volume-limited census of ~1500 galaxies dominated by dwarfs, but we have high S/N IFU data confirming SFing-AGN status for only 2 galaxies. We request ~4.4 hours on GEMINI-S for S/N&gt;20 GMOS IFU data to confirm 5 additional SFing-AGN with AGN-like [OI]/Halpha line ratios localised in the central kpc. These observations will be key to determining whether we have identified a predicted, distinct class of dwarf AGN in low-metallicity star-forming galaxies. </abstract>
+    <scheduling></scheduling>
+    <keywords>
+        <keyword>Emission lines</keyword>
+        <keyword>Dwarf galaxies</keyword>
+        <keyword>Active galaxies</keyword>
+    </keywords>
+    <investigators>
+        <pi id="investigator-0">
+            <firstName>Mugdha</firstName>
+            <lastName>Polimera</lastName>
+            <status>Grad Thesis</status>
+            <gender>Woman</gender>
+            <email>mugpol@unc.edu</email>
+            <phone>3174578703</phone>
+            <address>
+                <institution>University of North Carolina</institution>
+                <address>Department of Physics and Astronomy
+CB# 3255 Phillips Hall
+Chapel Hill
+NC
+27599-3255</address>
+                <country>USA</country>
+            </address>
+        </pi>
+        <coi id="investigator-1">
+            <firstName>Sheila</firstName>
+            <lastName>Kannappan</lastName>
+            <status>PhD</status>
+            <gender>None selected</gender>
+            <email>sheila@physics.unc.edu</email>
+            <phone></phone>
+            <institution>University of North Carolina</institution>
+        </coi>
+        <coi id="investigator-2">
+            <firstName>Chris</firstName>
+            <lastName>Richardson</lastName>
+            <status>PhD</status>
+            <gender>None selected</gender>
+            <email>crichardson17@elon.edu</email>
+            <phone></phone>
+            <institution>Elon University</institution>
+        </coi>
+    </investigators>
+    <targets>
+        <sidereal epoch="J2000" id="target-0">
+            <name>rs1047</name>
+            <degDeg>
+                <ra>201.64021000000002459273673593997955322265625</ra>
+                <dec>2.17505399999998871862771920859813690185546875</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">15.260000228881836</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-1">
+            <name>rs1105</name>
+            <degDeg>
+                <ra>203.76899000000003070454113185405731201171875</ra>
+                <dec>3.6607430000000249492586590349674224853515625</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.979999542236328</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-2">
+            <name>rs0909</name>
+            <degDeg>
+                <ra>191.5344400000000177897163666784763336181640625</ra>
+                <dec>4.44355300000000852378434501588344573974609375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.920000076293945</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-3">
+            <name>rs0421</name>
+            <degDeg>
+                <ra>169.373280000000022482709027826786041259765625</ra>
+                <dec>2.50430000000000063664629124104976654052734375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">17.0</magnitude>
+            </magnitudes>
+        </sidereal>
+        <sidereal epoch="J2000" id="target-4">
+            <name>rs0124</name>
+            <degDeg>
+                <ra>146.22550000000001091393642127513885498046875</ra>
+                <dec>2.46531399999997802297002635896205902099609375</dec>
+            </degDeg>
+            <magnitudes>
+                <magnitude band="r" system="AB">16.309999465942383</magnitude>
+            </magnitudes>
+        </sidereal>
+    </targets>
+    <conditions>
+        <condition id="condition-0">
+            <name>CC 70%/Cirrus, IQ 70%/Good, SB 80%/Grey, WV Any</name>
+            <cc>70%/Cirrus</cc>
+            <iq>70%/Good</iq>
+            <sb>80%/Grey</sb>
+            <wv>Any</wv>
+        </condition>
+    </conditions>
+    <blueprints>
+        <gmosS>
+            <regime>optical</regime>
+            <ifu id="blueprint-0">
+                <name>GMOS-S IFU B600 None IFU 1 slit</name>
+                <visitor>false</visitor>
+                <filter>None</filter>
+                <disperser>B600</disperser>
+                <fpu>IFU 1 slit</fpu>
+            </ifu>
+        </gmosS>
+    </blueprints>
+    <observations>
+        <observation band="Band 1/2" enabled="true" target="target-0" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.8</progTime>
+            <partTime units="hr">0.08000000000000002</partTime>
+            <time units="hr">0.8800000000000001</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>61</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-1" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.8</progTime>
+            <partTime units="hr">0.08000000000000002</partTime>
+            <time units="hr">0.8800000000000001</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>58</percentage>
+                    <evaluation>Caution</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-2" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.8</progTime>
+            <partTime units="hr">0.08000000000000002</partTime>
+            <time units="hr">0.8800000000000001</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>100</percentage>
+                    <evaluation>Success</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-3" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.8</progTime>
+            <partTime units="hr">0.08000000000000002</partTime>
+            <time units="hr">0.8800000000000001</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>44</percentage>
+                    <evaluation>Warning</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+        <observation band="Band 1/2" enabled="true" target="target-4" condition="condition-0" blueprint="blueprint-0">
+            <progTime units="hr">0.8</progTime>
+            <partTime units="hr">0.08000000000000002</partTime>
+            <time units="hr">0.8800000000000001</time>
+            <meta ck="">
+                <guiding>
+                    <percentage>47</percentage>
+                    <evaluation>Warning</evaluation>
+                </guiding>
+                <visibility>Good</visibility>
+                <gsa>0</gsa>
+            </meta>
+        </observation>
+    </observations>
+    <proposalClass>
+        <fastTurnaround tooOption="None" reviewer="investigator-0" mentor="investigator-1" key="2bc33410-a7e0-42ac-97f3-e8007c7f39c9">
+            <submission>
+                <request>
+                    <time units="hr">4.4</time>
+                    <minTime units="hr">4.4</minTime>
+                </request>
+                <response>
+                    <receipt>
+                        <timestamp>2020-01-31T19:41:51.000Z</timestamp>
+                        <id>FT-2020A-061</id>
+                        <contact>phase1help@gemini.edu</contact>
+                    </receipt>
+                </response>
+            </submission>
+            <partnerAffiliation>us</partnerAffiliation>
+        </fastTurnaround>
+    </proposalClass>
+</proposal>

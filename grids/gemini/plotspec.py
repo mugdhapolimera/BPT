@@ -177,7 +177,7 @@ age = 10**(6+0.1*(42-2)) # in years
 #totalflux = norm*mstar*(totalspec* lsun) /(4*np.pi*r*r*1e6)
 #totalflux = totalspec #new_spec/(newlam)
 
-optndx = (newlam < 7400) & (newlam > 4000)
+optndx = (newlam < 8000) & (newlam > 4000)
 optlam = newlam[optndx]
 optspec = new_spec[optndx] 
 
@@ -229,7 +229,7 @@ plt.ylabel(r'Flux Density ($10^{-17}$ $ergs/s/cm^2/{\AA}$)')
 #plt.ylabel(r'Flux Density ($10^{-17}$ $ergs/s/cm^2/{\AA}$)')
 #plt.plot(optlam,cont(optlam))
 #spectrum = pd.DataFrame(data = {'flux' : totalflux[optndx]*10, 'lam' : newlam[optndx]/10})
-#spectrum.to_csv('mock_spectrum.csv')
+#spectrum.to_csv('mock_spectrum_new.csv')
 if sdss:
     np.savetxt('mock_spectrum_SDSSrs0010.txt', zip(newlam[optndx]/10,totalflux[optndx]))
 else:
