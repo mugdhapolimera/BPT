@@ -40,79 +40,6 @@ matplotlib.rcParams.update({'axes.linewidth': 2})
 matplotlib.rcParams.update({'lines.linewidth': 2})
 from astropy.stats import binom_conf_interval
 
-##Read in RESOLVE/ECO extinction corrected and S/N filtered data
-#save = 0
-#resolve = 0
-#eco = 1
-#full = 0
-#singlepanel = 0
-#sdsscat = 'jhu'
-#
-##sdsscat = 'jhu'
-##sdsscat = 'nsa'
-##sdsscat = 'master'
-#if sys.platform == 'linux2':
-#        os.chdir('/afs/cas.unc.edu/users/m/u/mugpol/github/SDSS_spectra/')
-#
-#else:
-#    os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
-#
-#
-#if full: 
-#    inputfile = 'ECO+RESOLVE_snr5_dext_'+sdsscat+'.csv'
-#    print 'ECO+RESOLVE RESULTS'
-#    outputfile = 'eco+resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
-#elif eco: 
-#    #inputfile = 'ECO_filter_new.csv'
-#    if sdsscat == 'jhu':
-#        inputfile = 'ECO/SEL/ECO_full_snr5_dext_jhu.csv' #'ECO_full_bary_jhu.csv'#'ECO_full_snr5.csv'
-#    if sdsscat == 'port':
-#        inputfile = 'ECO/SEL/ECO_full_snr5_dext_port.csv' #'ECO_full_bary_port.csv'#'ECO_full_snr5_port.csv'
-#    if sdsscat == 'nsa':       
-#        inputfile = 'ECO_full_snr5_dext_nsa.csv'
-#    if sdsscat == 'master':       
-#        inputfile = 'ECO_snr5_master_hasnr5.csv' #bary.csv'
-#    print 'ECO RESULTS'
-#    outputfile = 'eco_emlineclass_dext_snr5_'+sdsscat+'.csv' #'eco_emlineclass_full_bary_'+sdsscat+'_new.csv'
-#
-#else:
-#    #inputfile = 'RESOLVE_filter_new.csv'
-#    if sdsscat == 'port':       
-#        inputfile = 'RESOLVE_full_snr5_dext_port.csv'
-#        #inputfile = 'RESOLVE_full_he2_dext_port.csv'
-#    if sdsscat == 'jhu':       
-#        #inputfile = 'RESOLVE_full_bary_jhu.csv'
-#        inputfile = 'RESOLVE_full_snr5_dext_jhu.csv'
-#        #inputfile = 'RESOLVE_full_blend_dext_new.csv'
-#    if sdsscat == 'nsa':       
-#        inputfile = 'RESOLVE_full_snr5_dext_nsa.csv'
-#        #outputfile = 'resolve_emlineclass_full_snr5.csv'
-#    if sdsscat == 'master':       
-#        inputfile = 'RESOLVE_snr5_master_new.csv'
-#    print 'RESOLVE RESULTS'
-#    outputfile = 'resolve_emlineclass_dext_snr5_'+sdsscat+'.csv' #'resolve_emlineclass_full_hasnr5_jhu.csv'
-#
-#df = pd.read_csv(inputfile)
-#if 'source' not in df.keys():
-#    df['source'] = sdsscat
-#
-##define alternate catalog names
-#if 'name' in df.keys():
-#    df['NAME'] = df['name']
-#if 'CATID' in df.keys():
-#    df['NAME'] = df['CATID']
-#name = df['name']
-#df['NAME'] = df['name']
-#df.index = df.name
-#
-#
-#if eco: 
-#    resname = df['resname'] #for eco
-#    resname = resname != 'notinresolve'
-#if resolve:
-#    econame = df['NAME']#df['econame'] #for resolve
-#    econame = df['NAME']#econame != 'notineco'
-
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
     return 1.3 + (0.61 / (log_NII_HA - 0.05))
@@ -159,7 +86,8 @@ def ratioerror(num,num_err,den, den_err):
     # note that the ratio uses only the stronger line, but for S/N reasons we add
     # the weaker and multiply by 3/4 since Chris Richardson says the canonical
     # line ratio is 3:1 (this needs to be updated with a more precise number)
-def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2, ax3):
+def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile, 
+              eco, resolve, full, sdsscat, save, ax1, ax2, ax3):
     df = pd.read_csv(inputfile)
         #define alternate catalog names
     if 'name' in df.keys():
@@ -169,6 +97,14 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
     name = df['name']
     df['NAME'] = df['name']
     df.index = df.name
+
+    s06 = pd.read_csv(s06outputfile)
+    s06.index = s06.galname
+    s06agn = np.array(s06[~s06.defstarform].galname)
+
+    midir = pd.read_csv(midirfile)
+    midir.index = midir.name
+    midiragn = np.array(midir.name.iloc[np.where(midir.agnflag == True)[0]])
 
     if sdsscat == 'port':
         nii = df['Flux_NII_6583']
@@ -184,8 +120,6 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
         oi_err = df['Flux_OI_6300_Err']
         sii_sum = df['Flux_SII_6716'] + df['Flux_SII_6730']
         sii_sum_err = np.sqrt(df['Flux_SII_6716_Err']**2 + df['Flux_SII_6730_Err']**2)
-        heii = df['Flux_HeII_4685']
-        heii_err = df['Flux_HeII_4685_Err']
     if sdsscat == 'jhu' or sdsscat == 'nsa' or sdsscat == 'master':
         
         nii = df['nii_6584_flux']
@@ -195,13 +129,7 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
         else:        
             nii_sum = df['nii_6584_flux']
             nii_sum_err = df['nii_6584_flux_err']
-        #nii_sum[df.source == 'nsa'] = df['nii_6584_flux']
-        #nii_sum_err[df.source == 'nsa'] = df['nii_6584_flux_err']
-    
-        #nii = nii_sum
-        # note that the ratio uses only the stronger line, but for S/N reasons we add
-        # the weaker and multiply by 3/4 since Chris Richardson says the canonical
-        # line ratio is 3:1 (this needs to be updated with a more precise number)
+
         oiii = df['oiii_5007_flux']
         oiii_err = df['oiii_5007_flux_err']
         h_alpha = df['h_alpha_flux']
@@ -220,18 +148,7 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
             sii_sum_err = df['sii_6731_flux_err']
     
     
-    #Filter Data: all non-negative SEL fluxes and errors; Hbeta >3sigma
-    gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & (oi > 0) &
-                (sii_sum > 0) & (h_beta > 0) & (h_beta > 5*h_beta_err) &
-                (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0) & 
-                (oi_err > 0) & (sii_sum_err > 0))
-    
-    snr = ((h_alpha > 5*h_alpha_err) & (nii_sum > 5*nii_sum_err) & (oiii > 5*oiii_err) & 
-           (oi > 5*oi_err) & (sii_sum > 5*sii_sum_err) & (h_beta > 5*h_beta_err))
-        
-    data = df.name > 0 #gooddata #& snr #use ALL galaxy data within catalog
-    if sdsscat == 'master':
-        data = df.name > 0
+    data = df.name > 0
         
     if eco: 
         resname = df['resname'] #for eco
@@ -278,10 +195,6 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
     o1ha = np.log10(oi/h_alpha)
     s2ha = np.log10(sii_sum/h_alpha)
     n2ha = np.log10(nii_sum/h_alpha)
-    s2ha_err = np.array(ratioerror(sii_sum, sii_sum_err, h_alpha, h_alpha_err))
-    o3hb_err = np.array(ratioerror(oiii, oiii_err, h_beta, h_beta_err))
-    o1ha_err = np.array(ratioerror(oi, oi_err, h_alpha, h_alpha_err))
-    n2ha_err = np.array(ratioerror(nii_sum, nii_sum_err, h_alpha, h_alpha_err))
     
     #Below are the selectors for the data to distinguish btwn: Seyferts, Composites,
     #and AGN's based on the flux ratio diagnostic as understood via Kewley 2006.
@@ -329,7 +242,7 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
                               'sftoagn1':sftoagn1, 'sftoagn2': sftoagn2})
     if save:
         flags.to_csv(outputfile ,index=False)
-    keys = ['defagn', 'composite', 'sftoagn', 'dwarfagn','agntosf']
+    keys = ['defagn', 'composite', 'sftoagn', 'agntosf','dwarfagn']
     marker = {'agntosf': 'c^', 'ambigagn': 'ms', 'composite': 'ms', 'defagn': 'ro', 
               'defliner': 'yo', 'defseyf': 'co', 'dwarfagn': 'ks',
               'sftoagn': 'bs'}
@@ -346,8 +259,8 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
     labels = {'agntosf': 'Low-SII AGN', 'ambigagn': 'Ambiguous AGN', 
               'composite': 'Composite', 'defagn': 'Traditional AGN', 
               'defliner': 'LINER', 'defseyf': 'Seyfert', 
-              'dwarfagn': 'Dwarf AGN', 'defstarform': 'Definite SF', 
-              'sftoagn': 'SFing-AGN'}
+              'dwarfagn': 'SEL Dwarf AGN', 'defstarform': 'Definite SF', 
+              'sftoagn': 'SF-AGN'}
     
     #checking that plotted points are within the total data range
     print ''
@@ -375,6 +288,9 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
     agn = (ambigsel1|seyfsel|linersel|ambagnsel|compsel|ambigsel2)
     dwarfagn = dwarf & agn
     giantagn = giant & agn
+
+    s06dwarfagn = np.intersect1d(s06agn, df.name[dwarf])
+    midirdwarfagn = np.intersect1d(midiragn, df.name[dwarf])
     
     print ("DATA POINTS: "),datalen
     print ("TOTAL PLOTTED POINTS: "), totalselpts
@@ -448,6 +364,14 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
             o3hb_sel = o3hb[dwarfagn]
             ax1.plot(n2ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
                      markersize = markersize[key], mew = 2, label = labels[key])
+    n2ha_sel = n2ha[s06dwarfagn]
+    o3hb_sel = o3hb[s06dwarfagn]
+    ax1.plot(n2ha_sel, o3hb_sel, 'kv', mfc = 'none',
+             markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
+    n2ha_sel = n2ha[midirdwarfagn]
+    o3hb_sel = o3hb[midirdwarfagn]
+    ax1.plot(n2ha_sel, o3hb_sel, 'kp', mfc = 'none',
+             markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
     
     ax1.legend(loc=3, numpoints = 1, fontsize = 15)#, fontsize = 14)
     
@@ -490,6 +414,14 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
             o3hb_sel = o3hb[dwarfagn]
             ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
                      markersize = markersize[key], mew = 2, label = labels[key])
+    s2ha_sel = s2ha[s06dwarfagn]
+    o3hb_sel = o3hb[s06dwarfagn]
+    ax2.plot(s2ha_sel, o3hb_sel, 'kv', mfc = 'none',
+             markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
+    s2ha_sel = s2ha[midirdwarfagn]
+    o3hb_sel = o3hb[midirdwarfagn]
+    ax2.plot(s2ha_sel, o3hb_sel, 'kp', mfc = 'none',
+             markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
     
     #OI Plot
     xmin = refoiha.min(); xmax = 0#refoiha.max()
@@ -527,6 +459,14 @@ def bpt_plots(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax1, ax2
             o3hb_sel = o3hb[dwarfagn]
             ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
                      markersize = markersize[key], mew = 2, label = labels[key])
+    o1ha_sel = o1ha[s06dwarfagn]
+    o3hb_sel = o3hb[s06dwarfagn]
+    ax3.plot(o1ha_sel, o3hb_sel, 'kv', mfc = 'none',
+             markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
+    o1ha_sel = o1ha[midirdwarfagn]
+    o3hb_sel = o3hb[midirdwarfagn]
+    ax3.plot(o1ha_sel, o3hb_sel, 'kp', mfc = 'none',
+             markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
     
     print(100.0*np.sum(dwarfagn)/np.sum(dwarf), \
           100.0*binom_conf_interval(np.sum(dwarfagn),np.sum(dwarf)) - \

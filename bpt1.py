@@ -26,12 +26,15 @@ import matplotlib.pyplot as plt
 #display catalog being used
 print ''
 #print 'ECO RESULTS'
-print 'RESOLVE RESULTS'
+
+survey = 'ECO+RESOLVE'
+print survey+'RESULTS'
+catalog = 'nsa'
 
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_bpt1_filter.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_full_bpt1snr5_dext_jhu.csv' #RESOLVE_full_hasnr5_dext_jhu.csv'
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_bpt1snr5_dext_'+catalog+'.csv' 
 df = pd.read_csv(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
@@ -40,22 +43,61 @@ df = pd.read_csv(inputfile) #ECO catalog
 he2_flag = 0
 save = 1
 
-if ('heii_4685_flux_port_ext' in df.keys()):
-    df = df[~np.isnan(df.heii_4685_flux_port_ext)]
-    heii = df['heii_4685_flux_port']
-    heii_err = df['heii_4685_flux_port_err']
-
-else:
-    df = df[~np.isnan(df.Flux_HeII_4685)]
+if catalog == 'port':
+    nii = df['Flux_NII_6583']
+    nii_sum = (df['Flux_NII_6583']+ df['Flux_NII_6547'])*3./4
+    nii_sum_err = (np.sqrt(df['Flux_NII_6547_Err']**2 + df['Flux_NII_6583_Err']**2))*3./4
+    oiii = df['Flux_OIII_5006']
+    oiii_err = df['Flux_OIII_5006_Err']
+    h_alpha = df['Flux_Ha_6562']
+    h_alpha_err = df['Flux_Ha_6562_Err']
+    h_beta = df['Flux_Hb_4861']
+    h_beta_err = df['Flux_Hb_4861_Err']
+    oi = df['Flux_OI_6300']
+    oi_err = df['Flux_OI_6300_Err']
+    sii_sum = df['Flux_SII_6716'] + df['Flux_SII_6730']
+    sii_sum_err = np.sqrt(df['Flux_SII_6716_Err']**2 + df['Flux_SII_6730_Err']**2)
     heii = df['Flux_HeII_4685']
     heii_err = df['Flux_HeII_4685_Err']
+if catalog== 'jhu' or catalog== 'nsa' or catalog== 'master':
+    
+    nii = df['nii_6584_flux']
+    if 'nii_6548_flux' in df.keys():
+        nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
+        nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
+    else:        
+        nii_sum = df['nii_6584_flux']
+        nii_sum_err = df['nii_6584_flux_err']
+    #nii_sum[df.source == 'nsa'] = df['nii_6584_flux']
+    #nii_sum_err[df.source == 'nsa'] = df['nii_6584_flux_err']
+
+    #nii = nii_sum
+    # note that the ratio uses only the stronger line, but for S/N reasons we add
+    # the weaker and multiply by 3/4 since Chris Richardson says the canonical
+    # line ratio is 3:1 (this needs to be updated with a more precise number)
+    oiii = df['oiii_5007_flux']
+    oiii_err = df['oiii_5007_flux_err']
+    h_alpha = df['h_alpha_flux']
+    h_alpha_err = df['h_alpha_flux_err']
+    h_beta = df['h_beta_flux']
+    h_beta_err = df['h_beta_flux_err']
+    oi = df['oi_6300_flux']
+    oi_err = df['oi_6300_flux_err']
+    if 'sii_6717_flux' in df.keys():
+        sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
+
+        sii_sum_err = np.sqrt(df['sii_6717_flux_err']**2 + df['sii_6731_flux_err']**2)
+    else:
+        sii_sum = df['sii_6731_flux']
+    
+        sii_sum_err = df['sii_6731_flux_err']
 
 #define alternate catalog names
-name = df['NAME']
+name = df['name']
 #resname = df['econame'] #for eco
 #resname = resname != 'notinresolve'
 
-econame = df['econame'] #for resolve
+econame = df['name'] #for resolve
 econame = econame != 'notineco'
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
@@ -81,32 +123,15 @@ def he2hblimit(log_NII_HA):
         return -1.07+1.0/(8.92*log_NII_HA-0.95)
 
 
-#create line ratios [NII]/H-alpha and [OIII]/H-beta
-nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
-nii_sum_err = (np.sqrt(df['nii_6584_flux_err']**2 + df['nii_6548_flux_err']**2))*3./4
-
-# note that the ratio uses only the stronger line, but for S/N reasons we add
-# the weaker and multiply by 3/4 since Chris Richardson says the canonical
-# line ratio is 3:1 (this needs to be updated with a more precise number)
-oiii = df['oiii_5007_flux']
-oiii_err = df['oiii_5007_flux_err']
-h_alpha = df['h_alpha_flux']
-h_alpha_err = df['h_alpha_flux_err']
-h_beta = df['h_beta_flux']
-h_beta_err = df['h_beta_flux_err']
-oi = df['oi_6300_flux']
-oi_err = df['oi_6300_flux_err']
-sii_sum = df['sii_6717_flux'] + df['sii_6731_flux']
-sii_sum_err = np.sqrt(df['sii_6717_flux']**2 + df['sii_6731_flux']**2)
-
-
 #need to check Kewley paper and figure out if ratio used in nii_sum applies to sii_sum as well
 
 #Filter Data: all non-negative SEL fluxes and errors; Hbeta >3sigma
-gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & 
-            (h_beta > 0) & (h_beta > 3*h_beta_err) &
-            (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0))# & 
+#gooddata = ((h_alpha > 0) & (nii_sum > 0) & (oiii > 0) & 
+#            (h_beta > 0) & (h_beta > 3*h_beta_err) &
+#            (h_alpha_err > 0) & (nii_sum_err > 0) & (oiii_err > 0))# & 
 #            (oi > 0) & (sii_sum > 0) & (oi_err > 0) & (sii_sum_err > 0))
+
+gooddata = (h_alpha > 0) 
 
 he2data = (heii/heii_err >=3) & (heii_err > 0)
 
@@ -148,7 +173,6 @@ oi = oi[data]
 sii_sum = sii_sum[data]
 h_beta = h_beta[data]
 h_alpha = h_alpha[data]
-heii = heii[data] # 3-sigma cut for HeII selection
 subsetname = name[data]
 
 #length of data to be used for debugging
@@ -205,7 +229,7 @@ flags = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':com
                            'defagn':agnsel})
         
 if save:
-        flags.to_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/resolve_emlineclass_full_bpt1snr5_jhu.csv',index=False)
+        flags.to_csv('C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_emlineclass_bpt1snr5_'+catalog+'.csv',index=False)
     
 #create alternate catalog name-based agn selector, print len
 #agn = (np.where(agnsel1 & resname)[0]) #for eco
@@ -246,6 +270,18 @@ print("Composite: "),round(comppercent, 2), ("%")
 print("TOTAL KNOWN AGN: "),round(agnpercent, 2), ("%")
 print ("Percent Omitted: "), round((100-(sfpercent+comppercent+agnpercent)), 2), ("%")
 print ''
+if 'logmstar' in df.keys():
+    dwarf = (df.logmstar < 9.5)
+    giant = (df.logmstar > 9.5)
+    
+agn = (agnsel|compsel)
+dwarfagn = dwarf & agn
+giantagn = giant & agn
+
+print ("AGN in Dwarf Galaxies: "), 100*round(np.sum(dwarfagn)/float(np.sum(dwarf)),2), ("%")
+print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant)),2), ("%")
+print ("AGN in dwarfs: "), np.sum(agn & dwarf)
+print ("Number of Dwarfs:"), np.sum(dwarf)
 
 ###PLOTS###
 #reference points in x-direction for demarcation lines on plots

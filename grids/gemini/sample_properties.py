@@ -11,20 +11,22 @@ import os
 import matplotlib as mpl
 os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
 
-df = pd.read_csv('RESOLVE_snr5_master.csv')
+df = pd.read_csv('ECO+RESOLVE_snr5_dext_jhu.csv')
 df.index = df.name
-flags = pd.read_csv('resolve_emlineclass_full_snr5_master.csv')
+flags = pd.read_csv('ECO/SEL/eco+resolve_emlineclass_dext_snr5_jhu.csv')
 flags.index = flags.galname
 
-confidence = pd.read_csv('Confidence_RESOLVE.csv')
-confidence.index = confidence.name
+sfingagn = list(flags.galname[flags.sftoagn])
+#confidence = pd.read_csv('Confidence_RESOLVE.csv')
+#confidence.index = confidence.name
 #df2 = pd.read_csv('RESOLVE_full_snr5_port.csv')
 #df2.index = df2.name
 #nsa = pd.read_csv('NSA_RESOLVE_smcdext.csv')
 #nsa.index = nsa.resname
-##target = ['rf0547', 'rf0338', 'rf0306', 'rf0477']
+#target = ['rf0547', 'rf0338', 'rf0306', 'rf0477']
 #target = targetnames
-target = list(targetlist.index.values)
+#target = list(targetlist.index.values)
+target = ['rs1105', 'rs0775', 'rs0472', 'rs1047', 'rs0421']
 #nov_target = ['rs0124', 'rs0421', 'rs0909', 'rs1105', 'rs1047']#, 'rs1038']
 nov_target = target
 #ifu = ['rs0150', 'rs0930', 'rs1143']
@@ -46,13 +48,17 @@ sami = ['rs0010']#,'rs0775']
 #flags.defstarform.loc[nonjhusfagn] = False
 
 #sel = flags.sftoagn
-sel = (flags.sftoagn) & (confidence.confidence_level > 0)
+sel = (flags.sftoagn) #& (confidence.confidence_level > 0)
 N2 = np.log10(df.nii_6584_flux/df.h_alpha_flux)
 bad = ((N2<-2.5) | (N2>-0.3))
 Z_pp04 = 9.37+2.03*N2+1.26*N2**2+0.32*N2**3
 Z_pp04[bad] = -99
 plt.figure()
 ax1 = plt.subplot()
+Z04 = np.log10(0.4)+8.76
+xaxis = np.linspace(7.5, 11.5)
+plt.plot(xaxis, Z04*np.ones(len(xaxis)), 'k--', linewidth = 2)
+plt.plot(xaxis, 8.76*np.ones(len(xaxis)), 'k--', linewidth = 2)
 plt.plot(df.logmstar,Z_pp04 ,'k.', alpha = 0.3, label = 'All galaxies')
 plt.plot(df.logmstar.loc[sel], Z_pp04.loc[sel],
          'bs', mec = 'k', markersize = 10, label = 'SFing-AGN')
@@ -133,7 +139,7 @@ sfagnplt, = ax.plot(fsmgr_st.loc[sel], fsmgr_lt.loc[sel],
 #ax.plot(fsmgr_st.loc[ifu], fsmgr_lt.loc[ifu],
 #            '*', ms = 12,mec = 'magenta', mfc= 'none',
 #            mew = 1, label = 'New IFU?')
-samiplt, = ax.plot(fsmgr_st.loc['rs0010'], fsmgr_lt.loc['rs0010'],'*', 
+samiplt, = ax.plot(fsmgr_st.loc['rs0010']-0.01, fsmgr_lt.loc['rs0010']-0.10,'*', 
          ms = 12,c = 'lime',mfc= 'none',mew = 2, 
          label = 'SFing-AGN in SAMI')
 #ax.plot((fsmgr_st.loc['rs0775']-0.03), fsmgr_lt.loc['rs0775']+0.03,'*', 
@@ -152,9 +158,9 @@ plt.xscale('log')
 plt.legend(handles = [cax, sfagnplt, targetsplt, samiplt], fontsize = 12)
 ax.set_xlabel(r'Short Term SFH $\left(\frac{M_*(<100 Myr)}{M_*(>100 Myr)}\right)$', fontsize = 15)
 ax.set_ylabel(r'Long Term SFH $\left(\frac{M_*(<1 Gyr)}{M_*(>1 Gyr)}\right)$', fontsize = 15)
-#for i, txt in enumerate(ifu):
-#    ax.annotate(txt, (fsmgr_st.loc[ifu][i], \
-#                      fsmgr_lt.loc[ifu][i]))
+#for i, txt in enumerate(sfingagn):
+#    ax.annotate(txt, (fsmgr_st.loc[sfingagn][i], \
+#                      fsmgr_lt.loc[sfingagn][i]))
 
 fig,ax = plt.subplots()
 cax = ax.scatter(10**ssfr_st, ssfr_lt, marker = 'o', s=8, 
@@ -275,7 +281,9 @@ xmin = 7.5
 xmax = 11.5
 ymin = 0
 ymax = 3
-df = resolve #pd.read_pickle(inputfile)
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/ECO+RESOLVE_inobssample.csv'
+df = pd.read_csv(inputfile)
+df.index = df.name
 print len(df)
 ra=df.radeg
 dec=df.dedeg
@@ -287,9 +295,9 @@ inspring = (ra > 8.75*15.) & (ra < 15.75*15.)
 mgas = df.logmgas
 mstars = df.logmstar
 mbary = 10**mgas + 10**mstars
-inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & \
-(((flinsample | (np.log10(mbary) > 9.0)) & infall) | \
-        ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
+inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & (np.log10(mbary) > 9.2)
+#(((flinsample | (np.log10(mbary) > 9.0)) & infall) | \
+#        ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
 df = df[inobssample]
 u_r = df['modelu_rcorr']
 
@@ -298,14 +306,15 @@ fig,ax = plt.subplots()#(figsize=(8,8))
 plt.imshow(np.rot90(Z), cmap='bone_r',                                                    
           extent=[xmin, xmax, ymin, ymax], interpolation='gaussian')
 
-sfagnplt, = ax.plot(df.logmstar.loc[flags.index.values[sel]], 
-        u_r.loc[flags.index.values[sel]],
+sfagnplt, = ax.plot(df.logmstar.loc[list(flags[flags.sftoagn].galname)], 
+        u_r.loc[list(flags[flags.sftoagn].galname)],
          'bs', mec = 'k', markersize = 10)#, label = 'SFing-AGN'),
 samiplt, = ax.plot(df.logmstar.loc[sami], u_r.loc[sami],'*', c = 'lime', 
          markersize = 10)#, label = 'SFing-AGN in SAMI'),
 ax.plot(df.logmstar.loc[nov_target], 
         u_r.loc[nov_target],
          'bs', mec = 'k', markersize = 10)
+ax.axhline(y = 1.4)
 targetsplt, = ax.plot(df.logmstar.loc[nov_target], u_r.loc[nov_target],'r*', 
          markersize = 10)#, label = 'Targets for this proposal'),
 #ax.plot(df.logmstar.loc[target], u_r.loc[target],'r*', 

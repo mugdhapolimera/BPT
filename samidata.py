@@ -15,15 +15,20 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 from matplotlib import colors
 from matplotlib import patches
+import matplotlib as mpl
+mpl.rcParams.update({'font.size': 20})
+mpl.rcParams.update({'axes.linewidth': 2})
+mpl.rcParams.update({'lines.linewidth': 2})
+#mpl.rcParams['xtick.labelsize'] = label_size 
+#mpl.rcParams['ytick.labelsize'] = label_size 
+#mpl.rcParams['xtick.length'] = 8
+#mpl.rcParams['ytick.length'] = 8
 import os
 from scipy.io import readsav
 import itertools
 from astropy import wcs
 from astropy.coordinates import SkyCoord as sky
-import matplotlib as mpl
 label_size = 15
-mpl.rcParams['xtick.labelsize'] = label_size 
-mpl.rcParams['ytick.labelsize'] = label_size 
 
 #define demarcation function: log_NII_HA vs. log_OIII_HB
 def n2hacompmin(log_NII_HA): #composite minimum line from equation 1, Kewley 2006
@@ -69,7 +74,7 @@ if galname == 'rs0756':
 if galname == 'rs0022':
     folder = '210660'
 
-os.chdir(r'C:\Users\mugdhapolimera\Desktop\UNC\Courses\Research\SAMI Data\/'+ folder)
+os.chdir(r'F:\mugdhapolimera\Documents\UNC\Courses\Research\SAMI Data\/'+ folder)
 #filename = 'adaptive_1-comp.fits'
 #filename = 'adaptive_recom-comp.fits'
 filename = 'default_recom-comp.fits'
@@ -273,7 +278,7 @@ ax.plot(25,25,'x', c = 'black')
 #    e1 = patches.Ellipse((25,25), width = b_a*i*2, height = 2*i, 
 #                         linewidth = 2, fill = False, zorder = 2, color = 'g')
 #    ax.add_patch(e1)
-Re = rescatphot.radr50p[rescat.name == galname] #in arcsec
+Re = resphot.radr50p[resdata.name == galname] #in arcsec
 Re_deg = Re/3600.0
 height = 2*Re/(pixelscale*3600)
 Re_kpc = 2*np.pi*d*(Re_deg/360)/1000 #kpc/pix
@@ -326,7 +331,7 @@ oi_err = oi_err[good]
 oiii_err = oiii_err[good]
 fig,(ax1,ax2,ax3) = plt.subplots(1,3,sharey = True)
 
-plt.title(galname+' SNR > '+str(snr))
+#plt.title(galname+' SNR > '+str(snr))
 good = (r <= 3.05)
 halpha = halpha[good]
 hbeta = hbeta[good]
@@ -446,53 +451,56 @@ sdss_ha = df.h_alpha_flux.loc[galname]
 sdss_ha_err = df.h_alpha_flux_err.loc[galname]
 sdss_hb = df.h_beta_flux.loc[galname]
 sdss_hb_err = df.h_beta_flux_err.loc[galname]
+ax1.tick_params(length=8, width=2)
+ax2.tick_params(length=8, width=2)
+ax3.tick_params(length=8, width=2)
 
 #Plotting SAMI errorbar
-ax3.errorbar(-1.05, 0.3, xerr = ratioerror(oi_cen,oi_cen_err,ha_cen,ha_cen_err),
-                yerr = ratioerror(oiii_cen,oiii_cen_err,hb_cen,hb_cen_err), 
-                marker = 'o', c = 'k')
-#Plotting SDSS errorbar
-ax3.errorbar(-1.2, 0.3, xerr = ratioerror(sdss_oi,sdss_oi_err,sdss_ha,sdss_ha_err),
-            yerr = ratioerror(sdss_oiii,sdss_oiii_err,sdss_hb,sdss_hb_err), 
-                marker = 'o', c = 'k')
-#Plotting expected GEMINI errorbar
-ax3.errorbar(-0.9, 0.3, xerr = ratioerror(sdss_oi,sdss_oi/37,sdss_ha,sdss_ha/78),
-            yerr = ratioerror(sdss_oiii,sdss_oiii/40,sdss_hb,sdss_hb/33), 
-                marker = 'o', c = 'k')
+#ax3.errorbar(-1.05, 0.3, xerr = ratioerror(oi_cen,oi_cen_err,ha_cen,ha_cen_err),
+#                yerr = ratioerror(oiii_cen,oiii_cen_err,hb_cen,hb_cen_err), 
+#                marker = 'o', c = 'k')
+##Plotting SDSS errorbar
+#ax3.errorbar(-1.2, 0.3, xerr = ratioerror(sdss_oi,sdss_oi_err,sdss_ha,sdss_ha_err),
+#            yerr = ratioerror(sdss_oiii,sdss_oiii_err,sdss_hb,sdss_hb_err), 
+#                marker = 'o', c = 'k')
+##Plotting expected GEMINI errorbar
+#ax3.errorbar(-0.9, 0.3, xerr = ratioerror(sdss_oi,sdss_oi/37,sdss_ha,sdss_ha/78),
+#            yerr = ratioerror(sdss_oiii,sdss_oiii/40,sdss_hb,sdss_hb/33), 
+#                marker = 'o', c = 'k')
 ax3.set_xlim(-1.6,-0.8)
 ax2.set_xlim(-0.5,-0.1)
 ax1.set_xlim(xlims)
 ax1.set_ylim(ylims)
 
-line = (1+z)*6561 #6300
-ndx = np.where(abs(lam-line) == min(abs(lam-line)))[0][0]
-spec = fits.open('372320_annular_red.fits')[0].data
-goodspec = np.ma.masked_where(np.isnan(spec[ndx,:,:]),spec[ndx,:,:])
-
-cmap = copy(plt.cm.seismic)
-cmap.set_bad('gray',0.8)
-
-fig = plt.figure()
-ax = plt.subplot(projection = w)
-cax = ax.imshow(goodspec,
-                norm = colors.Normalize(vmin = np.nanmin(goodspec), vmax = np.nanmax(goodspec)), 
-                cmap = cmap)
-fig.colorbar(cax,extend = 'min')
-ax.set_xlabel('RA')
-ax.set_ylabel('Dec')
-ax.plot(25,25,'x', c = 'black')
-plt.figure()
-plt.plot(lam,spec[:,25,25])
-
-spec = fits.open('372320_spectrum_1-4-arcsec_red.fits')[0].data
-plt.figure()
-plt.plot(lam/(1+z),spec*(1+z),'k')
-plt.axvline(x = 6562.8,ymin = 0, ymax = 1,color = 'orange',ls = '--')
-plt.axvline(x = 6583.45,ymin = 0, ymax = 1,color = 'orange',ls = '--')
-plt.axvline(x = 6548.05,ymin = 0, ymax = 1,color = 'orange',ls = '--')
-plt.xlabel('Wavelength (Angstroms)')
-plt.ylabel('Flux (arbitraty units)')
-
-spec = fits.open('372320_spectrum_re_blue.fits')[0].data
-plt.figure()
-plt.plot(bluelam,spec)
+#line = (1+z)*6561 #6300
+#ndx = np.where(abs(lam-line) == min(abs(lam-line)))[0][0]
+#spec = fits.open('372320_annular_red.fits')[0].data
+#goodspec = np.ma.masked_where(np.isnan(spec[ndx,:,:]),spec[ndx,:,:])
+#
+#cmap = copy(plt.cm.seismic)
+#cmap.set_bad('gray',0.8)
+#
+#fig = plt.figure()
+#ax = plt.subplot(projection = w)
+#cax = ax.imshow(goodspec,
+#                norm = colors.Normalize(vmin = np.nanmin(goodspec), vmax = np.nanmax(goodspec)), 
+#                cmap = cmap)
+#fig.colorbar(cax,extend = 'min')
+#ax.set_xlabel('RA')
+#ax.set_ylabel('Dec')
+#ax.plot(25,25,'x', c = 'black')
+#plt.figure()
+#plt.plot(lam,spec[:,25,25])
+#
+#spec = fits.open('372320_spectrum_1-4-arcsec_red.fits')[0].data
+#plt.figure()
+#plt.plot(lam/(1+z),spec*(1+z),'k')
+#plt.axvline(x = 6562.8,ymin = 0, ymax = 1,color = 'orange',ls = '--')
+#plt.axvline(x = 6583.45,ymin = 0, ymax = 1,color = 'orange',ls = '--')
+#plt.axvline(x = 6548.05,ymin = 0, ymax = 1,color = 'orange',ls = '--')
+#plt.xlabel('Wavelength (Angstroms)')
+#plt.ylabel('Flux (arbitraty units)')
+#
+#spec = fits.open('372320_spectrum_re_blue.fits')[0].data
+#plt.figure()
+#plt.plot(bluelam,spec)

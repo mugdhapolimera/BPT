@@ -42,6 +42,45 @@ econsa = pd.read_csv('ECO_full_snr5_dext_nsa.csv', index_col = 'name')#.loc[nsaf
 
 fulljhuflag = pd.read_csv("eco+resolve_emlineclass_dext_snr5_jhu.csv")
 
+jhuresdwarf = resjhu.logmstar < 9.5
+jhuecodwarf = ecojhu.logmstar < 9.5
+jhufulldwarf = fulljhu.logmstar < 9.5
+
+portresdwarf = resport.logmstar < 9.5
+portecodwarf = ecoport.logmstar < 9.5
+portfulldwarf = fullport.logmstar < 9.5
+
+nsaresdwarf = resnsa.logmstar < 9.5
+nsaecodwarf = econsa.logmstar < 9.5
+nsafulldwarf = fullnsa.logmstar < 9.5
+
+#giant
+#resjhuflag = resjhuflag[~jhuresdwarf]
+#ecojhuflag = ecojhuflag[~jhuecodwarf]
+#fulljhuflag = fulljhuflag[~jhufulldwarf]
+#
+#resportflag = resportflag[~portresdwarf]
+#ecoportflag = ecoportflag[~portecodwarf]
+#fullportflag = fullportflag[~portfulldwarf]
+#
+#resnsaflag = resnsaflag[~nsaresdwarf]
+#econsaflag = econsaflag[~nsaecodwarf]
+#fullnsaflag = fullnsaflag[~nsafulldwarf]
+
+#Dwarf
+resjhuflag = resjhuflag[jhuresdwarf]
+ecojhuflag = ecojhuflag[jhuecodwarf]
+fulljhuflag = fulljhuflag[jhufulldwarf]
+
+resportflag = resportflag[portresdwarf]
+ecoportflag = ecoportflag[portecodwarf]
+fullportflag = fullportflag[portfulldwarf]
+
+resnsaflag = resnsaflag[nsaresdwarf]
+econsaflag = econsaflag[nsaecodwarf]
+fullnsaflag = fullnsaflag[nsafulldwarf]
+
+
 percent = pd.DataFrame({"Category": ["Definite SF", "SFing-AGN", "Composite",
                                      "Seyfert", "LINER", "Ambiguous AGN", 
                                      "AGN-to-SF"],
@@ -68,12 +107,14 @@ data = {"JHU RESOLVE" : resjhuflag, "JHU ECO": ecojhuflag, "JHU Overall": fulljh
 
 for label in labels.keys():
     for sample in data.keys():
-        percent.loc[labels[label]][sample] = np.around(100.0*
-                   np.sum(data[sample][label])/len(data[sample]),2)
+#        percent.loc[labels[label]][sample] = np.around(100.0*
+#                   np.sum(data[sample][label])/len(data[sample]),1)
+        percent.loc[labels[label]][sample] = np.sum(data[sample][label])
+
         #percent.loc['Total'][sample] =        
 print(percent[["JHU RESOLVE","JHU ECO","JHU Overall",
                "Port RESOLVE","port ECO","port Overall",
-               "nsa RESOLVE","nsa ECO","nsa Overall"]].to_latex())
+               "nsa RESOLVE","nsa ECO","nsa Overall"]])#.to_latex())
 #print percent
 
 #def proportion_confint(count, nobs, alpha=0.05, method='normal'):
