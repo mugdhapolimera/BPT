@@ -37,11 +37,18 @@ def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
         cmap(np.linspace(minval, maxval, n)))
   	return new_cmap
 
+#os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
+#sdsscat = 'jhu'
+#s06file = 'eco+resolve_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
+#bptfile = 'eco+resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
+#midirfile = 'mid_ir/ECO+RESOLVE_WISE_good_syserr.csv'
+
 os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
 sdsscat = 'jhu'
-s06file = 'eco+resolve_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
-bptfile = 'eco+resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
-midirfile = 'mid_ir/ECO+RESOLVE_WISE_good.csv'
+s06file = 'resolve_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
+bptfile = 'resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
+midirfile = 'mid_ir/RESOLVE_WISE_good_randerr.csv'
+
 
 s06 = pd.read_csv(s06file)
 s06.index = s06.galname
@@ -50,7 +57,7 @@ bpt.index = bpt.galname
 midir = pd.read_csv(midirfile)
 midir.index = midir.name
 
-resdfname = "ECO+RESOLVE_barysample.csv"
+resdfname = "RESOLVE_barysample.csv"
 resdf = pd.read_csv(resdfname)
 resdf.index = resdf.name
 #fig, ax = plt.subplots(3,3)
@@ -344,7 +351,8 @@ plt.ylabel(r'Long Term SFH $\left(\frac{M_*(<1 Gyr)}{M_*(>1 Gyr) \times 1 Gyr}\r
 #plt.plot(11.5*xaxis, yaxis, 'k--', lw = 3)
 #plt.plot(12.0*xaxis, yaxis, 'k-.', lw = 3)
 
-
+for x in resdf.keys():
+    resdf[x] = np.array(resdf[x]).byteswap().newbyteorder() 
 
 xmin = 7.5
 xmax = 11.5
@@ -355,7 +363,7 @@ u_r = resdf['modelu_rcorr']
 X,Y,Z = density_estimation(resdf.logmstar,u_r)
 fig,ax = plt.subplots()#(figsize=(8,8))
 ax1.contour(X, Y, Z, levels = lvls, cmap=sf_colors_map, zorder = 0)
-sel = resdf.loc[s06.name[s06['agn']]]
+sel = resdf.loc[np.array(s06[s06['agn']].name)]
 ax.plot(sel.logmstar, sel.modelu_rcorr, '1', color = 'red', markersize = 10, 
        mew = 2, label = 'S06 AGN', zorder = 3)
 sel = resdf.loc[bpt.name[bpt['sftoagn']]]

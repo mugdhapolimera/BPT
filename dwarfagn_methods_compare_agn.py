@@ -40,9 +40,9 @@ def density_estimation(m1, m2):
 
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 save = 1
-resolve = 0
+resolve = 1
 eco = 0
-full = 1
+full = 0
 #sdsscat = 'port'
 sdsscat = 'jhu'
 #sdsscat = 'nsa'
@@ -98,9 +98,10 @@ else:
     bptoutputfile = 'resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
     inobssamplefile = 'RESOLVE_inobssample.csv'
     survey = 'RESOLVE'
-    midirfile = 'mid_ir/RESOLVE_WISE_good.csv'
+    midirfile = 'mid_ir/RESOLVE_WISE_good_randerr.csv'
+#    midirfile = 'mid_ir/RESOLVE_WISE_good_syserr.csv'
 
-plt.figure()
+#plt.figure()
 #gs0 = gridspec.GridSpec(2, 1)
 #gs00 = gridspec.GridSpecFromSubplotSpec(1, 2, subplot_spec=gs0[0])
 #gs01 = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=gs0[1])
@@ -111,17 +112,18 @@ plt.figure()
 #ax3 = plt.subplot(gs01[0, 0])
 #ax4 = plt.subplot(gs01[0, 1])
 #ax5 = plt.subplot(gs01[0, 2])
-
+#fig, ax1 = plt.subplots(1,1, sharey = True)
+#
 #ax1 = s06_bptagn(s06inputfile, s06outputfile, bptoutputfile, midirfile,
 #              eco, resolve, full, sdsscat, save, ax1)
-fig, ax2 = plt.subplots(1,1, sharey = True)
 
-midirfile = 'mid_ir/GAMA_WISECat.fits'
+#midirfile = 'mid_ir/GAMA_WISECat.fits'
+fig, ax2 = plt.subplots(1,1, sharey = True)
 ax2 = midir_plotallagn(ax2,midirfile, s06outputfile, bptoutputfile, survey, save)
 #os.chdir("C:\Users\mugdhapolimera\github\SDSS_Spectra\/")
 #
 #fig, (ax3, ax4, ax5) = plt.subplots(1,3, sharey = True)
-
+#
 #ax3, ax4, ax5 = bpt_plots(bptinputfile, bptoutputfile,  s06outputfile,  midirfile,
 #                          eco, resolve, full, sdsscat, save, ax3, ax4, ax5)
 

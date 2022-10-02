@@ -348,23 +348,40 @@ def s06_bpt(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax):
     #print ("Number of Dwarfs:"), np.sum(dwarf)
     ###PLOTS###
     #reference points in x-direction for demarcation lines on plots
+    def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
+      	new_cmap = colors.LinearSegmentedColormap.from_list(
+            'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+            cmap(np.linspace(minval, maxval, n)))
+      	return new_cmap
+    sf_colors_map = truncate_colormap(cm.gray_r)
+
     refn2ha = np.linspace(-3.0, 0.35)
-    refoiha = np.linspace(-2.5, -0.4)
-    refsiiha = np.linspace(-2, 0.3,100)
+#    refoiha = np.linspace(-2.5, -0.4)
+#    refsiiha = np.linspace(-2, 0.3,100)
     
     #lowsfagn = ['rf0376', 'rf0503', 'rs0063', 'rs0626', 'rs1195', 'rs1292']
     #NII/OIII plot
     #fig = plt.figure()
     #ax = fig.add_subplot(111)
+    xmin = refn2ha.min(); xmax = refn2ha.max()
+    ymin = -1.0; ymax = 1.0
+    nbins = 50
+
+    definite = np.column_stack((n2ha[sfsel], o3hb[sfsel]))
+    xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+    k2 = kde.gaussian_kde(definite.T)
+    definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+    ax.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                   shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
     ax.set_xlim(-1.5,0.32)
     ax.set_ylim(-1.0,1.0)
-    main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k')#, label = 'Ke01 Maximum Starburst Line')
+    main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k--')#, label = 'Ke01 Maximum Starburst Line')
     composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
                           'k-.')#, label = 'Ka03 Composite Line')
-    sfsel1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
-                       markersize = 5)#, label = 'Definite Star Forming')
-    compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'm1', 
-                          markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Composite')
+#    sfsel1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+#                       markersize = 5)#, label = 'Definite Star Forming')
+    compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], '1', color = 'lime', 
+                          markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Bonus AGN')
     agnsel1, = ax.plot(n2ha[agnsel], o3hb[agnsel], 'r1',
                        markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Traditional AGN')
     dwarfagn1, = ax.plot(n2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
@@ -372,64 +389,66 @@ def s06_bpt(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax):
             
     ax.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
     ax.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-    ax.legend(loc = 'lower left')
+    ax.legend(loc = 'lower left', fontsize = 15)
+
+
     
     #SII/OIII plot
-    plt.figure('SII Scatter Plot')
-    ax2 = plt.subplot(111)
-    main2, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
-    ax2.set_xlim(-1.5, 0.5)
-    ax2.set_ylim(-1.0,1.0)
-    ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
-    ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-    sfsel1, = ax2.plot(s2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
-                       markersize = 5)#, label = 'Definite Star Forming')
-    compdata1, = ax2.plot(s2ha[compsel], o3hb[compsel], 'm1', 
-                          markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Composite')
-    agnsel1, = ax2.plot(s2ha[agnsel], o3hb[agnsel], 'r1',
-                       markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Traditional AGN')
-    dwarfagn1, = ax2.plot(s2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
-                       mec = 'k', mew = 2,  markersize = 12, label = 'S06 Dwarf AGN')
-    #
+#    plt.figure('SII Scatter Plot')
+#    ax2 = plt.subplot(111)
+#    main2, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k',  label = 'Ke01 Line')
+#    ax2.set_xlim(-1.5, 0.5)
+#    ax2.set_ylim(-1.0,1.0)
+#    ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
+#    ax2.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+#    sfsel1, = ax2.plot(s2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+#                       markersize = 5)#, label = 'Definite Star Forming')
+#    compdata1, = ax2.plot(s2ha[compsel], o3hb[compsel], 'm1', 
+#                          markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Composite')
+#    agnsel1, = ax2.plot(s2ha[agnsel], o3hb[agnsel], 'r1',
+#                       markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Traditional AGN')
+#    dwarfagn1, = ax2.plot(s2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
+#                       mec = 'k', mew = 2,  markersize = 12, label = 'S06 Dwarf AGN')
+#    #
     ##OI/OIII plot
-    plt.figure('OI Scatter Plot')
-    ax3 = plt.subplot(111)
-    main3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-                      'k', label = 'Ke01 Maximum Starburst Line')
-    comp3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
-                      'k-.', label = 'Ka03 Composite Line')
-    liner2, = ax3.plot(refoiha[refoiha > -1.1], o1halinseyf(refoiha[refoiha > -1.1]),
-                       'k--', label = 'Ke06 Liner/Seyfert Division Line')
-    ax3.set_xlim(-2.0, -0.4)
-    ax3.set_ylim(-1.0,1.0)
-    ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
-    ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-    sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
-                        markersize = 5, label = 'SF')
-    compdata3, = ax3.plot(o1ha[compsel], o3hb[compsel], 'ms',
-                          markersize = 8, mew = 0, label = 'Composite')
-#    plt.legend(bbox_to_anchor=(1.25, 1),loc=2, borderaxespad=0., 
-#               numpoints = 1, fontsize = 14)
-    
-    
-    Z = np.array([0.1,0.2,0.3,0.4,0.6,0.8,1.0,1.5,2.5])
-    OvHb = (0.023606 - 0.667627*Z)*np.tanh(-3.412213 + 5.743451*Z) + 0.712143
-    NvH = (-1.0577 - 0.055221*Z)*np.tanh(2.00404 - 3.82832*Z) - 1.55079
-    ax.plot(NvH,OvHb,'r')
-    ax.scatter(NvH,OvHb,color = 'b')
-    #ndx = np.where(Z == 1.0)
-    #plt.scatter(NvH[ndx],OvHb[ndx])
-    
-    fn = curve_fit(fit_bptline, NvH, OvHb)
-    xaxis = np.arange(-1.6,-0.25,0.01)
-    ax.plot(refn2ha,fit_bptline(refn2ha,*fn[0]),'g') 
-    
-    OvHa = (-0.83751 + 0.110241*Z)*np.tanh(2.35279 - 3.97006*Z) - 2.11304
-    SvH = (-0.86928 + 0.052481*Z)*np.tanh(2.66503 - 4.44255*Z) - 1.251617
-    ax2.plot(SvH,OvHb,'r')
-    ax2.scatter(SvH,OvHb,color = 'b')
-
-    ax3.plot(OvHa,OvHb,'r')
-    ax3.scatter(OvHa,OvHb,color = 'b')
+#    plt.figure('OI Scatter Plot')
+#    ax3 = plt.subplot(111)
+#    main3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
+#                      'k', label = 'Ke01 Maximum Starburst Line')
+#    comp3, = ax3.plot(refoiha[refoiha < -0.7], o1hamain(refoiha[refoiha < -0.7]),
+#                      'k-.', label = 'Ka03 Composite Line')
+#    liner2, = ax3.plot(refoiha[refoiha > -1.1], o1halinseyf(refoiha[refoiha > -1.1]),
+#                       'k--', label = 'Ke06 Liner/Seyfert Division Line')
+#    ax3.set_xlim(-2.0, -0.4)
+#    ax3.set_ylim(-1.0,1.0)
+#    ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
+#    ax3.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+#    sfdata3, = ax3.plot(o1ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
+#                        markersize = 5, label = 'SF')
+#    compdata3, = ax3.plot(o1ha[compsel], o3hb[compsel], 'ms',
+#                          markersize = 8, mew = 0, label = 'Composite')
+##    plt.legend(bbox_to_anchor=(1.25, 1),loc=2, borderaxespad=0., 
+##               numpoints = 1, fontsize = 14)
+#    
+#    
+#    Z = np.array([0.1,0.2,0.3,0.4,0.6,0.8,1.0,1.5,2.5])
+#    OvHb = (0.023606 - 0.667627*Z)*np.tanh(-3.412213 + 5.743451*Z) + 0.712143
+#    NvH = (-1.0577 - 0.055221*Z)*np.tanh(2.00404 - 3.82832*Z) - 1.55079
+#    ax.plot(NvH,OvHb,'r')
+#    ax.scatter(NvH,OvHb,color = 'b')
+#    #ndx = np.where(Z == 1.0)
+#    #plt.scatter(NvH[ndx],OvHb[ndx])
+#    
+#    fn = curve_fit(fit_bptline, NvH, OvHb)
+#    xaxis = np.arange(-1.6,-0.25,0.01)
+#    ax.plot(refn2ha,fit_bptline(refn2ha,*fn[0]),'g') 
+#    
+#    OvHa = (-0.83751 + 0.110241*Z)*np.tanh(2.35279 - 3.97006*Z) - 2.11304
+#    SvH = (-0.86928 + 0.052481*Z)*np.tanh(2.66503 - 4.44255*Z) - 1.251617
+#    ax2.plot(SvH,OvHb,'r')
+#    ax2.scatter(SvH,OvHb,color = 'b')
+#
+#    ax3.plot(OvHa,OvHb,'r')
+#    ax3.scatter(OvHa,OvHb,color = 'b')
 
     return (ax)

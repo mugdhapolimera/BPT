@@ -46,7 +46,7 @@ singlepanel = 0
 catalog = 0
 sdsscat = 'jhu'
 he2_flag = 0
-plotdwarf = 0
+plotdwarf = 1
 #sdsscat = 'port'
 #sdsscat = 'nsa'
 #sdsscat = 'master'
@@ -59,7 +59,8 @@ else:
 
 if full: 
 #    inputfile = "ECO+RESOLVE_full_snr5_AGNdext_jhu.csv"#'ECO+RESOLVE_snr5_dext_'+sdsscat+'.csv'
-    inputfile = 'ECO+RESOLVE_snr5_dext_'+sdsscat+'.csv'
+#    inputfile = 'ECO+RESOLVE_snr5_dext_'+sdsscat+'.csv'
+    inputfile = 'ECO+RESOLVE_bpt1_and_sel_combined_'+sdsscat+'.csv'
     print 'ECO+RESOLVE RESULTS'
     if he2_flag:
         outputfile = 'eco+resolve_emlineclass_filter_he2.csv'
@@ -133,8 +134,8 @@ mbary = 10**mgas + 10**mstars
 #inobssample = ((grpcz >= 4500.) & (grpcz <= 7000.)) & \
 #(((flinsample | (np.log10(mbary) > 9.0)) & infall) | \
 #        ((flinsample | (np.log10(mbary) > 9.2)) & inspring))
-inobssample = np.log10(mbary) > 9.2
-df = df[inobssample]
+#inobssample = np.log10(mbary) > 9.2
+#df = df[inobssample]
 
 #define alternate catalog names
 if 'name' in df.keys():
@@ -320,6 +321,22 @@ h_beta_err = h_beta_err[data]
 h_alpha = h_alpha[data]
 h_alpha_err = h_alpha_err[data]
 
+
+sel = pd.read_csv('ECO+RESOLVE_snr5_dext_'+sdsscat+'.csv')
+sel.index = sel.name
+onlybpt = set(df.name) - set(sel.name)
+selname = set(sel.name)
+#bpt = pd.read_csv('ECO+RESOLVE_bpt1snr5_dext_'+sdsscat+'.csv')
+#bpt.index = bpt.name
+#onlybpt = set(bpt.name)
+#selname = set(df.name) - set(bpt.name)
+
+oi.loc[onlybpt] = np.nan
+oi_err.loc[onlybpt] = np.nan
+sii_sum.loc[onlybpt] = np.nan
+sii_sum_err.loc[onlybpt] = np.nan
+
+
 #nii = df['nii_6584_flux']
 ##if 'nii_6548_flux' in df.keys():
 #nii_sum = (df['nii_6584_flux']+ df['nii_6548_flux'])*3./4
@@ -415,11 +432,14 @@ if he2_flag:
     sfsel = sfsel1 & sfsel2 & sfsel3 & sfsel4 #definite star forming galaxies
 else:
     sfsel = sfsel1 & sfsel2 & sfsel3 
+sfsel.loc[onlybpt] = sfsel1.loc[onlybpt]
 compsel = compsel1  #composite galaxies
 seyfsel = agnsel1 & seyfselr #Seyfert AGN galaxies
 linersel = agnsel1 & linerselr #LINER AGN galaxies
+
 ambigsel1 = sfsel1 & (agnsel2 | agnsel3) #SF in first plot, AGN in subsequent plot
-ambigsel2 = np.array(agnsel1) & (np.array(sfsel2) | np.array(sfsel3)) #AGN in first plot, SF in subsequent plot
+#ambigsel2 = np.array(agnsel1) & (np.array(sfsel2) | np.array(sfsel3)) #AGN in first plot, SF in subsequent plot
+ambigsel2 = agnsel1 & (sfsel2 | sfsel3) #AGN in first plot, SF in subsequent plot
 ambagnsel = agnsel1 & ~seyfselr & ~linerselr & ~(sfsel2 | sfsel3) #Ambiguous AGN
 
 sftoagn1 = sfsel1 & agnsel2
@@ -747,9 +767,10 @@ ax1.set_ylim(-1.0,1.0)
 #                        markersize = 8, mew = 0, label = 'SF')
 ambig1data1, = ax1.plot(n2ha[ambigsel1], o3hb[ambigsel1], 'bs',
                 alpha = 0.5, markersize = 8, mew = 0, label = 'SF-AGN')
-compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
-                      markersize = 8, mew = 0, label = 'Composite')
-defagndata1, = ax1.plot(n2ha[defagn], o3hb[defagn], 'ro', alpha = 0.5, 
+#compdata1, = ax1.plot(n2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
+#                      markersize = 8, mew = 0, label = 'Composite')
+defagndata1, = ax1.plot(n2ha[defagn | compsel | ambigsel2], 
+                        o3hb[defagn | compsel | ambigsel2], 'ro', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Definite AGN')
 
 ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
@@ -764,8 +785,8 @@ ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 if he2_flag:
     agndata4, = ax1.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8,
                          mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 10,
-                        mew = 1, label = 'Low-[S II] AGN')
+#ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 10,
+#                        mew = 1, label = 'Low-[S II] AGN')
 main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Theoretical Maximum Starburst Line (Ke01)')
 composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 
 'k--', label = 'Composite Line (Ka03)')
@@ -779,12 +800,13 @@ if plotdwarf:
     compdata1, = ax1.plot(n2ha[dwarf&compsel], o3hb[dwarf&compsel], 'ms', 
                           markersize = 14, mew = 2, mec = 'k', 
                           mfc = 'none', label = 'Composite')
-    defagndata1, = ax1.plot(n2ha[dwarf&defagn], o3hb[dwarf&defagn], 'rs', 
+    defagndata1, = ax1.plot(n2ha[dwarf&(defagn | ambigsel2)], 
+                                 o3hb[dwarf&(defagn | ambigsel2)], 'rs', 
                           markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'Definite AGN')
-    ambig2data1, = ax1.plot(n2ha[dwarf&ambigsel2], o3hb[dwarf&ambigsel2],'cs', 
-                            markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'AGN-to-SF')
-    ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 10,
-                            mew = 1, label = 'Low-[S II] AGN')
+#    ambig2data1, = ax1.plot(n2ha[dwarf&ambigsel2], o3hb[dwarf&ambigsel2],'cs', 
+#                            markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'AGN-to-SF')
+#    ambig2data1, = ax1.plot(n2ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 10,
+#                            mew = 1, label = 'Low-[S II] AGN')
 
 xmin = refsiiha.min(); xmax = refsiiha.max()
 ymin = -1.25; ymax = 1.5
@@ -792,6 +814,17 @@ nbins = 50
 
 #fig = plt.figure()
 #ax2 = fig.add_subplot(132, sharey = True)
+
+s2ha = s2ha.loc[selname]
+o3hb = o3hb.loc[selname]
+#defagn = defagn.loc[sel.name]
+#sfsel= sfsel.loc[sel.name]
+#compsel= compsel.loc[sel.name]
+#ambigsel1= ambigsel1.loc[sel.name]
+#ambigsel2= ambigsel2.loc[sel.name]
+#compsel= compsel.loc[sel.name]
+#dwarf = dwarf.loc[sel.name]
+
 
 definite = np.column_stack((s2ha[defagn|sfsel], o3hb[defagn|sfsel]))
 xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
@@ -811,10 +844,11 @@ ax2.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape),
 main1, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k')
 ax2.set_xlim(-1.5,0.5)
 ax2.set_ylim(-1,1)
-compdata1, = ax2.plot(s2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
-                      markersize = 8, mew = 0, label = 'Composite')
-agn1, = ax2.plot(s2ha[defagn], o3hb[defagn], 'ro', alpha = 0.5, 
-                      markersize = 8, mew = 0, label = 'Definite AGN')
+#compdata1, = ax2.plot(s2ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
+#                      markersize = 8, mew = 0, label = 'Composite')
+agn1, = ax2.plot(s2ha[defagn | compsel | ambigsel2], 
+                 o3hb[defagn | compsel | ambigsel2], 'ro', alpha = 0.5, 
+                      markersize = 8, mew = 0, label = 'Traditional AGN')
 #ax2.errorbar(s2ha[ambigsel1], o3hb[ambigsel1],
 #                            yerr = o3hb_err[ambigsel1], xerr = s2ha_err[ambigsel1],
 #                            fmt= 's',c = 'b', alpha = 0.5) 
@@ -826,16 +860,16 @@ ax2.plot(s2ha[ambigsel1], o3hb[ambigsel1],
 #                         mfc ='none', mew = 2, label = 'HeII-Selected AGN')
 
 ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
-ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
-                  'k-.')
+#ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
+#                  'k-.')
 #ax2.errorbar(np.array(s2ha[flags.agntosf]).flatten(), 
 #             np.array(o3hb[flags.agntosf]).flatten(), 
 #             xerr = s2ha_err[flags.agntosf].flatten(),
 #            yerr = o3hb_err[flags.agntosf].flatten(), 
 ##            fmt = 'None', marker = 'gs', 
 #            mew = 2 ,  zorder  = 1)
-ambig2data1, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 10,
-                        mew = 1, label = 'Low-[S II] AGN')
+#ambig2data1, = ax2.plot(s2ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 10,
+#                        mew = 1, label = 'Low-[S II] AGN')
 if plotdwarf:
     defagndata1, = ax2.plot(s2ha[dwarf&defagn], o3hb[dwarf&defagn], 'rs', 
                           markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'Dwarf AGN (any type)')
@@ -844,11 +878,12 @@ if plotdwarf:
     ambig1data1, = ax2.plot(s2ha[dwarf&ambigsel1], o3hb[dwarf&ambigsel1], 'bs',
                     markersize = 14, mew = 2, mec = 'k', 
                     mfc = 'none', label = 'SF-AGN')
-    compdata1, = ax2.plot(s2ha[dwarf&compsel], o3hb[dwarf&compsel], 'ms', 
+    compdata1, = ax2.plot(s2ha[dwarf&(compsel | defagn | ambigsel2)], 
+                               o3hb[dwarf&(compsel | defagn | ambigsel2)], 'ms', 
                           markersize = 14, mew = 2, mec = 'k', 
-                          mfc = 'none', label = 'Composite')
-    ambig2data1, = ax2.plot(s2ha[dwarf&ambigsel2], o3hb[dwarf&ambigsel2],'cs', 
-                            markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'AGN-to-SF')
+                          mfc = 'none', label = 'Traditional AGN')
+#    ambig2data1, = ax2.plot(s2ha[dwarf&ambigsel2], o3hb[dwarf&ambigsel2],'cs', 
+#                            markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'AGN-to-SF')
 
 if he2_flag:
     agndata4, = ax2.plot(s2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, 
@@ -860,6 +895,8 @@ ymin = -1.25; ymax = 1.5
 nbins = 50
 #fig = plt.figure()
 #ax3 = fig.add_subplot(133, sharey = True)
+o1ha = o1ha.loc[sel.name]
+o3hb = o3hb.loc[sel.name]
 
 definite = np.column_stack((o1ha[defagn|sfsel], o3hb[defagn|sfsel]))
 xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
@@ -883,9 +920,10 @@ main1, = ax3.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 
                   label = 'Ke01 Maximum Starburst Line')
 ax3.set_xlim(-2.0,-0.4)
 ax3.set_ylim(-1,1)
-compdata1, = ax3.plot(o1ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
-                      markersize = 8, mew = 0, label = 'Composite')
-defagndata1, = ax3.plot(o1ha[defagn], o3hb[defagn], 'ro', alpha = 0.5, 
+#compdata1, = ax3.plot(o1ha[compsel], o3hb[compsel], 'ms', alpha = 0.5, 
+#                      markersize = 8, mew = 0, label = 'Composite')
+defagndata1, = ax3.plot(o1ha[defagn | compsel | ambigsel2], 
+                        o3hb[defagn | compsel | ambigsel2], 'ro', alpha = 0.5, 
                       markersize = 8, mew = 0, label = 'Definite AGN')
 #ax3.errorbar(o1ha[ambigsel1], o3hb[ambigsel1], xerr = o1ha_err[ambigsel1],
 #                            yerr = o3hb_err[ambigsel1], fmt = 'b.', alpha = 0.5,
@@ -907,12 +945,12 @@ if plotdwarf:
     compdata1, = ax3.plot(o1ha[dwarf&compsel], o3hb[dwarf&compsel], 'ms', 
                           markersize = 14, mew = 2, mec = 'k', 
                           mfc = 'none', label = 'Composite')
-    defagndata1, = ax3.plot(o1ha[dwarf&defagn], o3hb[dwarf&defagn], 'rs', 
+    defagndata1, = ax3.plot(o1ha[dwarf&(defagn | ambigsel2)], o3hb[dwarf&(defagn | ambigsel2)], 'rs', 
                           markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'Definite AGN')
-    ambig2data1, = ax3.plot(o1ha[dwarf&ambigsel2], o3hb[dwarf&ambigsel2],'c^', 
-                            markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'Low-[S II] AGN')
-    ambig2data1, = ax3.plot(o1ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 12,
-                            mew = 1,  label = 'AGN-to-SF')
+#    ambig2data1, = ax3.plot(o1ha[dwarf&ambigsel2], o3hb[dwarf&ambigsel2],'c^', 
+#                            markersize = 14, mew = 2, mec = 'k', mfc = 'none', label = 'Low-[S II] AGN')
+#    ambig2data1, = ax3.plot(o1ha[ambigsel2], o3hb[ambigsel2],'c^', markersize = 12,
+#                            mew = 1,  label = 'AGN-to-SF')
 
 sftoagn = df[ambigsel1 & dwarf][['radeg','dedeg']]
 c = SkyCoord(ra = list(sftoagn.radeg)*u.degree, 
@@ -960,6 +998,21 @@ if error:
                 fmt = 'none', ecolor = 'k',#marker = 'None', 
                 mew = 2, zorder = order)
 
+print ("DATA POINTS: "),np.sum(dwarf)
+print ("Definite Star Forming: "),np.sum(dwarf&sfsel),("("),round(np.sum(dwarf&sfsel)*100.0/np.sum(dwarf), 2),("%"),(")")
+print ("Composite: "),np.sum(dwarf&compsel), ("("),round(np.sum(dwarf&compsel)*100.0/np.sum(dwarf), 2),("%"),(")")
+print ("SF --> AGN: "), np.sum(dwarf&ambigsel1), ("("),round(np.sum(dwarf&ambigsel1)*100.0/np.sum(dwarf), 2),("%"),(")")
+print ("AGN --> SF: "), np.sum(dwarf&ambigsel2), ("("),round(np.sum(dwarf&ambigsel2)*100.0/np.sum(dwarf), 2),("%"),(")")
+print ("Ambiguous AGN: "),np.sum(dwarf&ambagnsel), ("("),round(np.sum(dwarf&ambagnsel)*100.0/np.sum(dwarf), 2),("%"),(")")
+print ("Seyfert: "),np.sum(dwarf&seyfsel), ("("),round(np.sum(dwarf&seyfsel)*100.0/np.sum(dwarf), 2),("%"),(")")
+print ("LINER: "),np.sum(dwarf&linersel), ("("),round(np.sum(dwarf&linersel)*100.0/np.sum(dwarf), 2),("%"),(")")
+#print ("TOTAL KNOWN AGN: "),linerselpts+seyfselpts+agnselpts, ("("), \
+#round(linerpercent+seyfpercent+agnpercent, 2), ("% )")
+#print ("POSSIBLE TOTAL AGN: "),linerselpts+seyfselpts+agnselpts+ambigsel1pts+ambigsel2pts,("("),\
+#round(linerpercent+seyfpercent+agnpercent+ambig1percent+ambig2percent, 2), ("% )")
+#print ("Percent Omitted: "), round((100-(sfpercent+seyfpercent+linerpercent+comppercent+agnpercent+ambig1percent+ambig2percent)), 2), ("%")
+print ''
+
 #    n2ha_port = np.log10(df[flags.agntosf]['Flux_NII_6583']/df[flags.agntosf]['Flux_Ha_6562'])
 #    o3hb_port = np.log10(df[flags.agntosf]['Flux_OIII_5006']/df[flags.agntosf]['Flux_Hb_4861'])
 #    s2ha_port = np.log10((df[flags.agntosf]['Flux_SII_6730']+df[flags.agntosf]['Flux_SII_6716']) \
@@ -1004,37 +1057,38 @@ if error:
 #                yerr = o3hb_port_err.flatten(),
 #                fmt = 'none', ecolor = 'k',#marker = 'None', 
 #                mew = 2, zorder = order)
-fig = plt.figure()
-ax1 = fig.add_subplot(111)
-o1o3 = np.log10(df.oi_6300_flux/df.oiii_5007_flux)
-xmin = o1o3.min(); xmax = o1o3.max()
-ymin = -1.25; ymax = 1.5
-nbins = 50
-
-definite = np.column_stack((o1o3, o3hb))
-xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
-k2 = kde.gaussian_kde(definite.T)
-definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
-ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
-               shading='gouraud', cmap=sf_colors_map)
-
-#ambig1data1, = plt.plot(o1o3, o3hb, 'ko',
-#                markersize = 18, mew = 0, label = 'SF-AGN')
-#ambig1data1, = plt.plot(o1o3[flags.defstarform], o3hb[flags.defstarform], 'o', color = 'gray', alpha = 0.5,
+#fig = plt.figure()
+#ax1 = fig.add_subplot(111)
+##o1o3 = np.log10(df.oi_6300_flux/df.oiii_5007_flux)
+#o1o3 = np.log10(oi/oiii)
+#xmin = o1o3.min(); xmax = o1o3.max()
+#ymin = -1.25; ymax = 1.5
+#nbins = 50
+#
+#definite = np.column_stack((o1o3, o3hb))
+#xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+#k2 = kde.gaussian_kde(definite.T)
+#definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+#ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+#               shading='gouraud', cmap=sf_colors_map)
+#
+##ambig1data1, = plt.plot(o1o3, o3hb, 'ko',
+##                markersize = 18, mew = 0, label = 'SF-AGN')
+##ambig1data1, = plt.plot(o1o3[flags.defstarform], o3hb[flags.defstarform], 'o', color = 'gray', alpha = 0.5,
+##                markersize = 8, mew = 0, label = 'SF-AGN')
+#compdata1, = plt.plot(o1o3[flags.composite], o3hb[flags.composite], 'ms', 
+#                      markersize = 8, mew = 0, label = 'Composite')
+#defagndata1, = plt.plot(o1o3[flags.defagn], o3hb[flags.defagn], 'ro', 
+#                      markersize = 8, mew = 0, label = 'Definite AGN')
+#ambig1data1, = plt.plot(o1o3[flags.sftoagn], o3hb[flags.sftoagn], 'bs',
 #                markersize = 8, mew = 0, label = 'SF-AGN')
-compdata1, = plt.plot(o1o3[flags.composite], o3hb[flags.composite], 'ms', 
-                      markersize = 8, mew = 0, label = 'Composite')
-defagndata1, = plt.plot(o1o3[flags.defagn], o3hb[flags.defagn], 'ro', 
-                      markersize = 8, mew = 0, label = 'Definite AGN')
-ambig1data1, = plt.plot(o1o3[flags.sftoagn], o3hb[flags.sftoagn], 'bs',
-                markersize = 8, mew = 0, label = 'SF-AGN')
-ambig2data1, = plt.plot(o1o3[flags.agntosf], o3hb[flags.agntosf],'c^', 
-                        markersize = 8,
-                        mew = 0,  label = 'Low-[SII]-AGN')
-ax1.set_xlabel(r"$\rm \log([OI]/[OIII])$", fontsize = 20)
-ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 20)
-wr_xaxis = [-2.5,-2,-1.5,-1.2,-1.0,-0.5]
-wr_yaxis = [1.0,0.85,0.55,0.25,0,-0.7]
-plt.plot(wr_xaxis, wr_yaxis, lw = 3, c = 'k')
-plt.show()
-plt.legend(loc = 'lower left', fontsize = 15)
+#ambig2data1, = plt.plot(o1o3[flags.agntosf], o3hb[flags.agntosf],'c^', 
+#                        markersize = 8,
+#                        mew = 0,  label = 'Low-[SII]-AGN')
+#ax1.set_xlabel(r"$\rm \log([OI]/[OIII])$", fontsize = 20)
+#ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 20)
+#wr_xaxis = [-2.5,-2,-1.5,-1.2,-1.0,-0.5]
+#wr_yaxis = [1.0,0.85,0.55,0.25,0,-0.7]
+#plt.plot(wr_xaxis, wr_yaxis, lw = 3, c = 'k')
+#plt.show()
+#plt.legend(loc = 'lower left', fontsize = 15)

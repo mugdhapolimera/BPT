@@ -27,14 +27,15 @@ import matplotlib.pyplot as plt
 print ''
 #print 'ECO RESULTS'
 
-survey = 'ECO+RESOLVE'
+#survey = 'ECO+RESOLVE'
+survey = 'RESOLVE'
 print survey+'RESULTS'
-catalog = 'nsa'
+catalog = 'jhu'
 
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_bpt1_filter.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_bpt1snr5_dext_'+catalog+'.csv' 
+inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_full_bpt1snr5_dext_'+catalog+'.csv' 
 df = pd.read_csv(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
@@ -133,12 +134,12 @@ def he2hblimit(log_NII_HA):
 
 gooddata = (h_alpha > 0) 
 
-he2data = (heii/heii_err >=3) & (heii_err > 0)
+#he2data = (heii/heii_err >=3) & (heii_err > 0)
 
-if he2_flag:
-    data = gooddata & he2data
-else:
-    data = gooddata #use ALL galaxy data within catalog
+#if he2_flag:
+#    data = gooddata & he2data
+#else:
+data = gooddata #use ALL galaxy data within catalog
 
 #results = pd.read_csv("C:/Anaconda2/Lib/site-packages/NebulaBayes/docs/results_bpass_agn_snr/RESOLVE_param_estimates.csv")
 #agn_index = (results['Parameter'] == 'AGNFRAC')
@@ -183,7 +184,7 @@ n2ha = np.log10(nii_sum/h_alpha)
 o3hb = np.log10(oiii/h_beta) # always the y-axis
 o1ha = np.log10(oi/h_alpha)
 s2ha = np.log10(sii_sum/h_alpha)
-he2hb = np.log10(heii/h_beta)
+#he2hb = np.log10(heii/h_beta)
 
 #Below are the selectors for the data to distinguish btwn: Seyferts, Composites,
 #and AGN's based on the flux ratio diagnostic as understood via Kewley 2006.
@@ -283,32 +284,51 @@ print ("AGN in Giant Galaxies: "), 100*round(np.sum(giantagn)/float(np.sum(giant
 print ("AGN in dwarfs: "), np.sum(agn & dwarf)
 print ("Number of Dwarfs:"), np.sum(dwarf)
 
+def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
+  	new_cmap = colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+  	return new_cmap
+sf_colors_map = truncate_colormap(cm.gray_r)
+
 ###PLOTS###
 #reference points in x-direction for demarcation lines on plots
 refn2ha = np.linspace(-3.0, 0.35)
 
 #NII/OIII plot
-plt.figure(1)
+plt.figure()
 ax = plt.subplot(111)
-main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Main Line')
-composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 'k-.', label = 'Composite Line')
+xmin = refn2ha.min(); xmax = refn2ha.max()
+ymin = -1.0; ymax = 1.0
+nbins = 50
+
+definite = np.column_stack((n2ha[sfsel], o3hb[sfsel]))
+xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+k2 = kde.gaussian_kde(definite.T)
+definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+ax.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+               shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
+main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k')#, label = 'Main Line')
+composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 'k-.')#, label = 'Composite Line')
 #composite, = ax.plot(refn2ha, n2hacompmin(refn2ha), 'k--')
-ax.set_xlim(-2,1)
-ax.set_ylim(-1.25,1.5)
+ax.set_xlim(-1.5,0.32)
+ax.set_ylim(-1.0,1.0)
 ax.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
 ax.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 #data, = ax.plot(n2ha, o3hb, 'k.')
-sfdata1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', markersize = 3, alpha = 0.5, label = 'SF')
-sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0073')], 
-                             o3hb.iloc[np.where(flags.galname == 'rf0073')],
-                             'bs', markersize = 8, alpha = 0.5)
-sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0503')], 
-                             o3hb.iloc[np.where(flags.galname == 'rf0503')],
-                             'gs', markersize = 8, alpha = 0.5)
-agndata1, = ax.plot(n2ha[agnsel], o3hb[agnsel],'rs', markersize = 8, label = 'Definite AGN')
-compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'bs', markersize = 8, label = 'Composite')
+#sfdata1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', markersize = 3, alpha = 0.5, label = 'SF')
+#sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0073')], 
+#                             o3hb.iloc[np.where(flags.galname == 'rf0073')],
+#                             'bs', markersize = 8, alpha = 0.5)
+#sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0503')], 
+#                             o3hb.iloc[np.where(flags.galname == 'rf0503')],
+#                             'gs', markersize = 8, alpha = 0.5)
+agndata1, = ax.plot(n2ha[agnsel], o3hb[agnsel],'r1', markersize = 8, mew = 2, alpha = 0.5, label = 'Traditional AGN')
+compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'r1', markersize = 8, mew = 2, alpha = 0.5) #, label = 'Composite')
+dwarfagn1, = ax.plot(n2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
+                       mec = 'k', mew = 2,  markersize = 12, label = 'Dwarf AGN')
 #comp2he2, = ax.plot(n2ha[agnsel4], o3hb[agnsel4], 'y*', label = 'HeII-selected AGN')
-if he2_flag:
-    agndata4, = ax.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
-plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title = 'Galaxy Types: ', numpoints = 1)
-plt.subplots_adjust(left=0.08, bottom=0.11, right=0.72, top=0.96, wspace=0.49, hspace=None)
+#if he2_flag:
+#    agndata4, = ax.plot(n2ha[agnsel4], o3hb[agnsel4],'ks', markersize = 8, mfc ='none', mew = 2, label = 'HeII-Selected AGN')
+ax.legend(loc = 'lower left', fontsize = 15)
+#plt.subplots_adjust(left=0.08, bottom=0.11, right=0.72, top=0.96, wspace=0.49, hspace=None)

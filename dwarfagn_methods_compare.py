@@ -21,7 +21,7 @@ from bpt_plots_new import bpt_plots
 import matplotlib.gridspec as gridspec
 os.chdir("../SDSS_spectra/mid_ir")
 from midir_agn import midiragnplot
-
+pd.set_option('display.max_columns', None)
 def density_estimation(m1, m2):
     X, Y = np.mgrid[xmin:xmax:25j, ymin:ymax:25j]                                                     
     positions = np.vstack([X.ravel(), Y.ravel()])                                                       
@@ -33,9 +33,9 @@ def density_estimation(m1, m2):
 
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
-save = 1
-resolve = 0
-eco = 1
+save = 0
+resolve = 1
+eco = 0
 full = 0
 #sdsscat = 'port'
 
@@ -113,104 +113,105 @@ else:
 #plt.show()
 
 #inobssamplefile = bptinputfile
-#plt.figure()    
-#ax = plt.subplot(111)
-#ax = midiragnplot(ax, inobssamplefile, survey)
-#ax = s06_bpt(s06inputfile, s06outputfile, eco, resolve, full, sdsscat, save, ax)
+plt.figure()    
+ax = plt.subplot(111)
+#ax = midiragnplot(ax, inobssamplefile, survey, save)
+ax = s06_bpt(s06inputfile, s06outputfile, eco, resolve, full, sdsscat, save, ax)
 
-def totalgals(df, wavelength):
-    return len(df)
-
-def agn(df, wavelength):
-    if wavelength == 'optical':
-        return np.sum(~df['defstarform'])
-    if wavelength == 'midir':
-        return np.sum(df.agnflag)
-
-def totaldwarfs(df, wavelength):
-    bary = pd.read_csv('ECO+RESOLVE_barysample.csv')
-    bary.index = bary.name
-    return np.sum(bary.logmstar.loc[df.name] < 9.5)
-
-def dwarfagn(df, wavelength):
-    if wavelength == 'optical':
-        bary = pd.read_csv('ECO+RESOLVE_barysample.csv')
-        bary.index = bary.name
-        return np.sum(bary.logmstar.loc[df.galname[~df['defstarform']]] < 9.5)
-
-    if wavelength == 'midir':
-        return np.sum(df.logmstar.loc[df.name[df['agnflag']]] < 9.5)
-
-def filenames(index, survey, colname, cat = 'none'):
-    if survey == 'RESOLVE' or survey =='ECO':
-        if 'agn' in colname:
-            files = {'trad': survey.lower()+'_emlineclass_bpt1snr5_'+cat+'.csv', 
-                's06': survey.lower()+'_s06emlineclass_dext_hasnr5_'+cat+'.csv', 
-                'compre': survey.lower()+'_emlineclass_dext_snr5_'+cat+'.csv',
-                'midir': survey+'_WISE_good.csv',
-                'baryparent': survey+'_barysample.csv'}
-        else:
-            
-            files = {'trad': survey+'_full_bpt1snr5_dext_'+cat+'.csv', 
-                's06': survey+'_full_bpt1snr5_dext_'+cat+'.csv', 
-                'compre': survey+'_full_snr5_dext_'+cat+'.csv',
-                'midir': survey+'_WISE_good.csv',
-                'baryparent': survey+'_barysample.csv'}
-        
-    else:
-        if 'agn' in colname:
-            files = {'trad': survey.lower()+'_emlineclass_bpt1snr5_'+cat+'.csv', 
-                's06': survey.lower()+'_s06emlineclass_dext_hasnr5_'+cat+'.csv', 
-                'compre': survey.lower()+'_emlineclass_dext_snr5_'+cat+'.csv',
-                'midir': survey+'_WISE_good.csv',
-                'baryparent': survey+'_barysample.csv'}
-        else:
-            files = {'trad': survey+'_bpt1snr5_dext_'+cat+'.csv', 
-                's06': survey+'_bpt1snr5_dext_'+cat+'.csv', 
-                'compre': survey+'_snr5_dext_'+cat+'.csv',
-                'midir': survey+'_WISE_good.csv',
-                'baryparent': survey+'_barysample.csv'}
-    
-    return files[index]
-
-#printing stats
-surveys = ['ECO+RESOLVE'] #['RESOLVE', 'ECO', 'ECO+RESOLVE']
-sdsscats = ['jhu', 'port', 'nsa']
-columns = ['totalgals', 'agn', 'totaldwarfs', 'dwarfagn']
-waves = ['optical', 'midir']
-
-stats = pd.DataFrame(index = ['trad', 's06', 'compre', 'midir'])#,'baryparent'])
-
-
-for ndx in list(stats.index):
-    for cols in columns:
-        for survey in surveys:
-            if (ndx == 'midir') | (ndx == 'baryparent'):
-                colname = survey+' '+cols
-                df = pd.read_csv(filenames(ndx, survey, colname))
-                if 'name' in df.keys():
-                    df.index = df.name
-                if 'galname' in df.keys():
-                    df.index = df.galname
-
-                wave = 'midir'
-                if colname not in list(stats.keys()):
-                    stats[colname] = np.zeros(len(stats)) 
-                stats[colname].loc[ndx] = eval(cols+'(df,wave)')
-            else:
-                for cat in sdsscats:
-                    colname = survey+' '+cat+' '+cols                    
-                    df = pd.read_csv(filenames(ndx, survey, colname, cat = cat))
-                    if 'name' in df.keys():
-                        df.index = df.name
-                    if 'galname' in df.keys():
-                        df.index = df.galname
-                    wave = 'optical'
-
-                    if colname not in list(stats.keys()):
-                        stats[colname] = np.zeros(len(stats)) 
-                    stats[colname].loc[ndx] = eval(cols+'(df,wave)')
-    
-    
-
-
+#def totalgals(df, wavelength):
+#    return len(df)
+#
+#def agn(df, wavelength):
+#    if wavelength == 'optical':
+#        return np.sum(~df['defstarform'])
+#    if wavelength == 'midir':
+#        return np.sum(df.agnflag)
+#
+#def totaldwarfs(df, wavelength):
+#    bary = pd.read_csv('ECO+RESOLVE_barysample.csv')
+#    bary.index = bary.name
+#    return np.sum(bary.logmstar.loc[df.name] < 9.5)
+#
+#def dwarfagn(df, wavelength):
+#    if wavelength == 'optical':
+#        bary = pd.read_csv('ECO+RESOLVE_barysample.csv')
+#        bary.index = bary.name
+#        return np.sum(bary.logmstar.loc[df.galname[~df['defstarform']]] < 9.5)
+#
+#    if wavelength == 'midir':
+#        return np.sum(df.logmstar.loc[df.name[df['agnflag']]] < 9.5)
+#
+#def filenames(index, survey, colname, cat = 'none'):
+#    if survey == 'RESOLVE' or survey =='ECO':
+#        if 'agn' in colname:
+#            files = {'trad': survey.lower()+'_emlineclass_bpt1snr5_'+cat+'.csv', 
+#                's06': survey.lower()+'_s06emlineclass_dext_hasnr5_'+cat+'.csv', 
+#                'compre': survey.lower()+'_emlineclass_dext_snr5_'+cat+'.csv',
+#                'midir': 'mid_ir/'+survey+'_WISE_good.csv',
+#                'baryparent': survey+'_barysample.csv'}
+#        else:
+#            
+#            files = {'trad': survey+'_full_bpt1snr5_dext_'+cat+'.csv', 
+#                's06': survey+'_full_bpt1snr5_dext_'+cat+'.csv', 
+#                'compre': survey+'_full_snr5_dext_'+cat+'.csv',
+#                'midir': 'mid_ir/'+survey+'_WISE_good.csv',
+#                'baryparent': survey+'_barysample.csv'}
+#        
+#    else:
+#        if 'agn' in colname:
+#            files = {'trad': survey.lower()+'_emlineclass_bpt1snr5_'+cat+'.csv', 
+#                's06': survey.lower()+'_s06emlineclass_dext_hasnr5_'+cat+'.csv', 
+#                'compre': survey.lower()+'_emlineclass_dext_snr5_'+cat+'.csv',
+#                'midir': 'mid_ir/'+survey+'_WISE_good.csv',
+#                'baryparent': survey+'_barysample.csv'}
+#        else:
+#            files = {'trad': survey+'_bpt1snr5_dext_'+cat+'.csv', 
+#                's06': survey+'_bpt1snr5_dext_'+cat+'.csv', 
+#                'compre': survey+'_snr5_dext_'+cat+'.csv',
+#                'midir': 'mid_ir/'+survey+'_WISE_good.csv',
+#                'baryparent': survey+'_barysample.csv'}
+#    
+#    return files[index]
+#
+##printing stats
+##surveys = ['ECO+RESOLVE'] #['RESOLVE', 'ECO', 'ECO+RESOLVE']
+#surveys = ['RESOLVE']
+#sdsscats = ['jhu', 'port', 'nsa']
+#columns = ['totalgals', 'agn', 'totaldwarfs', 'dwarfagn']
+#waves = ['optical', 'midir']
+#
+#stats = pd.DataFrame(index = ['trad', 's06', 'compre', 'midir'])#,'baryparent'])
+#
+#
+#for ndx in list(stats.index):
+#    for cols in columns:
+#        for survey in surveys:
+#            if (ndx == 'midir') | (ndx == 'baryparent'):
+#                colname = survey+' '+cols
+#                df = pd.read_csv(filenames(ndx, survey, colname))
+#                if 'name' in df.keys():
+#                    df.index = df.name
+#                if 'galname' in df.keys():
+#                    df.index = df.galname
+#
+#                wave = 'midir'
+#                if colname not in list(stats.keys()):
+#                    stats[colname] = np.zeros(len(stats)) 
+#                stats[colname].loc[ndx] = eval(cols+'(df,wave)')
+#            else:
+#                for cat in sdsscats:
+#                    colname = survey+' '+cat+' '+cols                    
+#                    df = pd.read_csv(filenames(ndx, survey, colname, cat = cat))
+#                    if 'name' in df.keys():
+#                        df.index = df.name
+#                    if 'galname' in df.keys():
+#                        df.index = df.galname
+#                    wave = 'optical'
+#
+#                    if colname not in list(stats.keys()):
+#                        stats[colname] = np.zeros(len(stats)) 
+#                    stats[colname].loc[ndx] = eval(cols+'(df,wave)')
+##    
+##    
+##
+##
