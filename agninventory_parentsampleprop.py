@@ -17,6 +17,10 @@ import matplotlib.colors as mpcolors
 import scipy
 from scipy.io.idl import readsav
 matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+matplotlib.rcParams.update({'font.size': 20})
+matplotlib.rcParams.update({'axes.linewidth': 2})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+
 def density_estimation(m1, m2):
     X, Y = np.mgrid[xmin:xmax:25j, ymin:ymax:25j]                                                     
     positions = np.vstack([X.ravel(), Y.ravel()])                                                       
@@ -37,9 +41,10 @@ plot = 0
 #s06file = 'eco+resolve_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
 #bptfile = 'eco+resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
 #midirfile = 'mid_ir/ECO+RESOLVE_WISE_good_syserr.csv'
-survey = 'RESOLVE'
+survey = 'ECO+RESOLVE'
+#survey = 'RESOLVE'
 os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
-sdsscat = 'jhu'
+sdsscat = 'nsa'
 s06file = survey.lower()+'_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
 optfile = survey.lower()+'_emlineclass_dext_snr5_'+sdsscat+'.csv'
 bptfile = survey.lower()+'_emlineclass_bpt1snr5_'+sdsscat+'.csv'
@@ -60,6 +65,12 @@ irsys.index = irsys.name
 resdfname = survey+"_barysample.csv"
 resdf = pd.read_csv(resdfname)
 resdf.index = resdf.name
+
+bpt = bpt.loc[set(bpt.galname) & set(resdf.name)]
+opt = opt.loc[set(opt.galname) & set(resdf.name)]
+s06 = s06.loc[set(s06.galname) & set(resdf.name)]
+
+
 
 print(survey+' parent survey: ', len(resdf))
 print(survey+' BPT-only sample: ', len(bpt))
@@ -169,12 +180,14 @@ agn = iragn | s06bonus | opt_bpt_tradagn | optsfagn
 
 #for x in resdf.keys():
 #    resdf[x] = np.array(resdf[x]).byteswap().newbyteorder() 
+plot = 0
+
 if plot:
     xmin = 7.5
     xmax = 11.5
     ymin = 0.45
     ymax = 2.75
-    u_r = resdf['modelu_rcorr']
+    u_r = resdf['modelu_r']
     lvls = [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     sf_colors_map = truncate_colormap(cm.gray,n=11)
     nbins = 100
@@ -208,7 +221,7 @@ if plot:
     
     sel = resdf.loc[irrand.name]
     ax.plot(sel.logmstar, sel.modelu_rcorr, 'o', color = 'green', markersize = msize, 
-            mew = 2, mfc = 'none', label = 'Mid-IR search sample', zorder = 4)
+            mew = 2, mfc = 'none', label = 'Mid-IR search sample', zorder = 14)
     #sel = resdf.loc[irsys.name]
     #ax.plot(sel.logmstar, sel.modelu_rcorr, 'o', color = 'orange', markersize = msize+2, 
     #        mew=2, mfc = 'none', label = 'Mid-IR systematic-error-limited sample', zorder = 5)
@@ -226,7 +239,7 @@ if plot:
     xmax = 11.5
     ymin = 0.45
     ymax = 2.75
-    u_r = resdf['modelu_rcorr']
+    u_r = resdf['modelu_r']
     lvls = [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     sf_colors_map = truncate_colormap(cm.gray,n=11)
     nbins = 100
@@ -244,20 +257,20 @@ if plot:
     #ax.contour(X, Y, Z, levels = lvls, cmap=sf_colors_map, zorder = 0)
     
     sel = resdf.loc[opt_bpt_tradagn]
-    ax.plot(sel.logmstar, sel.modelu_rcorr, '1', color = 'red', markersize = msize, 
+    ax.plot(sel.logmstar, sel.modelu_r, '1', color = 'red', markersize = msize, 
            mew = 2, label = 'Traditional AGN', zorder = 3)
     
     sel = resdf.loc[s06bonus]
-    ax.plot(sel.logmstar, sel.modelu_rcorr, '1', color = 'lime', markersize = msize, 
+    ax.plot(sel.logmstar, sel.modelu_r, '1', color = 'lime', markersize = msize, 
            mew = 2, label = 'S06 Bonus AGN', zorder = 3)
     
     sel = resdf.loc[optsfagn]
-    ax.plot(sel.logmstar, sel.modelu_rcorr, 's', color = 'blue', markersize = msize, 
+    ax.plot(sel.logmstar, sel.modelu_r, 's', color = 'blue', markersize = msize, 
             mew = 2, mfc = 'none', label = 'SF-AGN', zorder = 2)
     
     sel = resdf.loc[iragn]
-    ax.plot(sel.logmstar, sel.modelu_rcorr, 'p', color = 'orange', markersize = msize, 
-            mew = 2, mfc = 'none', label = 'Mid-IR AGN', zorder = 1)
+    ax.plot(sel.logmstar, sel.modelu_r, 'p', color = 'orange', markersize = msize, 
+            mew = 2, mfc = 'none', label = 'Mid-IR AGN', zorder = 10)
     
     
     #sel = resdf.loc[dwarfagn]
@@ -278,15 +291,17 @@ if plot:
     #ax.contour(X, Y, Z, cmap='summer')
     #
     
-    xmin = 7.5
-    xmax = 11.5
+    xmin = 9.18
+    xmax = 12.0
     ymin = -3
     ymax = 2
     resdf['g_s'] = resdf.logmgas - resdf.logmstar
+    resdf['mbary'] = np.log10(10**resdf.logmstar + 10**resdf.logmgas)
+
     fig,ax = plt.subplots()#(figsize=(8,8))
-    X,Y,Z = density_estimation(resdf.logmstar,resdf['g_s'])
+    X,Y,Z = density_estimation(resdf.mbary,resdf['g_s'])
     xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
-    resdfcontour = np.column_stack((resdf.logmstar, resdf['g_s']))
+    resdfcontour = np.column_stack((resdf.mbary, resdf['g_s']))
     k = kde.gaussian_kde(resdfcontour.T)
     resdf_contour_z = k(np.vstack([xgrid.flatten(), ygrid.flatten()]))
     resdf_colors_map = truncate_colormap(cm.gray_r)
@@ -295,30 +310,67 @@ if plot:
     #ax.contour(X, Y, Z, levels = lvls, cmap=sf_colors_map, zorder = 0)
     
     sel = resdf.loc[opt_bpt_tradagn]
-    ax.plot(sel.logmstar, sel.g_s, '1', color = 'red', markersize = msize, 
+    ax.plot(sel.mbary, sel.g_s, '1', color = 'red', markersize = msize, 
            mew = 2, label = 'Traditional AGN', zorder = 3)
     
     sel = resdf.loc[s06bonus]
-    ax.plot(sel.logmstar, sel.g_s, '1', color = 'lime', markersize = msize, 
+    ax.plot(sel.mbary, sel.g_s, '1', color = 'lime', markersize = msize, 
            mew = 2, label = 'S06 Bonus AGN', zorder = 3)
     
     sel = resdf.loc[optsfagn]
-    ax.plot(sel.logmstar, sel.g_s, 's', color = 'blue', markersize = msize, 
+    ax.plot(sel.mbary, sel.g_s, 's', color = 'blue', markersize = msize, 
             mew = 2, mfc = 'none', label = 'SF-AGN', zorder = 2)
     
     sel = resdf.loc[iragn]
-    ax.plot(sel.logmstar, sel.g_s, 'p', color = 'orange', markersize = msize, 
-            mew = 2, mfc = 'none', label = 'Mid-IR AGN', zorder = 1)
+    ax.plot(sel.mbary, sel.g_s, 'p', color = 'orange', markersize = msize, 
+            mew = 2, mfc = 'none', label = 'Mid-IR AGN', zorder = 10)
     
     
-    ax.axvline(x = 9.5, c = 'k', linestyle = '--')
+    ax.axvline(x = 9.9, c = 'k', linestyle = '--')
     ax.axhline(y = 0, c = 'k', linestyle = '--')
     
-    plt.xlabel(r'log(M${_{stellar}}$/M${_\odot}$)', fontsize = 20)
+    plt.xlabel(r'log(M${_{baryonic}}$/M${_\odot}$)', fontsize = 20)
     plt.ylabel(r'log(M${_{gas}}$/M${_{stellar}}$)', fontsize = 20)
-    plt.xlim(xmin,xmax)
-    plt.ylim(ymin,ymax)
+    plt.xlim(9.18,xmax)
+    plt.ylim(-2.5,ymax)
     plt.legend(fontsize = 15)
+
+#    fig,ax = plt.subplots()#(figsize=(8,8))
+#    X,Y,Z = density_estimation(resdf.logmstar,resdf['g_s'])
+#    xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+#    resdfcontour = np.column_stack((resdf.logmstar, resdf['g_s']))
+#    k = kde.gaussian_kde(resdfcontour.T)
+#    resdf_contour_z = k(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+#    resdf_colors_map = truncate_colormap(cm.gray_r)
+#    ax.pcolormesh(xgrid, ygrid, resdf_contour_z.reshape(xgrid.shape), 
+#                       shading='gouraud', cmap=resdf_colors_map) #plt.cm.gray_r)
+#    #ax.contour(X, Y, Z, levels = lvls, cmap=sf_colors_map, zorder = 0)
+#    
+#    sel = resdf.loc[opt_bpt_tradagn]
+#    ax.plot(sel.logmstar, sel.g_s, '1', color = 'red', markersize = msize, 
+#           mew = 2, label = 'Traditional AGN', zorder = 3)
+#    
+#    sel = resdf.loc[s06bonus]
+#    ax.plot(sel.logmstar, sel.g_s, '1', color = 'lime', markersize = msize, 
+#           mew = 2, label = 'S06 Bonus AGN', zorder = 3)
+#    
+#    sel = resdf.loc[optsfagn]
+#    ax.plot(sel.logmstar, sel.g_s, 's', color = 'blue', markersize = msize, 
+#            mew = 2, mfc = 'none', label = 'SF-AGN', zorder = 2)
+#    
+#    sel = resdf.loc[iragn]
+#    ax.plot(sel.logmstar, sel.g_s, 'p', color = 'orange', markersize = msize, 
+#            mew = 2, mfc = 'none', label = 'Mid-IR AGN', zorder = 10)
+#    
+#    
+#    ax.axvline(x = 9.5, c = 'k', linestyle = '--')
+#    ax.axhline(y = 0, c = 'k', linestyle = '--')
+#    
+#    plt.xlabel(r'log(M${_{stellar}}$/M${_\odot}$)', fontsize = 20)
+#    plt.ylabel(r'log(M${_{gas}}$/M${_{stellar}}$)', fontsize = 20)
+#    plt.xlim(xmin,xmax)
+#    plt.ylim(-2.5,ymax)
+#    plt.legend(fontsize = 15)
     
     
     from scipy.stats import kde
@@ -344,6 +396,11 @@ if plot:
     bad = ((N2<-2.5) | (N2>-0.3))
     Z_pp04 = 9.37+2.03*N2+1.26*N2**2+0.32*N2**3
     Z_pp04[bad] = np.nan
+    
+    #TODO -- check N2O3 or N2HA or Nebula Bayes with SEL or only BPT-lines
+    
+#ADD RIGHT AXES
+    
     #Z = pd.read_csv("C:/Users/mugdhapolimera/github/SDSS_spectra/ECO+RESOLVE_snr5_jhu_csf_M5grid_final_LOGZ.txt", 
     #                     sep = '\s+', names = ["name", "Estimate", "err_up", "err_down"])
     #Z.index = Z.name
@@ -356,14 +413,16 @@ if plot:
     Z04 = np.log10(0.4)+8.76
     plt.plot(xaxis, Z04*np.ones(len(xaxis)), 'k--', linewidth = 2)
     plt.plot(xaxis, 8.76*np.ones(len(xaxis)), 'k--', linewidth = 2)
-    #ax2 = ax1.twinx()
-    #ax1.set_yticks(yticks)#np.arange(7.8,9.2,0.2))
-    #float_formatter = lambda x: "%.2f" % x
-    #xticks = np.array([7.4, 7.6, 7.8, 8.0, 8.2, 8.4, 8.6, 8.8, 9.0, 9.2])
-    #N2 = 1.754*yticks - 15.614
-    #N2_label = ["%.2f" % z for z in N2]
-    #ax2.set_yticklabels(N2_label)
-    #ax2.set_ylabel(r'[NII]/H$\alpha$')#, fontsize = 22)
+    ax2 = ax1.twinx()
+    yticks = np.array([7.8, 8.0, 8.2, 8.4, 8.6, 8.8, 9.0,9.2])
+    ax2.set_yticks(np.linspace(0,1,len(yticks)))
+    ax1.set_yticks(yticks)#np.arange(7.8,9.2,0.2))
+    float_formatter = lambda x: "%.2f" % x
+    xticks = np.array([7.4, 7.6, 7.8, 8.0, 8.2, 8.4, 8.6, 8.8, 9.0, 9.2])
+    N2 = 1.754*yticks - 15.614
+    N2_label = ["%.2f" % z for z in N2]
+    ax2.set_yticklabels(N2_label)
+    ax2.set_ylabel(r'[NII]/H$\alpha$')#, fontsize = 22)
     
     #plt.ylim(min(yaxis),max(yaxis))
     ax1.set_ylim(7.8,9.2)
@@ -398,10 +457,12 @@ if plot:
     lvls = [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
     #ax1.contour(X, Y, Z, levels = lvls, colors = 'k', zorder = 1)
     
-    ax1.plot(resdf.logmstar.loc[irrand.name[irrand['agnflag']]], Z_pp04[irrand.name[irrand['agnflag']]], 
+    ax1.plot(resdf.logmstar.loc[irrand.name[irrand['agnflag']]], 
+             Z_pp04[irrand.name[irrand['agnflag']]], 
              'p', markersize = 10, label = 'Mid-IR AGN', mfc = 'none',
-             color = 'orange', alpha = 1.0, mec = 'orange', mew = 2, zorder = 5)
-    ax1.plot(resdf.logmstar.loc[s06bonus], Z_pp04.loc[s06bonus], '1', markersize = 10, label = 'S06 Bonus AGN', 
+             color = 'orange', alpha = 1.0, mec = 'orange', mew = 2, zorder = 10)
+    ax1.plot(resdf.logmstar.loc[s06bonus], Z_pp04.loc[s06bonus], '1', 
+             markersize = 10, label = 'S06 Bonus AGN', 
              color = 'lime', alpha = 1.0, mew = 2, zorder = 4)
     ax1.plot(resdf.logmstar.loc[opt_bpt_tradagn], Z_pp04.loc[opt_bpt_tradagn], '1', markersize = 10, label = 'Traditional AGN', 
              color = 'red', alpha = 1.0, mec = 'red', mew = 2, mfc = 'none', zorder = 2)
@@ -478,7 +539,8 @@ if plot:
              mec = 'blue', mfc = 'none', label = 'SF-AGN', 
              markersize = 10, mew = 2, alpha = 1, zorder = 5)
     plt.plot(fsmgr_st.loc[iragn], fsmgr_lt.loc[iragn], 
-                   'p', color = 'orange', label = 'Mid-IR AGN', markersize = 10, mew = 0, zorder = 5)
+                   'p', color = 'orange', label = 'Mid-IR AGN', markersize = 10, 
+                   mew = 3, mfc = 'none', zorder = 10)
     plt.plot(xaxis, yaxis, 'k--', lw = 3)
     plt.xlim(np.min(xaxis), np.max(fsmgr_st))
     plt.ylim(np.min(fsmgr_lt), np.max(fsmgr_lt))
@@ -493,3 +555,57 @@ if plot:
     #            '*',color = 'lime', ms = 10, label = labels[key])
     plt.xlabel(r'Short Term SFH $\left(\frac{M_*(<100 Myr)}{M_*(>100 Myr) \times 0.1 Gyr}\right)$')
     plt.ylabel(r'Long Term SFH $\left(\frac{M_*(<1 Gyr)}{M_*(>1 Gyr) \times 1 Gyr}\right)$')
+    
+    
+    plt.figure()
+    
+    mbary = np.log10(10**resdf.logmstar + 10**resdf.logmgas)
+    #centrals
+    plt.plot(resdf.logmh[resdf.fc == 1].loc[opt_bpt_tradagn], 
+             mbary[resdf.fc == 1].loc[opt_bpt_tradagn], 
+             '1', color = 'red', mew = 2, mfc = 'none', markersize = 10,
+             label = 'Traditional AGN') #other group galaxies
+    plt.plot(resdf.logmh[resdf.fc == 1].loc[s06bonus], 
+             mbary[resdf.fc == 1].loc[s06bonus], 
+             '1', color = 'lime', mew = 2, mfc = 'none', markersize = 10,label = 'S06 Bonus AGN') #other group galaxies
+    plt.plot(resdf.logmh[resdf.fc == 1].loc[optsfagn], 
+             mbary[resdf.fc == 1].loc[optsfagn], 
+             's', color = 'blue', mew = 2, mfc = 'none', markersize = 10,label = 'SF-AGN') #other group galaxies
+    plt.plot(resdf.logmh[resdf.fc == 1].loc[iragn], 
+             mbary[resdf.fc == 1].loc[iragn], 
+             'p', color = 'orange', mew = 2, mfc = 'none', markersize = 10,label = 'Mid-IR AGN') #other group galaxies
+    plt.legend(loc = 'lower right', numpoints = 1, fontsize = 15)
+#satellites
+    plt.plot(resdf.logmh[resdf.fc == 0].loc[opt_bpt_tradagn], 
+             mbary[resdf.fc == 0].loc[opt_bpt_tradagn], 
+             '1', color = 'red', mew = 2, mfc = 'none', markersize = 5) #other group galaxies
+    plt.plot(resdf.logmh[resdf.fc == 0].loc[s06bonus], 
+             mbary[resdf.fc == 0].loc[s06bonus], 
+             '1', color = 'lime', mew = 2, mfc = 'none',markersize = 5) #other group galaxies
+    plt.plot(resdf.logmh[resdf.fc == 0].loc[optsfagn], 
+             mbary[resdf.fc == 0].loc[optsfagn], 
+             's', color = 'blue', mew = 2, mfc = 'none', markersize = 5) #other group galaxies
+    plt.plot(resdf.logmh[resdf.fc == 0].loc[iragn], 
+             mbary[resdf.fc == 0].loc[iragn], 
+             'p', color = 'orange', mew = 2, mfc = 'none', markersize = 5, 
+             zorder = 10) #other group galaxies
+
+    plt.plot(resdf.logmh[resdf.fc == 1].loc[sf], 
+             mbary[resdf.fc == 1].loc[sf], 
+             '.', color = 'gray', mec= 'none', markersize = 10, alpha = 0.3,
+             zorder = 0) 
+    plt.plot(resdf.logmh[resdf.fc == 0].loc[sf], 
+             mbary[resdf.fc == 0].loc[sf], 
+             '.', color = 'gray', mec = 'none', markersize = 5, alpha = 0.3,
+             zorder = 0) 
+
+    plt.xlabel(r'log(Galaxy M$\rm_{halo}$/M$_{\odot}$)')
+    plt.ylabel(r'log(Galaxy M$\rm_{bary}$/M$_{\odot}$)')
+    plt.xlim(10.8,14.54)
+    plt.ylim(9.15,11.5)
+    fullmbary = np.log10(10**resdf.logmstar + 10**resdf.logmgas)
+    yaxis = np.arange(np.min(fullmbary)-0.5, np.max(fullmbary)+0.5,0.1)
+    xaxis = np.ones(len(yaxis))
+    plt.plot(11.5*xaxis, yaxis, 'k--', lw = 3)
+    plt.plot(12.0*xaxis, yaxis, 'k-.', lw = 3)
+

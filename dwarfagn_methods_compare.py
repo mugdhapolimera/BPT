@@ -34,9 +34,9 @@ def density_estimation(m1, m2):
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 he2_flag = 0
 save = 0
-resolve = 1
+resolve = 0
 eco = 0
-full = 0
+full = 1
 #sdsscat = 'port'
 
 sdsscat = 'jhu'
@@ -102,9 +102,9 @@ else:
 #ax3 = plt.subplot(gs01[0, 0])
 #ax4 = plt.subplot(gs01[0, 1])
 #ax5 = plt.subplot(gs01[0, 2])
-##ax1 = plt.subplot(111)
-#
-#ax1 = s06_bpt(s06inputfile, s06outputfile, eco, resolve, full, sdsscat, save, ax1)
+ax1 = plt.subplot(111)
+
+ax1 = s06_bpt(s06inputfile, s06outputfile, eco, resolve, full, sdsscat, save, ax1)
 #ax2 = midiragnplot(ax2,inobssamplefile, survey, save)
 #os.chdir("C:\Users\mugdhapolimera\github\SDSS_Spectra\/")
 #ax3, ax4, ax5 = bpt_plots(bptinputfile, bptoutputfile, eco, resolve, full, sdsscat, 
@@ -113,10 +113,13 @@ else:
 #plt.show()
 
 #inobssamplefile = bptinputfile
-plt.figure()    
-ax = plt.subplot(111)
-#ax = midiragnplot(ax, inobssamplefile, survey, save)
-ax = s06_bpt(s06inputfile, s06outputfile, eco, resolve, full, sdsscat, save, ax)
+#plt.figure()    
+#fig, (ax3, ax4, ax5) = plt.subplots(1,3, sharey = True)
+#ax3, ax4, ax5 = bpt_plots(bptinputfile, bptoutputfile, eco, resolve, full, sdsscat, 
+#                          save, ax3, ax4, ax5)
+#ax = plt.subplot(111)
+##ax = midiragnplot(ax, inobssamplefile, survey, save)
+#ax = s06_bpt(s06inputfile, s06outputfile, eco, resolve, full, sdsscat, save, ax)
 
 #def totalgals(df, wavelength):
 #    return len(df)

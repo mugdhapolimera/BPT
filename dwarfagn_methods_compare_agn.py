@@ -40,9 +40,9 @@ def density_estimation(m1, m2):
 
 #Read in RESOLVE/ECO extinction corrected and S/N filtered data
 save = 1
-resolve = 1
+resolve = 0
 eco = 0
-full = 0
+full = 1
 #sdsscat = 'port'
 sdsscat = 'jhu'
 #sdsscat = 'nsa'
@@ -57,11 +57,12 @@ else:
 if full: 
     if sdsscat == 'jhu':
         s06inputfile = 'ECO+RESOLVE_bpt1snr5_dext_jhu.csv'#'ECO_full_snr5.csv'
-        bptinputfile = 'ECO+RESOLVE_snr5_dext_jhu.csv' #'ECO_full_bary_jhu.csv'#'ECO_full_snr5.csv'
+        bptinputfile = 'ECO+RESOLVE_bpt1snr5_dext_jhu.csv' #'ECO_full_bary_jhu.csv'#'ECO_full_snr5.csv'
+        selinputfile = 'ECO+RESOLVE_snr5_dext_jhu.csv' #'ECO_full_bary_jhu.csv'#'ECO_full_snr5.csv'
     print 'ECO+RESOLVE RESULTS'
     s06outputfile = 'eco+resolve_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
-    bptoutputfile = 'eco+resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
-    midirfile = 'mid_ir/ECO+RESOLVE_GAMA_WISE_barysample.csv'
+    bptoutputfile = 'eco+resolve_emlineclass_dext_updatedsample_'+sdsscat+'.csv'
+    midirfile = 'mid_ir/RESOLVE_WISE_good_randerr.csv'
     survey = 'ECO+RESOLVE'
 elif eco: 
     if sdsscat == 'jhu':
@@ -98,8 +99,8 @@ else:
     bptoutputfile = 'resolve_emlineclass_dext_snr5_'+sdsscat+'.csv'
     inobssamplefile = 'RESOLVE_inobssample.csv'
     survey = 'RESOLVE'
-    midirfile = 'mid_ir/RESOLVE_WISE_good_randerr.csv'
-#    midirfile = 'mid_ir/RESOLVE_WISE_good_syserr.csv'
+#    midirfile = 'mid_ir/RESOLVE_WISE_good_randerr.csv'
+    midirfile = 'mid_ir/RESOLVE_WISE_good_syserr.csv'
 
 #plt.figure()
 #gs0 = gridspec.GridSpec(2, 1)
@@ -118,14 +119,15 @@ else:
 #              eco, resolve, full, sdsscat, save, ax1)
 
 #midirfile = 'mid_ir/GAMA_WISECat.fits'
-fig, ax2 = plt.subplots(1,1, sharey = True)
-ax2 = midir_plotallagn(ax2,midirfile, s06outputfile, bptoutputfile, survey, save)
+#fig, ax2 = plt.subplots(1,1, sharey = True)
+#ax2 = midir_plotallagn(ax2,midirfile, s06outputfile, bptoutputfile, survey, save)
 #os.chdir("C:\Users\mugdhapolimera\github\SDSS_Spectra\/")
 #
-#fig, (ax3, ax4, ax5) = plt.subplots(1,3, sharey = True)
-#
-#ax3, ax4, ax5 = bpt_plots(bptinputfile, bptoutputfile,  s06outputfile,  midirfile,
-#                          eco, resolve, full, sdsscat, save, ax3, ax4, ax5)
+simple = 1
+fig, (ax3, ax4, ax5) = plt.subplots(1,3, sharey = True)
+
+ax3, ax4, ax5 = bpt_plots(bptinputfile, bptoutputfile,  selinputfile, s06outputfile,  midirfile,
+                          eco, resolve, full, sdsscat, save, ax3, ax4, ax5, simple)
 
 #plt.show()
 

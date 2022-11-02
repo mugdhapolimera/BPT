@@ -375,17 +375,17 @@ def s06_bpt(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax):
                    shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
     ax.set_xlim(-1.5,0.32)
     ax.set_ylim(-1.0,1.0)
-    main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k--')#, label = 'Ke01 Maximum Starburst Line')
+    main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'g--', lw = 5)#, label = 'Ke01 Maximum Starburst Line')
     composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
-                          'k-.')#, label = 'Ka03 Composite Line')
+                          '-.', color = 'cyan', lw = 5)#, label = 'Ka03 Composite Line')
 #    sfsel1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 
 #                       markersize = 5)#, label = 'Definite Star Forming')
     compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], '1', color = 'lime', 
                           markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Bonus AGN')
     agnsel1, = ax.plot(n2ha[agnsel], o3hb[agnsel], 'r1',
-                       markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Traditional AGN')
+                       markersize = 8, mew = 2, alpha = 0.5, label = 'Conventional AGN')
     dwarfagn1, = ax.plot(n2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
-                       mec = 'k', mew = 2,  markersize = 12, label = 'S06 Dwarf AGN')
+                       mec = 'k', mew = 2,  markersize = 12, label = 'Dwarf AGN')
             
     ax.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
     ax.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
@@ -406,7 +406,7 @@ def s06_bpt(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax):
 #    compdata1, = ax2.plot(s2ha[compsel], o3hb[compsel], 'm1', 
 #                          markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Composite')
 #    agnsel1, = ax2.plot(s2ha[agnsel], o3hb[agnsel], 'r1',
-#                       markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Traditional AGN')
+#                       markersize = 8, mew = 2, alpha = 0.5, label = 'S06 Conventional AGN')
 #    dwarfagn1, = ax2.plot(s2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
 #                       mec = 'k', mew = 2,  markersize = 12, label = 'S06 Dwarf AGN')
 #    #

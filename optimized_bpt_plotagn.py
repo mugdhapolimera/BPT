@@ -86,8 +86,8 @@ def ratioerror(num,num_err,den, den_err):
     # note that the ratio uses only the stronger line, but for S/N reasons we add
     # the weaker and multiply by 3/4 since Chris Richardson says the canonical
     # line ratio is 3:1 (this needs to be updated with a more precise number)
-def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile, 
-              eco, resolve, full, sdsscat, save, ax1, ax2, ax3):
+def bpt_plots(inputfile, outputfile,  selinputfile, s06outputfile,  midirfile, 
+              eco, resolve, full, sdsscat, save, ax1, ax2, ax3, simple):
     df = pd.read_csv(inputfile)
         #define alternate catalog names
     if 'name' in df.keys():
@@ -100,7 +100,8 @@ def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile,
 
     s06 = pd.read_csv(s06outputfile)
     s06.index = s06.galname
-    s06agn = np.array(s06[~s06.defstarform].galname)
+#    s06agn = np.array(s06[~s06.defstarform].galname)
+    s06agn = np.array(s06.galname[s06.composite])
 
     midir = pd.read_csv(midirfile)
     midir.index = midir.name
@@ -185,6 +186,30 @@ def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile,
     if sdsscat =='nsa':
         df = df[data]
     
+        
+    sel = pd.read_csv(selinputfile)
+    sel.index = sel.name
+    onlybpt = set(df.name) - set(sel.name)
+    selname = set(sel.name)
+#    oi.loc[onlybpt] = np.nan
+#    oi_err.loc[onlybpt] = np.nan
+#    sii_sum.loc[onlybpt] = np.nan
+#    sii_sum_err.loc[onlybpt] = np.nan
+
+    siisel = pd.read_csv('ECO+RESOLVE_bpt1snr5_siisnr_jhu.csv')
+    siisel.index=siisel.name
+    siisel = siisel['snr']
+    oisel = pd.read_csv('ECO+RESOLVE_bpt1snr5_oisnr_jhu.csv')
+    oisel.index=oisel.name
+    oisel = oisel['snr']
+    
+    #bpt = pd.read_csv('ECO+RESOLVE_bpt1snr5_dext_'+sdsscat+'.csv')
+    #bpt.index = bpt.name
+    #onlybpt = set(bpt.name)
+    #selname = set(df.name) - set(bpt.name)
+    
+
+    
     #length of data to be used for debugging
     datalen = np.sum(data)
     subsetname = df.NAME[data]
@@ -204,17 +229,18 @@ def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile,
     sfsel1 = (o3hb < n2hacompmin(n2ha)) & (n2ha < 0.) & ~(o3hb > n2hamain(n2ha)) #~(o3hb > n2hamain(n2ha)) & ~compsel1
     agnsel1= (o3hb > n2hamain(n2ha))
     #plt.hist(o1ha_err[o1ha_err < 1e5], bins = 'fd')
+
     #SII plot selectors
-    sfsel2 = (o3hb <= s2hamain(s2ha)) & ~compsel1
-    seyfsel2 = ((o3hb > s2hamain(s2ha)) & (o3hb >= s2halinseyf(s2ha)))
-    linersel2 = ((o3hb > s2hamain(s2ha)) & (o3hb < s2halinseyf(s2ha)))
-    agnsel2 = (o3hb > s2hamain(s2ha)) & ~compsel1
+    sfsel2 = (o3hb <= s2hamain(s2ha)) & ~compsel1 & siisel
+    seyfsel2 = ((o3hb > s2hamain(s2ha)) & (o3hb >= s2halinseyf(s2ha))) & siisel
+    linersel2 = ((o3hb > s2hamain(s2ha)) & (o3hb < s2halinseyf(s2ha))) & siisel
+    agnsel2 = (o3hb > s2hamain(s2ha)) & ~compsel1 & siisel
     
     #OI plot selectors
-    sfsel3 = (o3hb <= o1hamain(o1ha)) & (o1ha < -0.7) & ~compsel1
-    seyfsel3 = ((o3hb > o1hamain(o1ha)) | (o1ha > -0.7)) & (o3hb >= o1halinseyf(o1ha))
-    linersel3 = ((o3hb > o1hamain(o1ha)) | (o1ha > -0.7)) & (o3hb < o1halinseyf(o1ha))
-    agnsel3 = ((o3hb > o1hamain(o1ha)) | (o1ha > -0.7)) & ~compsel1
+    sfsel3 = (o3hb <= o1hamain(o1ha)) & (o1ha < -0.7) & ~compsel1 & oisel
+    seyfsel3 = ((o3hb > o1hamain(o1ha)) | (o1ha > -0.7)) & (o3hb >= o1halinseyf(o1ha)) & oisel
+    linersel3 = ((o3hb > o1hamain(o1ha)) | (o1ha > -0.7)) & (o3hb < o1halinseyf(o1ha)) & oisel
+    agnsel3 = ((o3hb > o1hamain(o1ha)) | (o1ha > -0.7)) & ~compsel1 & oisel
     
     #REFERENCE for cumulative plot selectors
     seyfselr = seyfsel2 & seyfsel3
@@ -235,32 +261,36 @@ def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile,
     #Save the BPT flags to a CSV file
     emlineclass = sfsel ^ compsel ^ seyfsel ^ linersel ^ ambigsel1 ^ ambigsel2 ^ ambagnsel
     defagn = seyfsel | linersel | ambagnsel
+    convagn = compsel | defagn
     
     flags = pd.DataFrame({'galname':subsetname, 'defstarform':sfsel, 'composite':compsel, 
                               'defseyf':seyfsel, 'defliner':linersel, 'ambigagn':ambagnsel,
                               'sftoagn':ambigsel1, 'agntosf':ambigsel2, 'defagn': defagn,
-                              'sftoagn1':sftoagn1, 'sftoagn2': sftoagn2})
+                              'sftoagn1':sftoagn1, 'sftoagn2': sftoagn2, 'convagn': convagn})
     if save:
         flags.to_csv(outputfile ,index=False)
-    keys = ['defagn', 'composite', 'sftoagn', 'agntosf','dwarfagn']
-    marker = {'agntosf': 'c^', 'ambigagn': 'ms', 'composite': 'ms', 'defagn': 'ro', 
+#    keys = ['defagn', 'composite', 'sftoagn', 'agntosf','dwarfagn']
+    keys = ['convagn', 'sftoagn']
+    marker = {'convagn': '1', 'agntosf': 'c^', 'ambigagn': 'ms', 'composite': 'ms', 
+              'defagn': 'ro', 
               'defliner': 'yo', 'defseyf': 'co', 'dwarfagn': 'ks',
               'sftoagn': 'bs'}
-    markersize = {'agntosf': 14, 'ambigagn': 8, 'composite': 8, 'defagn': 8, 
+    markersize = {'convagn': 10, 'agntosf': 14, 'ambigagn': 8, 'composite': 8, 'defagn': 8, 
               'defliner': 8, 'defseyf': 8, 'sftoagn': 8, 
-              'dwarfagn':14}
-    alpha = {'agntosf': 1, 'ambigagn': 0.5, 'composite': 0.5, 'defagn': 0.5, 
+              'dwarfagn':16}
+    alpha = {'convagn': 1, 'agntosf': 1, 'ambigagn': 0.5, 'composite': 0.5, 'defagn': 0.5, 
               'defliner': 0.5, 'defseyf': 0.5, 'sftoagn': 0.7, 
               'dwarfagn':1}
     
-    markercolors = {'agntosf': 'c', 'ambigagn': 'm', 'composite': 'm', 'defagn': 'r', 
+    markercolors = {'convagn': 'r', 'agntosf': 'c', 'ambigagn': 'm', 'composite': 'm', 'defagn': 'r', 
               'defliner': 'y', 'defseyf': 'c', 'dwarfagn': 'k', 'sftoagn': 'b'}
     
     labels = {'agntosf': 'Low-SII AGN', 'ambigagn': 'Ambiguous AGN', 
               'composite': 'Composite', 'defagn': 'Traditional AGN', 
               'defliner': 'LINER', 'defseyf': 'Seyfert', 
               'dwarfagn': 'SEL Dwarf AGN', 'defstarform': 'Definite SF', 
-              'sftoagn': 'SF-AGN'}
+              'sftoagn': 'SF-AGN', 'convagn': 'Conventional AGN'}
+    
     
     #checking that plotted points are within the total data range
     print ''
@@ -317,158 +347,317 @@ def bpt_plots(inputfile, outputfile,  s06outputfile,  midirfile,
     
     ###PLOTS###
     #reference points in x-direction for demarcation lines on plots
-    refn2ha = np.linspace(-3.0, 0.35)
-    refoiha = np.linspace(-2.5, -0.4)
-    refsiiha = np.linspace(-2, 0.3,100)
-    
-    def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
-      	new_cmap = colors.LinearSegmentedColormap.from_list(
-            'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-            cmap(np.linspace(minval, maxval, n)))
-      	return new_cmap
-    sf_colors_map = truncate_colormap(cm.gray_r)
-    ndx = []#'ECO03494']#np.where((df.NAME == 'rs1105') | (df.NAME == 'rs1375'))[0]
-    xmin = refn2ha.min(); xmax = refn2ha.max()
-    ymin = -1.25; ymax = 1.5
-    nbins = 50
-    
-    #fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
-    
-    #NII/OIII plot
-    definite = np.column_stack((n2ha[sfsel], o3hb[sfsel]))
-    xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
-    k2 = kde.gaussian_kde(definite.T)
-    definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
-    agn_contour = np.column_stack((n2ha[defagn], o3hb[defagn]))
-    xmin_agn = agn_contour[:,0].min(); xmax_agn = agn_contour[:,0].max()
-    ymin_agn = agn_contour[:,1].min(); ymax_agn = agn_contour[:,1].max()
-    xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j, 
-                                    ymin_agn:ymax_agn:nbins*1j]
-    k = kde.gaussian_kde(agn_contour.T)
-    agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
-    ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
-                   shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
-    ax1.set_xlim(-1.5,0.5)
-    ax1.set_ylim(-1.0,1.0)
-    ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
-    ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
-    
-    for key in keys:
-        if key != 'dwarfagn':
+    if simple:
+        refn2ha = np.linspace(-3.0, 0.35)
+        refoiha = np.linspace(-2.5, -0.4)
+        refsiiha = np.linspace(-2, 0.3,100)
+        
+        def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
+          	new_cmap = colors.LinearSegmentedColormap.from_list(
+                'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+                cmap(np.linspace(minval, maxval, n)))
+          	return new_cmap
+        sf_colors_map = truncate_colormap(cm.gray_r)
+        ndx = []#'ECO03494']#np.where((df.NAME == 'rs1105') | (df.NAME == 'rs1375'))[0]
+        xmin = refn2ha.min(); xmax = refn2ha.max()
+        ymin = -1.25; ymax = 1.5
+        nbins = 50
+        
+        #fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
+        
+        #NII/OIII plot
+        definite = np.column_stack((n2ha[sfsel], o3hb[sfsel]))
+        xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+        k2 = kde.gaussian_kde(definite.T)
+        definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+        ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                       shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
+
+        ax1.set_xlim(-1.5,0.5)
+        ax1.set_ylim(-1.0,1.0)
+        ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
+        ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+        
+        for key in keys:
             n2ha_sel = n2ha.loc[flags[key]]
             o3hb_sel = o3hb.loc[flags[key]]
-            ax1.plot(n2ha_sel, o3hb_sel, marker[key], color = markercolors[key], alpha = alpha[key], 
-                     markersize = markersize[key], mew = 0, label = labels[key])
-        else:
-            n2ha_sel = n2ha[dwarfagn]
-            o3hb_sel = o3hb[dwarfagn]
-            ax1.plot(n2ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
-                     markersize = markersize[key], mew = 2, label = labels[key])
-    n2ha_sel = n2ha[s06dwarfagn]
-    o3hb_sel = o3hb[s06dwarfagn]
-    ax1.plot(n2ha_sel, o3hb_sel, 'kv', mfc = 'none',
-             markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
-    n2ha_sel = n2ha[midirdwarfagn]
-    o3hb_sel = o3hb[midirdwarfagn]
-    ax1.plot(n2ha_sel, o3hb_sel, 'kp', mfc = 'none',
-             markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
-    
-    ax1.legend(loc=3, numpoints = 1, fontsize = 15)#, fontsize = 14)
-    
-    main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Theoretical Maximum Starburst Line (Ke01)')
-    composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 
-    'k--', label = 'Composite Line (Ka03)')
-    
-    #SII plot
-    xmin = refsiiha.min(); xmax = refsiiha.max()
-    ymin = -1.25; ymax = 1.5
-    nbins = 50
-    
-    definite = np.column_stack((s2ha[defagn|sfsel], o3hb[defagn|sfsel]))
-    xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
-    k2 = kde.gaussian_kde(definite.T)
-    definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
-    agn_contour = np.column_stack((s2ha[defagn], o3hb[defagn]))
-    xmin_agn = agn_contour[:,0].min(); xmax_agn = agn_contour[:,0].max()
-    ymin_agn = agn_contour[:,1].min(); ymax_agn = agn_contour[:,1].max()
-    xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j, 
-                                    ymin_agn:ymax_agn:nbins*1j]
-    k = kde.gaussian_kde(agn_contour.T)
-    agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
-    ax2.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
-                   shading='gouraud', cmap=sf_colors_map)
-    main1, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k', label = 'Main Line')
-    ax2.set_xlim(-1.5,0.5)
-    ax2.set_ylim(-1,1)
-    ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
-    ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
-                      'k-.', label = 'Liner/Seyfert Division')
-    for key in keys:
-        if key != 'dwarfagn':
+            ax1.plot(n2ha_sel, o3hb_sel, marker[key], color = markercolors[key], 
+                     alpha = alpha[key], markersize = markersize[key], 
+                     mew = 2, mec = markercolors[key], label = labels[key])
+
+        n2ha_sel = n2ha[dwarfagn]
+        o3hb_sel = o3hb[dwarfagn]
+        ax1.plot(n2ha_sel, o3hb_sel, 'ks', mfc = 'none',
+                 markersize = 14, mew = 2, label = 'Dwarf AGN')
+
+        n2ha_sel = n2ha[s06dwarfagn]
+        o3hb_sel = o3hb[s06dwarfagn]
+        ax1.plot(n2ha_sel, o3hb_sel, 'v',color = 'lime',  mfc = 'none',
+                 markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
+
+        n2ha_sel = n2ha[midirdwarfagn]
+        o3hb_sel = o3hb[midirdwarfagn]
+        ax1.plot(n2ha_sel, o3hb_sel, 'p', color = 'orange', zorder = 10, mfc = 'none',
+                 markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
+        
+        ax1.legend(loc=3, numpoints = 1, fontsize = 15)#, fontsize = 14)
+        
+        main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Theoretical Maximum Starburst Line (Ke01)')
+        composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 
+        'k--', label = 'Composite Line (Ka03)')
+        
+        #SII plot
+        xmin = refsiiha.min(); xmax = refsiiha.max()
+        ymin = -1.25; ymax = 1.5
+        nbins = 50
+        s2ha = s2ha.loc[siisel]
+        o3hb_orig = o3hb.copy()
+        o3hb = o3hb.loc[siisel]
+        
+        s2ha = s2ha[~np.isnan(s2ha)]
+        o3hb = o3hb[~np.isnan(s2ha)]
+        
+        definite = np.column_stack((s2ha[defagn|sfsel], o3hb[defagn|sfsel]))
+        xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+        k2 = kde.gaussian_kde(definite.T)
+        definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+        agn_contour = np.column_stack((s2ha[defagn], o3hb[defagn]))
+        xmin_agn = agn_contour[:,0].min(); xmax_agn = agn_contour[:,0].max()
+        ymin_agn = agn_contour[:,1].min(); ymax_agn = agn_contour[:,1].max()
+        xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j, 
+                                        ymin_agn:ymax_agn:nbins*1j]
+        k = kde.gaussian_kde(agn_contour.T)
+        agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
+        ax2.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                       shading='gouraud', cmap=sf_colors_map)
+        main1, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k', label = 'Main Line')
+        ax2.set_xlim(-1.5,0.5)
+        ax2.set_ylim(-1,1)
+        ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
+        ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
+                          'k-.', label = 'Liner/Seyfert Division')
+        for key in keys:
             s2ha_sel = s2ha.loc[flags[key]]
             o3hb_sel = o3hb.loc[flags[key]]
-            ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], alpha = alpha[key], 
-                     markersize = markersize[key], mew = 0, label = labels[key])
-        else:
-            s2ha_sel = s2ha[dwarfagn]
-            o3hb_sel = o3hb[dwarfagn]
-            ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
-                     markersize = markersize[key], mew = 2, label = labels[key])
-    s2ha_sel = s2ha[s06dwarfagn]
-    o3hb_sel = o3hb[s06dwarfagn]
-    ax2.plot(s2ha_sel, o3hb_sel, 'kv', mfc = 'none',
-             markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
-    s2ha_sel = s2ha[midirdwarfagn]
-    o3hb_sel = o3hb[midirdwarfagn]
-    ax2.plot(s2ha_sel, o3hb_sel, 'kp', mfc = 'none',
-             markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
-    
-    #OI Plot
-    xmin = refoiha.min(); xmax = 0#refoiha.max()
-    ymin = -1.25; ymax = 1.5
-    nbins = 50
-    
-    definite = np.column_stack((o1ha[defagn|sfsel], o3hb[defagn|sfsel]))
-    xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
-    k2 = kde.gaussian_kde(definite.T)
-    definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
-    agn_contour = np.column_stack((o1ha[defagn], o3hb[defagn]))
-    xmin_agn = agn_contour[:,0].min(); xmax_agn = agn_contour[:,0].max()
-    ymin_agn = agn_contour[:,1].min(); ymax_agn = agn_contour[:,1].max()
-    xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j, 
-                                    ymin_agn:ymax_agn:nbins*1j]
-    k = kde.gaussian_kde(agn_contour.T)
-    agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
-    ax3.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
-                   shading='gouraud', cmap=sf_colors_map)
-    main1, = ax3.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 'k', 
-                      label = 'Ke01 Maximum Starburst Line')
-    ax3.set_xlim(-2.0,-0.4)
-    ax3.set_ylim(-1,1)
-    ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
-                                   'k-.', label = 'Ke06 Liner/Seyfert Division Line')
-    ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
-    for key in keys:
-        if key != 'dwarfagn':
+            ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], 
+                     alpha = alpha[key], markersize = markersize[key], 
+                     mew = 2, mec = markercolors[key], label = labels[key])
+
+        s2ha_sel = s2ha[dwarfagn]
+        o3hb_sel = o3hb[dwarfagn]
+        ax2.plot(s2ha_sel, o3hb_sel, 'ks', mfc = 'none',
+                 markersize = 14, mew = 2, label = 'Dwarf AGN')
+
+        s2ha_sel = s2ha[s06dwarfagn]
+        o3hb_sel = o3hb[s06dwarfagn]
+        ax2.plot(s2ha_sel, o3hb_sel, 'v', color = 'lime', mfc = 'none',
+                 markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
+
+        s2ha_sel = s2ha[midirdwarfagn]
+        o3hb_sel = o3hb[midirdwarfagn]
+        ax2.plot(s2ha_sel, o3hb_sel, 'p', mfc = 'none', color = 'orange', zorder = 10, 
+                 markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
+        
+        #OI Plot
+        xmin = refoiha.min(); xmax = 0#refoiha.max()
+        ymin = -1.25; ymax = 1.5
+        nbins = 50
+        
+        o1ha = o1ha.loc[oisel]
+        o3hb = o3hb_orig.loc[oisel]
+
+        o1ha = o1ha[~np.isnan(o1ha) & np.isfinite(o1ha)]
+        o3hb = o3hb[~np.isnan(o1ha) & np.isfinite(o1ha)]
+        
+        definite = np.column_stack((o1ha[defagn|sfsel], o3hb[defagn|sfsel]))
+        xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+        k2 = kde.gaussian_kde(definite.T)
+        definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+
+        ax3.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                       shading='gouraud', cmap=sf_colors_map)
+        main1, = ax3.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 'k', 
+                          label = 'Ke01 Maximum Starburst Line')
+        ax3.set_xlim(-2.0,-0.4)
+        ax3.set_ylim(-1,1)
+        ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
+                                       'k-.', label = 'Ke06 Liner/Seyfert Division Line')
+        ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
+
+        for key in keys:
             o1ha_sel = o1ha.loc[flags[key]]
             o3hb_sel = o3hb.loc[flags[key]]
-            ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], alpha = alpha[key], 
-                     markersize = markersize[key], mew = 0, label = labels[key])
-        else:
-            o1ha_sel = o1ha[dwarfagn]
-            o3hb_sel = o3hb[dwarfagn]
-            ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
-                     markersize = markersize[key], mew = 2, label = labels[key])
-    o1ha_sel = o1ha[s06dwarfagn]
-    o3hb_sel = o3hb[s06dwarfagn]
-    ax3.plot(o1ha_sel, o3hb_sel, 'kv', mfc = 'none',
-             markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
-    o1ha_sel = o1ha[midirdwarfagn]
-    o3hb_sel = o3hb[midirdwarfagn]
-    ax3.plot(o1ha_sel, o3hb_sel, 'kp', mfc = 'none',
-             markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
-    
-    print(100.0*np.sum(dwarfagn)/np.sum(dwarf), \
-          100.0*binom_conf_interval(np.sum(dwarfagn),np.sum(dwarf)) - \
-          (100.0*np.sum(dwarfagn)/np.sum(dwarf)))
-    return (ax1, ax2, ax3)
+            ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], 
+                     alpha = alpha[key], markersize = markersize[key], 
+                     mew = 2, mec = markercolors[key], label = labels[key])
+
+        o1ha_sel = o1ha[dwarfagn]
+        o3hb_sel = o3hb[dwarfagn]
+        ax3.plot(o1ha_sel, o3hb_sel, 'ks', mfc = 'none',
+                 markersize = 14, mew = 2, label = 'Dwarf AGN')
+
+        o1ha_sel = o1ha[s06dwarfagn]
+        o3hb_sel = o3hb[s06dwarfagn]
+        ax3.plot(o1ha_sel, o3hb_sel, 'v', color = 'lime', mfc = 'none',
+                 markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
+
+        o1ha_sel = o1ha[midirdwarfagn]
+        o3hb_sel = o3hb[midirdwarfagn]
+        ax3.plot(o1ha_sel, o3hb_sel, 'p', mfc = 'none', color = 'orange', zorder = 10, 
+                 markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
+        
+        print(100.0*np.sum(dwarfagn)/np.sum(dwarf), \
+              100.0*binom_conf_interval(np.sum(dwarfagn),np.sum(dwarf)) - \
+              (100.0*np.sum(dwarfagn)/np.sum(dwarf)))
+        return (ax1, ax2, ax3)
+        
+    else:
+        refn2ha = np.linspace(-3.0, 0.35)
+        refoiha = np.linspace(-2.5, -0.4)
+        refsiiha = np.linspace(-2, 0.3,100)
+        
+        def truncate_colormap(cmap, minval=0, maxval=0.75, n=150):
+          	new_cmap = colors.LinearSegmentedColormap.from_list(
+                'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+                cmap(np.linspace(minval, maxval, n)))
+          	return new_cmap
+        sf_colors_map = truncate_colormap(cm.gray_r)
+        ndx = []#'ECO03494']#np.where((df.NAME == 'rs1105') | (df.NAME == 'rs1375'))[0]
+        xmin = refn2ha.min(); xmax = refn2ha.max()
+        ymin = -1.25; ymax = 1.5
+        nbins = 50
+        
+        #fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True)
+        
+        #NII/OIII plot
+        definite = np.column_stack((n2ha[sfsel], o3hb[sfsel]))
+        xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+        k2 = kde.gaussian_kde(definite.T)
+        definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+
+        ax1.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                       shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
+        ax1.set_xlim(-1.5,0.5)
+        ax1.set_ylim(-1.0,1.0)
+        ax1.set_xlabel(r"$\rm \log([NII]/H\alpha)$", fontsize = 22)
+        ax1.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
+        
+        for key in keys:
+            if key != 'dwarfagn':
+                n2ha_sel = n2ha.loc[flags[key]]
+                o3hb_sel = o3hb.loc[flags[key]]
+                ax1.plot(n2ha_sel, o3hb_sel, marker[key], color = markercolors[key], alpha = alpha[key], 
+                         markersize = markersize[key], mew = 0, label = labels[key])
+            else:
+                n2ha_sel = n2ha[dwarfagn]
+                o3hb_sel = o3hb[dwarfagn]
+                ax1.plot(n2ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
+                         markersize = markersize[key], mew = 2, label = labels[key])
+        n2ha_sel = n2ha[s06dwarfagn]
+        o3hb_sel = o3hb[s06dwarfagn]
+        ax1.plot(n2ha_sel, o3hb_sel, 'kv', mfc = 'none',
+                 markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
+        n2ha_sel = n2ha[midirdwarfagn]
+        o3hb_sel = o3hb[midirdwarfagn]
+        ax1.plot(n2ha_sel, o3hb_sel, 'kp', mfc = 'none',
+                 markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
+        
+        ax1.legend(loc=3, numpoints = 1, fontsize = 15)#, fontsize = 14)
+        
+        main1, = ax1.plot(refn2ha, n2hamain(refn2ha), 'k', label = 'Theoretical Maximum Starburst Line (Ke01)')
+        composite, = ax1.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 
+        'k--', label = 'Composite Line (Ka03)')
+        
+        #SII plot
+        xmin = refsiiha.min(); xmax = refsiiha.max()
+        ymin = -1.25; ymax = 1.5
+        nbins = 50
+        
+        definite = np.column_stack((s2ha[defagn|sfsel], o3hb[defagn|sfsel]))
+        xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+        k2 = kde.gaussian_kde(definite.T)
+        definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+        agn_contour = np.column_stack((s2ha[defagn], o3hb[defagn]))
+        xmin_agn = agn_contour[:,0].min(); xmax_agn = agn_contour[:,0].max()
+        ymin_agn = agn_contour[:,1].min(); ymax_agn = agn_contour[:,1].max()
+        xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j, 
+                                        ymin_agn:ymax_agn:nbins*1j]
+        k = kde.gaussian_kde(agn_contour.T)
+        agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
+        ax2.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                       shading='gouraud', cmap=sf_colors_map)
+        main1, = ax2.plot(refsiiha, s2hamain(refsiiha), 'k', label = 'Main Line')
+        ax2.set_xlim(-1.5,0.5)
+        ax2.set_ylim(-1,1)
+        ax2.set_xlabel(r"$\rm \log([SII]/H\alpha)$", fontsize = 22)
+        ax2.plot(refsiiha[refsiiha > -0.31], s2halinseyf(refsiiha[refsiiha > -0.31]),
+                          'k-.', label = 'Liner/Seyfert Division')
+        for key in keys:
+            if key != 'dwarfagn':
+                s2ha_sel = s2ha.loc[flags[key]]
+                o3hb_sel = o3hb.loc[flags[key]]
+                ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], alpha = alpha[key], 
+                         markersize = markersize[key], mew = 0, label = labels[key])
+            else:
+                s2ha_sel = s2ha[dwarfagn]
+                o3hb_sel = o3hb[dwarfagn]
+                ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
+                         markersize = markersize[key], mew = 2, label = labels[key])
+        s2ha_sel = s2ha[s06dwarfagn]
+        o3hb_sel = o3hb[s06dwarfagn]
+        ax2.plot(s2ha_sel, o3hb_sel, 'kv', mfc = 'none',
+                 markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
+        s2ha_sel = s2ha[midirdwarfagn]
+        o3hb_sel = o3hb[midirdwarfagn]
+        ax2.plot(s2ha_sel, o3hb_sel, 'kp', mfc = 'none',
+                 markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
+        
+        #OI Plot
+        xmin = refoiha.min(); xmax = 0#refoiha.max()
+        ymin = -1.25; ymax = 1.5
+        nbins = 50
+        
+        definite = np.column_stack((o1ha[defagn|sfsel], o3hb[defagn|sfsel]))
+        xgrid, ygrid = np.mgrid[xmin:xmax:nbins*1j, ymin:ymax:nbins*1j]
+        k2 = kde.gaussian_kde(definite.T)
+        definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
+        agn_contour = np.column_stack((o1ha[defagn], o3hb[defagn]))
+        xmin_agn = agn_contour[:,0].min(); xmax_agn = agn_contour[:,0].max()
+        ymin_agn = agn_contour[:,1].min(); ymax_agn = agn_contour[:,1].max()
+        xgrid_agn, ygrid_agn = np.mgrid[xmin_agn:xmax_agn:nbins*1j, 
+                                        ymin_agn:ymax_agn:nbins*1j]
+        k = kde.gaussian_kde(agn_contour.T)
+        agn_contour_z = k(np.vstack([xgrid_agn.flatten(), ygrid_agn.flatten()]))
+        ax3.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
+                       shading='gouraud', cmap=sf_colors_map)
+        main1, = ax3.plot(refoiha[refoiha < -0.75], o1hamain(refoiha[refoiha < -0.75]), 'k', 
+                          label = 'Ke01 Maximum Starburst Line')
+        ax3.set_xlim(-2.0,-0.4)
+        ax3.set_ylim(-1,1)
+        ax3.plot(refoiha[refoiha > -1.13], o1halinseyf(refoiha[refoiha > -1.13]),
+                                       'k-.', label = 'Ke06 Liner/Seyfert Division Line')
+        ax3.set_xlabel(r"$\rm \log([OI]/H\alpha)$", fontsize = 22)
+        for key in keys:
+            if key != 'dwarfagn':
+                o1ha_sel = o1ha.loc[flags[key]]
+                o3hb_sel = o3hb.loc[flags[key]]
+                ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], alpha = alpha[key], 
+                         markersize = markersize[key], mew = 0, label = labels[key])
+            else:
+                o1ha_sel = o1ha[dwarfagn]
+                o3hb_sel = o3hb[dwarfagn]
+                ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], mfc = 'none',
+                         markersize = markersize[key], mew = 2, label = labels[key])
+        o1ha_sel = o1ha[s06dwarfagn]
+        o3hb_sel = o3hb[s06dwarfagn]
+        ax3.plot(o1ha_sel, o3hb_sel, 'kv', mfc = 'none',
+                 markersize = markersize[key], mew = 2, label = 'S06-BPT Dwarf AGN')
+        o1ha_sel = o1ha[midirdwarfagn]
+        o3hb_sel = o3hb[midirdwarfagn]
+        ax3.plot(o1ha_sel, o3hb_sel, 'kp', mfc = 'none',
+                 markersize = markersize[key], mew = 2, label = 'Mid-IR Dwarf AGN')
+        
+        print(100.0*np.sum(dwarfagn)/np.sum(dwarf), \
+              100.0*binom_conf_interval(np.sum(dwarfagn),np.sum(dwarf)) - \
+              (100.0*np.sum(dwarfagn)/np.sum(dwarf)))
+        return (ax1, ax2, ax3)

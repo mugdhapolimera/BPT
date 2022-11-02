@@ -19,6 +19,18 @@ Created on Thu Dec 06 03:12:35 2018
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os 
+import sys
+from scipy.stats import kde
+import matplotlib
+import matplotlib.cm as cm
+import matplotlib.colors as colors
+matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+matplotlib.rcParams.update({'font.size': 20})
+matplotlib.rcParams.update({'axes.linewidth': 2})
+matplotlib.rcParams.update({'lines.linewidth': 2})
+from astropy.stats import binom_conf_interval
+
 
 #plt.ion()
 #import pdb
@@ -27,15 +39,18 @@ import matplotlib.pyplot as plt
 print ''
 #print 'ECO RESULTS'
 
-#survey = 'ECO+RESOLVE'
-survey = 'RESOLVE'
+survey = 'ECO+RESOLVE'
+#survey = 'RESOLVE'
 print survey+'RESULTS'
 catalog = 'jhu'
 
 #read in data
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_full.pkl'
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_bpt1_filter.pkl'
-inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_full_bpt1snr5_dext_'+catalog+'.csv' 
+if survey == 'ECO+RESOLVE':
+    inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_bpt1snr5_dext_'+catalog+'.csv' 
+else:    
+    inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/'+survey+'_full_bpt1snr5_dext_'+catalog+'.csv' 
 df = pd.read_csv(inputfile) #ECO catalog
 #inputfile = 'C:/Users/mugdhapolimera/github/SDSS_Spectra/RESOLVE_SDSS_all_dext.fits'
 #inputfile = 'RESOLVE_SDSS_dext.fits'
@@ -308,8 +323,9 @@ k2 = kde.gaussian_kde(definite.T)
 definite_z = k2(np.vstack([xgrid.flatten(), ygrid.flatten()]))
 ax.pcolormesh(xgrid, ygrid, definite_z.reshape(xgrid.shape), 
                shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
-main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k')#, label = 'Main Line')
-composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 'k-.')#, label = 'Composite Line')
+main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'k', lw = 3)#, label = 'Main Line')
+composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]), 
+                     '-.', color = 'cyan', lw = 5)#, label = 'Composite Line')
 #composite, = ax.plot(refn2ha, n2hacompmin(refn2ha), 'k--')
 ax.set_xlim(-1.5,0.32)
 ax.set_ylim(-1.0,1.0)
@@ -323,7 +339,7 @@ ax.set_ylabel(r"$\rm \log([OIII]/H\beta)$", fontsize = 22)
 #sfdata1, = ax.plot(n2ha.iloc[np.where(flags.galname == 'rf0503')], 
 #                             o3hb.iloc[np.where(flags.galname == 'rf0503')],
 #                             'gs', markersize = 8, alpha = 0.5)
-agndata1, = ax.plot(n2ha[agnsel], o3hb[agnsel],'r1', markersize = 8, mew = 2, alpha = 0.5, label = 'Traditional AGN')
+agndata1, = ax.plot(n2ha[agnsel], o3hb[agnsel],'r1', markersize = 8, mew = 2, alpha = 0.5, label = 'Conventional AGN')
 compdata1, = ax.plot(n2ha[compsel], o3hb[compsel], 'r1', markersize = 8, mew = 2, alpha = 0.5) #, label = 'Composite')
 dwarfagn1, = ax.plot(n2ha[dwarfagn], o3hb[dwarfagn], 'kv', mfc = 'none',
                        mec = 'k', mew = 2,  markersize = 12, label = 'Dwarf AGN')
