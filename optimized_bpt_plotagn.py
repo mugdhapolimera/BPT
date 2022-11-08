@@ -87,7 +87,7 @@ def ratioerror(num,num_err,den, den_err):
     # the weaker and multiply by 3/4 since Chris Richardson says the canonical
     # line ratio is 3:1 (this needs to be updated with a more precise number)
 def bpt_plots(inputfile, outputfile,  selinputfile, s06outputfile,  midirfile, 
-              eco, resolve, full, sdsscat, save, ax1, ax2, ax3, simple):
+              eco, resolve, full, sdsscat, save, ax1, ax2, ax3, simple, allcat):
     df = pd.read_csv(inputfile)
         #define alternate catalog names
     if 'name' in df.keys():
@@ -251,13 +251,13 @@ def bpt_plots(inputfile, outputfile,  selinputfile, s06outputfile,  midirfile,
     compsel = compsel1  #composite galaxies
     seyfsel = agnsel1 & seyfselr #Seyfert AGN galaxies
     linersel = agnsel1 & linerselr #LINER AGN galaxies
-    ambigsel1 = sfsel1 & (agnsel2 | agnsel3) #SF in first plot, AGN in subsequent plot
+    ambigsel1 = sfsel1 & (agnsel2 | agnsel3) & (siisel & oisel) #SF in first plot, AGN in subsequent plot
     ambigsel2 = np.array(agnsel1) & (np.array(sfsel2) | np.array(sfsel3)) #AGN in first plot, SF in subsequent plot
     ambagnsel = agnsel1 & ~seyfselr & ~linerselr & ~(sfsel2 | sfsel3) #Ambiguous AGN
     
     sftoagn1 = sfsel1 & agnsel2
     sftoagn2 = sfsel1 & agnsel3
-    
+
     #Save the BPT flags to a CSV file
     emlineclass = sfsel ^ compsel ^ seyfsel ^ linersel ^ ambigsel1 ^ ambigsel2 ^ ambagnsel
     defagn = seyfsel | linersel | ambagnsel
@@ -385,20 +385,21 @@ def bpt_plots(inputfile, outputfile,  selinputfile, s06outputfile,  midirfile,
                      alpha = alpha[key], markersize = markersize[key], 
                      mew = 2, mec = markercolors[key], label = labels[key])
 
-        n2ha_sel = n2ha[dwarfagn]
-        o3hb_sel = o3hb[dwarfagn]
-        ax1.plot(n2ha_sel, o3hb_sel, 'ks', mfc = 'none',
-                 markersize = 14, mew = 2, label = 'Dwarf AGN')
-
-        n2ha_sel = n2ha[s06dwarfagn]
-        o3hb_sel = o3hb[s06dwarfagn]
-        ax1.plot(n2ha_sel, o3hb_sel, 'v',color = 'lime',  mfc = 'none',
-                 markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
-
-        n2ha_sel = n2ha[midirdwarfagn]
-        o3hb_sel = o3hb[midirdwarfagn]
-        ax1.plot(n2ha_sel, o3hb_sel, 'p', color = 'orange', zorder = 10, mfc = 'none',
-                 markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
+        if allcat:
+            n2ha_sel = n2ha[dwarfagn]
+            o3hb_sel = o3hb[dwarfagn]
+            ax1.plot(n2ha_sel, o3hb_sel, 'ks', mfc = 'none',
+                     markersize = 14, mew = 2, label = 'Dwarf AGN')
+    
+            n2ha_sel = n2ha[s06dwarfagn]
+            o3hb_sel = o3hb[s06dwarfagn]
+            ax1.plot(n2ha_sel, o3hb_sel, 'v',color = 'lime',  mfc = 'none',
+                     markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
+    
+            n2ha_sel = n2ha[midirdwarfagn]
+            o3hb_sel = o3hb[midirdwarfagn]
+            ax1.plot(n2ha_sel, o3hb_sel, 'p', color = 'orange', zorder = 10, mfc = 'none',
+                     markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
         
         ax1.legend(loc=3, numpoints = 1, fontsize = 15)#, fontsize = 14)
         
@@ -442,21 +443,25 @@ def bpt_plots(inputfile, outputfile,  selinputfile, s06outputfile,  midirfile,
             ax2.plot(s2ha_sel, o3hb_sel, marker[key], color = markercolors[key], 
                      alpha = alpha[key], markersize = markersize[key], 
                      mew = 2, mec = markercolors[key], label = labels[key])
-
-        s2ha_sel = s2ha[dwarfagn]
-        o3hb_sel = o3hb[dwarfagn]
-        ax2.plot(s2ha_sel, o3hb_sel, 'ks', mfc = 'none',
+        s2ha_sel = s2ha[sftoagn1 & ~oisel & seyfsel2]
+        o3hb_sel = o3hb[sftoagn1 & ~oisel & seyfsel2]
+        ax2.plot(s2ha_sel, o3hb_sel, 'ko', mfc = 'none',
                  markersize = 14, mew = 2, label = 'Dwarf AGN')
-
-        s2ha_sel = s2ha[s06dwarfagn]
-        o3hb_sel = o3hb[s06dwarfagn]
-        ax2.plot(s2ha_sel, o3hb_sel, 'v', color = 'lime', mfc = 'none',
-                 markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
-
-        s2ha_sel = s2ha[midirdwarfagn]
-        o3hb_sel = o3hb[midirdwarfagn]
-        ax2.plot(s2ha_sel, o3hb_sel, 'p', mfc = 'none', color = 'orange', zorder = 10, 
-                 markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
+        if allcat:
+            s2ha_sel = s2ha[dwarfagn]
+            o3hb_sel = o3hb[dwarfagn]
+            ax2.plot(s2ha_sel, o3hb_sel, 'ks', mfc = 'none',
+                     markersize = 14, mew = 2, label = 'Dwarf AGN')
+    
+            s2ha_sel = s2ha[s06dwarfagn]
+            o3hb_sel = o3hb[s06dwarfagn]
+            ax2.plot(s2ha_sel, o3hb_sel, 'v', color = 'lime', mfc = 'none',
+                     markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
+    
+            s2ha_sel = s2ha[midirdwarfagn]
+            o3hb_sel = o3hb[midirdwarfagn]
+            ax2.plot(s2ha_sel, o3hb_sel, 'p', mfc = 'none', color = 'orange', zorder = 10, 
+                     markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
         
         #OI Plot
         xmin = refoiha.min(); xmax = 0#refoiha.max()
@@ -490,21 +495,25 @@ def bpt_plots(inputfile, outputfile,  selinputfile, s06outputfile,  midirfile,
             ax3.plot(o1ha_sel, o3hb_sel, marker[key], color = markercolors[key], 
                      alpha = alpha[key], markersize = markersize[key], 
                      mew = 2, mec = markercolors[key], label = labels[key])
-
-        o1ha_sel = o1ha[dwarfagn]
-        o3hb_sel = o3hb[dwarfagn]
-        ax3.plot(o1ha_sel, o3hb_sel, 'ks', mfc = 'none',
+        o1ha_sel = o1ha[sftoagn2 & ~siisel]
+        o3hb_sel = o3hb[sftoagn2 & ~siisel]
+        ax3.plot(o1ha_sel, o3hb_sel, 'gs', mfc = 'g',
                  markersize = 14, mew = 2, label = 'Dwarf AGN')
-
-        o1ha_sel = o1ha[s06dwarfagn]
-        o3hb_sel = o3hb[s06dwarfagn]
-        ax3.plot(o1ha_sel, o3hb_sel, 'v', color = 'lime', mfc = 'none',
-                 markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
-
-        o1ha_sel = o1ha[midirdwarfagn]
-        o3hb_sel = o3hb[midirdwarfagn]
-        ax3.plot(o1ha_sel, o3hb_sel, 'p', mfc = 'none', color = 'orange', zorder = 10, 
-                 markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
+        if allcat:
+            o1ha_sel = o1ha[dwarfagn]
+            o3hb_sel = o3hb[dwarfagn]
+            ax3.plot(o1ha_sel, o3hb_sel, 'ks', mfc = 'none',
+                     markersize = 14, mew = 2, label = 'Dwarf AGN')
+    
+            o1ha_sel = o1ha[s06dwarfagn]
+            o3hb_sel = o3hb[s06dwarfagn]
+            ax3.plot(o1ha_sel, o3hb_sel, 'v', color = 'lime', mfc = 'none',
+                     markersize = 14, mew = 2, label = 'S06 Bonus Dwarf AGN')
+    
+            o1ha_sel = o1ha[midirdwarfagn]
+            o3hb_sel = o3hb[midirdwarfagn]
+            ax3.plot(o1ha_sel, o3hb_sel, 'p', mfc = 'none', color = 'orange', zorder = 10, 
+                     markersize = 14, mew = 2, label = 'Mid-IR Dwarf AGN')
         
         print(100.0*np.sum(dwarfagn)/np.sum(dwarf), \
               100.0*binom_conf_interval(np.sum(dwarfagn),np.sum(dwarf)) - \

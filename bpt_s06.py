@@ -375,7 +375,7 @@ def s06_bpt(inputfile, outputfile, eco, resolve, full, sdsscat, save, ax):
                    shading='gouraud', cmap=sf_colors_map) #plt.cm.gray_r)
     ax.set_xlim(-1.5,0.32)
     ax.set_ylim(-1.0,1.0)
-    main1, = ax.plot(refn2ha, n2hamain(refn2ha), 'g--', lw = 5)#, label = 'Ke01 Maximum Starburst Line')
+    main1, = ax.plot(refn2ha, n2hamain(refn2ha), '--', color = 'limegreen', lw = 5)#, label = 'Ke01 Maximum Starburst Line')
     composite, = ax.plot(refn2ha[refn2ha < 0], n2hacompmin(refn2ha[refn2ha < 0]),
                           '-.', color = 'cyan', lw = 5)#, label = 'Ka03 Composite Line')
 #    sfsel1, = ax.plot(n2ha[sfsel], o3hb[sfsel], 'k.', alpha = 0.1, 

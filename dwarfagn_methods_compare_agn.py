@@ -113,10 +113,10 @@ else:
 #ax3 = plt.subplot(gs01[0, 0])
 #ax4 = plt.subplot(gs01[0, 1])
 #ax5 = plt.subplot(gs01[0, 2])
-#fig, ax1 = plt.subplots(1,1, sharey = True)
-#
-#ax1 = s06_bptagn(s06inputfile, s06outputfile, bptoutputfile, midirfile,
-#              eco, resolve, full, sdsscat, save, ax1)
+fig, ax1 = plt.subplots(1,1, sharey = True)
+
+ax1 = s06_bptagn(s06inputfile, s06outputfile, bptoutputfile, midirfile,
+              eco, resolve, full, sdsscat, save, ax1)
 
 #midirfile = 'mid_ir/GAMA_WISECat.fits'
 #fig, ax2 = plt.subplots(1,1, sharey = True)
@@ -127,7 +127,7 @@ simple = 1
 fig, (ax3, ax4, ax5) = plt.subplots(1,3, sharey = True)
 
 ax3, ax4, ax5 = bpt_plots(bptinputfile, bptoutputfile,  selinputfile, s06outputfile,  midirfile,
-                          eco, resolve, full, sdsscat, save, ax3, ax4, ax5, simple)
+                          eco, resolve, full, sdsscat, save, ax3, ax4, ax5, simple, allcat = 0)
 
 #plt.show()
 
