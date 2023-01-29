@@ -43,7 +43,7 @@ plot = 0
 #midirfile = 'mid_ir/ECO+RESOLVE_WISE_good_syserr.csv'
 survey = 'ECO+RESOLVE'
 #survey = 'RESOLVE'
-os.chdir('C:/Users/mugdhapolimera/github/SDSS_Spectra/')
+os.chdir('C:/Users/mugdh/github/SDSS_Spectra/')
 sdsscat = 'nsa'
 s06file = survey.lower()+'_s06emlineclass_dext_hasnr5_'+sdsscat+'.csv'
 optfile = survey.lower()+'_emlineclass_dext_snr5_'+sdsscat+'.csv'

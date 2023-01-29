@@ -1,0 +1,24 @@
+AGN categories based on Polimera et al., 2022 (P22) and Polimera et al., in prep. 
+
+All flags are: -999/0/1 for NA/False/True
+
+Optical:
+Below <sdsscat> = 'jhu' or 'port' or 'nsa' to use the MPA-JHU, Portsmouth, or NSA SDSS catalogs respectively
+JHU can be used as a 'default' sample since it has the largest overlap
+
+<sdsscat>_inbptsample = AGN search sample using S/N restrictions for BPT plot only
+<sdsscat>_inbptvosample = AGN search sample using S/N restrictions for BPT (NII) and VO (SII and OI) plots. This is a subset of inbptsample
+<sdsscat>_sfagn = SF-AGN
+<sdsscat>_comp = Composite
+<sdsscat>_sy = Seyfert
+<sdsscat>_lin = Liner
+<sdsscat>_lowsii = Low-SII AGN
+<sdsscat>_ambigagn = Ambiguous AGN
+<sdsscat>_agnbptonly = BPT AGN (only using the NII plot)
+<sdsscat>_s06bonus = Bonus AGN from Staskinska+2006
+<sdsscat>_conv = All conventional AGN, i.e., Composite or BPT AGN. Calculated as (<sdsscat>_comp OR <sdsscat>_sy OR jhy_lin OR <sdsscat>_lowsii OR <sdsscat>_ambigagn OR <sdsscat>_agnbptonly)
+<sdsscat>_sf = Star forming galaxies. Calculated as NOT(<sdsscat>_conv OR <sdsscat>_sfagn OR <sdsscat>_s06bonus)
+
+If you want to find optical AGN, you can define it as:
+<sdsscat>_opticalagn = (<sdsscat>_sf==0) & (<sdsscat>_inbptsample==1)
+WARNING: <sdsscat>_opticalagn is NOT given in the csv file! You have to add it to your code!!!
